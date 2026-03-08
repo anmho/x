@@ -28,7 +28,7 @@ Observable outcome:
 - [x] (2026-03-08 23:42Z) Mirrored integrations updates to `services/omnichannel/frontend/app/settings/page.tsx` and re-verified parity.
 - [x] (2026-03-08 23:43Z) Ran frontend build validation for both workspaces and captured outputs.
 - [x] (2026-03-08 23:43Z) Performed post-change bug/unfinished rescan and ticket reconciliation (no new unique follow-up tickets required).
-- [ ] Sync final plan + Linear status and document outcomes.
+- [x] (2026-03-08 23:44Z) Synced `ANM-58` to `Done`, finalized outcomes, and committed root-repo change slice.
 
 ## Surprises & Discoveries
 
@@ -135,3 +135,4 @@ No new API contracts or external dependencies are required. Existing React state
 
 Revision Note (2026-03-08): Initial plan created and linked to ANM-58 for integrations-card expansion in settings UI.
 Revision Note (2026-03-08): Recorded completed implementation, validation evidence, and ticket reconciliation results.
+Revision Note (2026-03-08): Marked completion alignment across plan progress, Linear status, and commit evidence.
