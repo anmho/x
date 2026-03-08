@@ -21,4 +21,8 @@ This file is the permanent mistake memory for repository agents.
 
 ## Entries
 
-No mistakes logged yet.
+## 2026-03-08T22:14:08Z - Committed in wrong repository
+- What happened: I tried to commit frontend route changes from the top-level repository, but the files live in a nested Git repository at `services/omnichannel/frontend`.
+- Root cause: I did not verify repository boundaries before staging and committing.
+- Preventive rule/check added: Before every commit, run `git rev-parse --show-toplevel` in the working directory that contains the edited files.
+- Verification: Confirmed separate top-level paths for `/Users/andrewho/repos/projects/x` and `/Users/andrewho/repos/projects/x/services/omnichannel/frontend`.
