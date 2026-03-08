@@ -39,6 +39,12 @@ This file is the permanent mistake memory for repository agents.
 - Preventive rule/check added: Always quote any path containing `[` or `]` when running shell commands.
 - Verification: Retried staging using quoted dynamic-route paths.
 
+## 2026-03-08T22:30:08Z - Invalid background smoke-check command
+- What happened: I attempted a one-liner background startup/smoke check for `control-plane serve` that failed (`nice(5) failed`) and did not produce a valid process id for cleanup.
+- Root cause: I used a brittle shell one-liner instead of a deterministic start/poll/stop sequence.
+- Preventive rule/check added: Use explicit command steps (`start`, `poll`, `stop`) and verify PID capture before issuing `kill`.
+- Verification: Subsequent validation relies on deterministic compile/test checks; runtime smoke is marked as blocked by sandbox.
+
 ## 2026-03-08T22:15:06Z - Missed one dark shell class during bulk replacement
 - What happened: My initial automated replacement left `services/omnichannel/frontend/app/domains/page.tsx` still using `bg-[#0a0a0a]`.
 - Root cause: I validated only a subset of grep output and did not run a final zero-match check for the hardcoded color pattern.
