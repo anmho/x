@@ -1,0 +1,17 @@
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Go build outputs
+/api
+/tmp/
+*.out
+
+# Logs
+*.log
+
+# OS / editor
+.DS_Store
+*.swp
+*.swo

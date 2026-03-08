@@ -12,7 +12,7 @@ After this change, contributors can keep the monorepo clean with one command, av
 
 - [x] (2026-03-08 01:21Z) Baseline audit captured rough edges and measured artifact hotspots.
 - [x] (2026-03-08 01:22Z) Added targeted ignore rules for generated Go binaries and replaced broad `/bin/` masking with explicit `bin/platform` ignore.
-- [ ] Add `services/access-api/.gitignore` for local artifacts and env files.
+- [x] (2026-03-08 02:03Z) Added `services/access-api/.gitignore` for local env/build/runtime artifacts.
 - [ ] Extend cleanup tooling to cover high-volume Node/Next/Go artifacts via an explicit full-clean mode.
 - [ ] Add lightweight monorepo package-manager guidance in root config to reduce per-project install drift.
 - [ ] Validate behavior and record final outcomes.
