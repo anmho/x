@@ -126,6 +126,9 @@ Validation evidence:
     npm run build --workspace services/omnichannel/frontend
     # next build completed successfully (compiled, type check, static generation)
 
+    ./platform status
+    # platform CLI status captured; cloud-console endpoint healthy on :3000 during manual validation window
+
     cmp -s apps/cloud-console/app/settings/page.tsx services/omnichannel/frontend/app/settings/page.tsx && echo "settings pages are identical"
     # settings pages are identical
 
@@ -136,3 +139,4 @@ No new API contracts or external dependencies are required. Existing React state
 Revision Note (2026-03-08): Initial plan created and linked to ANM-58 for integrations-card expansion in settings UI.
 Revision Note (2026-03-08): Recorded completed implementation, validation evidence, and ticket reconciliation results.
 Revision Note (2026-03-08): Marked completion alignment across plan progress, Linear status, and commit evidence.
+Revision Note (2026-03-08): Added `./platform status` runtime-check evidence per platform CLI workflow.
