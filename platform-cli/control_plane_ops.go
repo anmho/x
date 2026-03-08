@@ -68,7 +68,7 @@ type secretShareSpec struct {
 
 func runControlPlane(args []string) error {
 	if len(args) == 0 {
-		return errors.New("missing control-plane subcommand (init|show|plan|apply|destroy)")
+		return errors.New("missing control-plane subcommand (init|show|plan|apply|destroy|serve)")
 	}
 	switch args[0] {
 	case "init":
@@ -81,6 +81,8 @@ func runControlPlane(args []string) error {
 		return runControlPlanePlanOrApply(args[1:], false)
 	case "destroy":
 		return runControlPlaneDestroy(args[1:])
+	case "serve":
+		return runControlPlaneServe(args[1:])
 	default:
 		return fmt.Errorf("unknown control-plane subcommand %q", args[0])
 	}
