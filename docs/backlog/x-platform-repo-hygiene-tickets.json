@@ -1,0 +1,37 @@
+{
+  "generatedAt": "2026-03-08",
+  "source": "Repo hygiene execution in /Users/andrewho/repos/projects/x",
+  "teamKey": "ANM",
+  "tickets": [
+    {
+      "title": "[X Platform] Repo hygiene: ignore generated service binaries",
+      "priority": 2,
+      "description": "## Request summary\nApply artifact hygiene so generated service binaries are not accidentally committed.\n\n## Scope\n- Update root and service ignore rules for generated Go binaries.\n- Narrow broad bin ignore behavior to explicit local binary artifacts.\n\n## Affected areas/files\n- .gitignore\n- services/omnichannel/.gitignore\n\n## Validation plan\n- Run git check-ignore for backend api/worker binaries and bin/platform.\n\n## Risks/dependencies\n- Ensure path-specific ignores do not hide legitimate source files.\n\n## Project\nX Platform"
+    },
+    {
+      "title": "[X Platform] Repo hygiene: add access-api local ignore policy",
+      "priority": 3,
+      "description": "## Request summary\nStandardize service-level ignore hygiene for access-api local artifacts.\n\n## Scope\n- Add services/access-api/.gitignore for env, build, and runtime byproducts.\n\n## Affected areas/files\n- services/access-api/.gitignore\n\n## Validation plan\n- Run git check-ignore services/access-api/api and verify expected match.\n\n## Risks/dependencies\n- Must preserve .env.example visibility while masking local secrets.\n\n## Project\nX Platform"
+    },
+    {
+      "title": "[X Platform] Repo hygiene: expand cleanup tooling and command entrypoints",
+      "priority": 2,
+      "description": "## Request summary\nMake cleanup repeatable by covering high-volume artifacts and exposing standard command entrypoints.\n\n## Scope\n- Extend scripts/clean with --full mode.\n- Add cleanup scripts to package.json.\n- Add make clean and make clean-full targets.\n\n## Affected areas/files\n- scripts/clean\n- scripts/README.md\n- package.json\n- Makefile\n\n## Validation plan\n- Run ./scripts/clean --dry-run and ./scripts/clean --dry-run --full.\n\n## Risks/dependencies\n- Full cleanup is destructive for local dependency caches; dry-run must stay available.\n\n## Project\nX Platform"
+    },
+    {
+      "title": "[X Platform] Repo hygiene: add root npm workspace guidance",
+      "priority": 3,
+      "description": "## Request summary\nReduce install drift by pinning package manager version and defining workspace boundaries at repo root.\n\n## Scope\n- Add packageManager pin and workspaces list in root package.json.\n\n## Affected areas/files\n- package.json\n\n## Validation plan\n- Confirm npm scripts remain callable from root and workspace paths resolve correctly.\n\n## Risks/dependencies\n- Existing per-project lockfiles remain and should be addressed in a follow-up migration if needed.\n\n## Project\nX Platform"
+    },
+    {
+      "title": "[X Platform] Repo hygiene: final validation and status alignment",
+      "priority": 3,
+      "description": "## Request summary\nClose the hygiene execution with aligned plan status, validation evidence, and commit mapping.\n\n## Scope\n- Run final ignore and cleanup validations.\n- Update plan progress, decision log, outcomes, and ticket tracker.\n\n## Affected areas/files\n- plans/repo-hygiene-bloat-execplan.md\n\n## Validation plan\n- Verify dry-run outputs and git check-ignore mappings are recorded in plan artifacts.\n\n## Risks/dependencies\n- None beyond maintaining plan/code synchronization.\n\n## Project\nX Platform"
+    },
+    {
+      "title": "[X Platform][medium] Follow-up: unify Node dependency strategy across workspaces",
+      "priority": 3,
+      "description": "## Observed issue/opportunity\nWorkspace-level package manager guidance was added, but multiple lockfiles and duplicated node_modules caches remain.\n\n## Affected areas/files\n- apps/cloud-console/package-lock.json\n- services/omnichannel/frontend/package-lock.json\n- mcp/package-lock.json\n\n## Expected outcome\nDefine and implement a consistent dependency strategy (single lockfile or documented multi-lock policy) with clear install instructions.\n\n## Validation notes\n- Fresh install workflow should be deterministic and documented.\n- Build tooling should not emit ambiguous workspace-root warnings.\n\n## Category\nmedium\n\n## Project\nX Platform"
+    }
+  ]
+}

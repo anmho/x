@@ -21,6 +21,12 @@ This file is the permanent mistake memory for repository agents.
 
 ## Entries
 
+## 2026-03-08T22:38:06Z - Used project-style ticket prefix instead of team-key issue identifiers
+- What happened: I initially tracked execution items as `XPLAT-*` in the ExecPlan and did not publish corresponding Linear issues before execution.
+- Root cause: I treated the project label as the issue identifier prefix and deferred external ticket creation.
+- Preventive rule/check added: Before editing plan ticket IDs, confirm team key vs project naming and run `node scripts/linear/create-issues.mjs` (dry-run first, then publish) at task start.
+- Verification: Updated the plan tracker to `ANM`-scoped placeholders, prepared `docs/backlog/x-platform-repo-hygiene-tickets.json`, and executed the Linear dry-run command with `--team-key ANM`.
+
 ## 2026-03-08T22:29:00Z - Used compile build checks instead of platform stack command for runtime validation
 - What happened: I validated frontend changes mainly with `npm run build` before checking stack state via `./platform status`.
 - Root cause: I optimized for fast compile feedback and skipped the repository-default runtime validation command in initial checks.
@@ -68,3 +74,9 @@ This file is the permanent mistake memory for repository agents.
 - Root cause: I reused unsafe double-quoted search syntax despite already documenting this shell behavior.
 - Preventive rule/check added: Treat all `rg` patterns containing backticks as single-quoted literals, no exceptions.
 - Verification: Subsequent command output confirmed the shell error source and this entry was added immediately.
+
+## 2026-03-08T22:37:52Z - Repeated backtick pattern quoting failure in rg validation
+- What happened: I ran `rg` validations for updated `AGENTS.md` rules using double-quoted patterns with backticks, and zsh attempted to execute `Anmho`, `Backlog`, and `In` as commands.
+- Root cause: I failed to apply the existing single-quote rule for literal Markdown text containing backticks.
+- Preventive rule/check added: Before running any `rg` command, if the pattern contains backticks, require single-quoted pattern syntax and avoid shell interpolation.
+- Verification: Re-ran validations using single-quoted patterns and obtained expected matches without shell command-substitution errors.

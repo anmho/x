@@ -16,14 +16,16 @@ After this change, contributors can keep the monorepo clean with one command, av
 - [x] (2026-03-08 22:28Z) Extended `scripts/clean` with `--full` coverage for high-volume Node/Next artifacts and added Go service binaries to default cleanup paths.
 - [x] (2026-03-08 22:32Z) Added root `packageManager` pin and explicit npm workspace map for active Node packages.
 - [x] (2026-03-08 22:33Z) Ran final ignore/cleanup validation and documented outcomes.
+- [x] (2026-03-08 22:38Z) Prepared ANM-team Linear payload for the X Platform project and validated tickets via dry-run.
+- [ ] Publish ANM tickets once `LINEAR_API_KEY` is available in the execution environment.
 
-## Ticket Tracker (Project: X Platform / XPLAT)
+## Ticket Tracker (Project: X Platform / Team Key: ANM)
 
-- XPLAT-001: Ignore generated service binaries and narrow root bin ignore scope. Status: Committed (`46d5ea0`).
-- XPLAT-002: Add `services/access-api/.gitignore`. Status: Committed (`92c8659`).
-- XPLAT-003: Extend cleanup tooling and command surfaces. Status: Committed.
-- XPLAT-004: Add root workspace guidance for Node installs. Status: Committed.
-- XPLAT-005: Run final validation and close outcomes. Status: Committed.
+- ANM-TBD-001: Ignore generated service binaries and narrow root bin ignore scope. Status: Implemented in code (`46d5ea0`), ticket payload prepared, awaiting publish.
+- ANM-TBD-002: Add `services/access-api/.gitignore`. Status: Implemented in code (`92c8659`), ticket payload prepared, awaiting publish.
+- ANM-TBD-003: Extend cleanup tooling and command surfaces. Status: Implemented in code (`f13478e`), ticket payload prepared, awaiting publish.
+- ANM-TBD-004: Add root workspace guidance for Node installs. Status: Implemented in code (`86f2f02`), ticket payload prepared, awaiting publish.
+- ANM-TBD-005: Run final validation and close outcomes. Status: Implemented in code (`88fc8cc`), ticket payload prepared, awaiting publish.
 
 ## Surprises & Discoveries
 
@@ -50,6 +52,10 @@ After this change, contributors can keep the monorepo clean with one command, av
   Rationale: Align with the single project naming convention (`X Platform` / `XPLAT`).
   Date/Author: 2026-03-08 / Codex
 
+- Decision: Use `ANM` as the issue identifier key and keep `X Platform` as the project grouping label.
+  Rationale: Linear issue prefixes are team-key-based; the user confirmed the active team key is `ANM`.
+  Date/Author: 2026-03-08 / Codex
+
 ## Outcomes & Retrospective
 
 Completed outcomes:
@@ -62,7 +68,7 @@ Completed outcomes:
 Remaining gaps:
 
 - No full workspace dependency unification was performed; existing per-project lockfiles remain.
-- This plan tracks ticket-style items internally; no external issue tracker objects were created.
+- Linear publish requires `LINEAR_API_KEY` at execution time; ANM ticket payload is prepared.
 
 ## Context And Orientation
 
@@ -126,6 +132,13 @@ Commit list per fix:
 - `92c8659` (`XPLAT-002`): add `services/access-api/.gitignore`.
 - `f13478e` (`XPLAT-003`): expand cleanup tooling and command entrypoints.
 - `86f2f02` (`XPLAT-004`): add root npm workspace guidance.
+
+Linear execution notes:
+
+- Prepared payload: `docs/backlog/x-platform-repo-hygiene-tickets.json` (team key `ANM`, project context `X Platform`).
+- Dry-run command: `node scripts/linear/create-issues.mjs --input docs/backlog/x-platform-repo-hygiene-tickets.json --team-key ANM --dry-run`.
+- Publish attempt command: `node scripts/linear/create-issues.mjs --input docs/backlog/x-platform-repo-hygiene-tickets.json --team-key ANM`.
+  Result: blocked with `LINEAR_API_KEY is required when not using --dry-run`.
 
 ## Interfaces And Dependencies
 
