@@ -49,11 +49,19 @@ Reference runbook: `docs/runbooks/platform-cli-workflow.md`.
 3. Include additional context in each Linear ticket: request summary, scope, affected areas/files, validation plan, and risks/dependencies.
 4. Use the `Anmho` Linear team/key as the primary team so issue identifiers follow `ANM-<number>` for new work in this repository.
 5. If `Anmho` is unavailable in MCP, stop and request workspace/team-key correction before creating new tickets.
-6. For every active ExecPlan, create or link a corresponding Linear ticket and add the issue ID/link in the plan before executing milestones.
-7. Before executing milestones, verify the Linear ticket context and status match the current plan state.
-8. When taking a ticket off `Backlog`, immediately set it to `In Progress` before starting implementation work.
-9. Synchronize ticket status throughout execution (for example: backlog, in progress, blocked, done) whenever plan progress changes.
-10. At completion, ensure the Linear ticket status, plan `Progress`, and `Outcomes & Retrospective` are all aligned.
+6. Use `X Platform` as the default Linear project for repository work; if the project is missing, create or restore it before starting implementation.
+7. For every active ExecPlan, create or link a corresponding Linear ticket and add the issue ID/link in the plan before executing milestones.
+8. Before executing milestones, verify the Linear ticket context and status match the current plan state.
+9. When taking a ticket off `Backlog`, immediately set it to `In Progress` before starting implementation work.
+10. Synchronize ticket status throughout execution (for example: backlog, in progress, blocked, done) whenever plan progress changes.
+11. At completion, ensure the Linear ticket status, plan `Progress`, and `Outcomes & Retrospective` are all aligned.
+11. Link each new ticket to the canonical repo tracking project listed in `Linear Project Reference`.
+
+### Linear Project Reference
+
+- Project name: `Project X Agent Execution`
+- Project URL: `https://linear.app/anmho/team/ANM/projects/all`
+- Rule: include this project link in ticket context and attach the ticket to this project when creating/updating work items.
 
 ## Required Workflow For Implementation Work
 
