@@ -1,0 +1,37 @@
+{
+  "name": "@x/monorepo",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Project X super monorepo tooling entrypoint",
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "scripts": {
+    "clean": "./scripts/clean",
+    "clean:dry-run": "./scripts/clean --dry-run",
+    "clean:full": "./scripts/clean --full",
+    "clean:full:dry-run": "./scripts/clean --dry-run --full",
+    "doctor": "./scripts/doctor",
+    "verify": "./scripts/verify all",
+    "verify:platform": "./scripts/verify platform",
+    "verify:apps": "./scripts/verify apps",
+    "verify:docs": "./scripts/verify docs",
+    "verify:agents": "./agents/blueprints/verify",
+    "preflight": "./scripts/deploy-preflight platform",
+    "preflight:cloud-console": "./scripts/deploy-preflight cloud-console",
+    "preflight:omnichannel": "./scripts/deploy-preflight omnichannel",
+    "preflight:access-api": "./scripts/deploy-preflight access-api",
+    "config:materialize": "python3 scripts/ci/materialize_platform_configs.py",
+    "config:check": "python3 scripts/ci/materialize_platform_configs.py --check",
+    "project:registry": "node scripts/ci/generate-project-registry.mjs",
+    "mcp:check": "npm --prefix mcp run check",
+    "stack:start": "./scripts/dev-stack start",
+    "stack:status": "./scripts/dev-stack status",
+    "stack:stop": "./scripts/dev-stack stop",
+    "linear:create-issues": "node scripts/linear/create-issues.mjs",
+    "agents:pm": "node agents/pm-agent/run.mjs",
+    "agents:code": "node agents/code-agents/run.mjs",
+    "docs:dev": "cd docs/mintlify && npx mint dev",
+    "build:web": "npm --prefix services/omnichannel/frontend run build"
+  }
+}

@@ -13,9 +13,17 @@ After this change, contributors can keep the monorepo clean with one command, av
 - [x] (2026-03-08 01:21Z) Baseline audit captured rough edges and measured artifact hotspots.
 - [x] (2026-03-08 01:22Z) Added targeted ignore rules for generated Go binaries and replaced broad `/bin/` masking with explicit `bin/platform` ignore.
 - [x] (2026-03-08 02:03Z) Added `services/access-api/.gitignore` for local env/build/runtime artifacts.
-- [ ] Extend cleanup tooling to cover high-volume Node/Next/Go artifacts via an explicit full-clean mode.
+- [x] (2026-03-08 22:28Z) Extended `scripts/clean` with `--full` coverage for high-volume Node/Next artifacts and added Go service binaries to default cleanup paths.
 - [ ] Add lightweight monorepo package-manager guidance in root config to reduce per-project install drift.
 - [ ] Validate behavior and record final outcomes.
+
+## Ticket Tracker (Project: X Platform / XPLAT)
+
+- XPLAT-001: Ignore generated service binaries and narrow root bin ignore scope. Status: Committed (`46d5ea0`).
+- XPLAT-002: Add `services/access-api/.gitignore`. Status: Committed (`92c8659`).
+- XPLAT-003: Extend cleanup tooling and command surfaces. Status: Committed.
+- XPLAT-004: Add root workspace guidance for Node installs. Status: Pending.
+- XPLAT-005: Run final validation and close outcomes. Status: Pending.
 
 ## Surprises & Discoveries
 
@@ -92,6 +100,11 @@ Artifacts will be appended during implementation:
 - Ignore validation snippets
 - Cleanup dry-run snippets
 - Commit list per fix
+
+Validation snippets captured:
+
+- `./scripts/clean --dry-run` lists default removals including `services/access-api/api` and omnichannel `api`/`worker` binaries.
+- `./scripts/clean --dry-run --full` additionally lists `apps/cloud-console/node_modules`, `apps/cloud-console/.next`, `services/omnichannel/frontend/node_modules`, `services/omnichannel/frontend/.next`, and `mcp/node_modules`.
 
 ## Interfaces And Dependencies
 

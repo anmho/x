@@ -1,0 +1,106 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+DRY_RUN=0
+FULL=0
+
+usage() {
+  cat <<'EOF'
+Usage:
+  scripts/clean [--dry-run] [--full]
+
+Removes generated local artifacts:
+  - .logs/
+  - bin/platform
+  - cli/target/
+  - services/x_stream_bot/target/
+  - services/access-api/api
+  - services/omnichannel/backend/api
+  - services/omnichannel/backend/worker
+  - agents/code-agents/out/
+  - agents/pm-agent/out/
+
+`--full` additionally removes high-volume frontend artifacts:
+  - apps/cloud-console/node_modules/
+  - apps/cloud-console/.next/
+  - services/omnichannel/frontend/node_modules/
+  - services/omnichannel/frontend/.next/
+  - mcp/node_modules/
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --help|-h)
+      usage
+      exit 0
+      ;;
+    --dry-run)
+      DRY_RUN=1
+      ;;
+    --full)
+      FULL=1
+      ;;
+    *)
+      echo "unknown option: $1"
+      usage
+      exit 1
+      ;;
+  esac
+  shift
+done
+
+remove_path() {
+  local rel="$1"
+  local abs="$ROOT_DIR/$rel"
+
+  if [[ ! -e "$abs" ]]; then
+    echo "skip: $rel (not found)"
+    return
+  fi
+
+  if [[ "$DRY_RUN" -eq 1 ]]; then
+    echo "would remove: $rel"
+    return
+  fi
+
+  rm -rf "$abs"
+  echo "removed: $rel"
+}
+
+paths=(
+  ".logs"
+  "bin/platform"
+  "cli/target"
+  "services/x_stream_bot/target"
+  "services/access-api/api"
+  "services/omnichannel/backend/api"
+  "services/omnichannel/backend/worker"
+  "agents/code-agents/out"
+  "agents/pm-agent/out"
+)
+
+for rel in "${paths[@]}"; do
+  remove_path "$rel"
+done
+
+if [[ "$FULL" -eq 1 ]]; then
+  paths_full=(
+    "apps/cloud-console/node_modules"
+    "apps/cloud-console/.next"
+    "services/omnichannel/frontend/node_modules"
+    "services/omnichannel/frontend/.next"
+    "mcp/node_modules"
+  )
+
+  for rel in "${paths_full[@]}"; do
+    remove_path "$rel"
+  done
+fi
+
+if [[ "$DRY_RUN" -eq 1 ]]; then
+  echo "cleanup complete (dry-run)"
+else
+  echo "cleanup complete"
+fi
