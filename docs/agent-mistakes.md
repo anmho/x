@@ -27,6 +27,12 @@ This file is the permanent mistake memory for repository agents.
 - Preventive rule/check added: Before every commit, run `git rev-parse --show-toplevel` in the working directory that contains the edited files.
 - Verification: Confirmed separate top-level paths for `/Users/andrewho/repos/projects/x` and `/Users/andrewho/repos/projects/x/services/omnichannel/frontend`.
 
+## 2026-03-08T22:27:59Z - Unquoted bracket path in git add
+- What happened: I ran `git add` with an unquoted path containing `[domain]`, and zsh expanded it as a glob, causing `no matches found`.
+- Root cause: I forgot shell globbing behavior for dynamic-route paths.
+- Preventive rule/check added: Always quote any path containing `[` or `]` when running shell commands.
+- Verification: Retried staging using quoted dynamic-route paths.
+
 ## 2026-03-08T22:15:06Z - Missed one dark shell class during bulk replacement
 - What happened: My initial automated replacement left `services/omnichannel/frontend/app/domains/page.tsx` still using `bg-[#0a0a0a]`.
 - Root cause: I validated only a subset of grep output and did not run a final zero-match check for the hardcoded color pattern.
