@@ -1,6 +1,6 @@
 # Omni-Channel Notification System (MVP)
 
-A production-ready omni-channel notification system built with Golang, Next.js, Temporal, and Supabase. Supports email via SendGrid plus test channels (`sms`, `push`, `webhook`) and an optional local `app` relay channel for emulator workflows.
+A production-ready omni-channel notification system built with Golang, Next.js, Temporal, and Supabase. Supports email via SendGrid plus test channels (`sms`, `push`, `webhook`) and optional local relay channels (`app`, `imessage`) for emulator workflows.
 
 ## Features
 
@@ -110,7 +110,7 @@ You can still run each service directly if needed (Supabase + Temporal + backend
 2. Use the dedicated Notifications service page to:
    - Manage registered apps
    - Create/revoke service API keys
-   - Test all notification channels (email/sms/push/webhook/app)
+   - Test all notification channels (email/sms/push/webhook/app/imessage)
    - View Temporal workflow IDs and run states
 
 ### App/Emulator Relay Setup (Optional)
