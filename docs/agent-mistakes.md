@@ -21,6 +21,12 @@ This file is the permanent mistake memory for repository agents.
 
 ## Entries
 
+## 2026-03-08T22:29:00Z - Used compile build checks instead of platform stack command for runtime validation
+- What happened: I validated frontend changes mainly with `npm run build` before checking stack state via `./platform status`.
+- Root cause: I optimized for fast compile feedback and skipped the repository-default runtime validation command in initial checks.
+- Preventive rule/check added: For runtime/environment claims, always run and report `./platform status` (or an explicitly scoped stack command) before finalizing.
+- Verification: Added `Platform CLI First Workflow (Required)` to `AGENTS.md` and created `docs/runbooks/platform-cli-workflow.md`.
+
 ## 2026-03-08T22:14:08Z - Committed in wrong repository
 - What happened: I tried to commit frontend route changes from the top-level repository, but the files live in a nested Git repository at `services/omnichannel/frontend`.
 - Root cause: I did not verify repository boundaries before staging and committing.
@@ -44,3 +50,15 @@ This file is the permanent mistake memory for repository agents.
 - Root cause: I used backticks inside double quotes instead of shell-safe single quoting for a literal Markdown snippet.
 - Preventive rule/check added: When searching for literal strings that include backticks or `<...>`, wrap the entire pattern in single quotes.
 - Verification: Re-ran validation with `rg -n 'For every task, ensure an ExecPlan exists at `plans/<plan>.md`' AGENTS.md` and received the expected single match.
+
+## 2026-03-08T22:28:07Z - Ran TypeScript check without selecting project
+- What happened: I executed `npm --prefix services/omnichannel/frontend exec tsc --noEmit` from the repo root and got the TypeScript CLI help output instead of a project typecheck.
+- Root cause: I assumed `npm --prefix ... exec tsc` would always resolve the project context without explicitly running in the package directory.
+- Preventive rule/check added: For frontend typechecks, run `./node_modules/.bin/tsc --noEmit` from the package directory (or provide `-p <tsconfig>` explicitly).
+- Verification: Re-ran from `services/omnichannel/frontend` with `./node_modules/.bin/tsc --noEmit`; command exited successfully.
+
+## 2026-03-08T22:28:48Z - Repeated shell quoting error while searching for backtick text
+- What happened: I ran an `rg` pattern in double quotes that contained `` `ANM-28` ``, and zsh tried to execute `ANM-28` as a command.
+- Root cause: I reused unsafe double-quoted search syntax despite already documenting this shell behavior.
+- Preventive rule/check added: Treat all `rg` patterns containing backticks as single-quoted literals, no exceptions.
+- Verification: Subsequent command output confirmed the shell error source and this entry was added immediately.

@@ -18,6 +18,18 @@ Project X is both a platform and a monorepo. High-level directories:
 - `scripts/`: local automation and verification entrypoints.
 - `platform-cli/`: source for the platform CLI.
 
+## Platform CLI First Workflow (Required)
+
+Use the platform entrypoint for runtime validation and stack control.
+
+1. From repo root, prefer `./platform start`, `./platform status`, `./platform stop`, and `./platform logs <service>` for day-to-day environment checks.
+2. Use `scripts/dev-stack <start|status|stop|logs>` only when you specifically need the dev-stack supervisor behavior.
+3. Use service-local stack scripts (for example, `services/omnichannel/scripts/stack.sh`) only when intentionally working inside that single service stack.
+4. Treat `npm run build` and similar package commands as compile validation only; do not present them as stack/runtime validation.
+5. In status updates and final summaries, explicitly name which stack command was used (`./platform ...`, `scripts/dev-stack ...`, or service-local stack script).
+
+Reference runbook: `docs/runbooks/platform-cli-workflow.md`.
+
 ## Required Workflow For Planning Work
 
 1. Start by checking whether a relevant plan already exists in `plans/`.
