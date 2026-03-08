@@ -322,6 +322,11 @@ func reconcileControlPlane(cfg *controlPlaneConfig, selectedProject string, dryR
 			} else if len(project.Deployments) > 0 {
 				fmt.Printf("control-plane: skip deployments for %s (no gcp.project_id)\n", project.Name)
 			}
+			if len(project.Domains) > 0 {
+				if err := reconcileDomainSet(project.Name, project.Domains, true, prune); err != nil {
+					return err
+				}
+			}
 			continue
 		}
 
@@ -393,6 +398,11 @@ func reconcileControlPlane(cfg *controlPlaneConfig, selectedProject string, dryR
 			}
 		} else if len(project.Deployments) > 0 {
 			fmt.Printf("control-plane: skip deployments for %s (no gcp.project_id)\n", project.Name)
+		}
+		if len(project.Domains) > 0 {
+			if err := reconcileDomainSet(project.Name, project.Domains, dryRun, prune); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
