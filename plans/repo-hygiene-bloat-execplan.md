@@ -14,7 +14,7 @@ After this change, contributors can keep the monorepo clean with one command, av
 - [x] (2026-03-08 01:22Z) Added targeted ignore rules for generated Go binaries and replaced broad `/bin/` masking with explicit `bin/platform` ignore.
 - [x] (2026-03-08 02:03Z) Added `services/access-api/.gitignore` for local env/build/runtime artifacts.
 - [x] (2026-03-08 22:28Z) Extended `scripts/clean` with `--full` coverage for high-volume Node/Next artifacts and added Go service binaries to default cleanup paths.
-- [ ] Add lightweight monorepo package-manager guidance in root config to reduce per-project install drift.
+- [x] (2026-03-08 22:32Z) Added root `packageManager` pin and explicit npm workspace map for active Node packages.
 - [ ] Validate behavior and record final outcomes.
 
 ## Ticket Tracker (Project: X Platform / XPLAT)
@@ -22,7 +22,7 @@ After this change, contributors can keep the monorepo clean with one command, av
 - XPLAT-001: Ignore generated service binaries and narrow root bin ignore scope. Status: Committed (`46d5ea0`).
 - XPLAT-002: Add `services/access-api/.gitignore`. Status: Committed (`92c8659`).
 - XPLAT-003: Extend cleanup tooling and command surfaces. Status: Committed.
-- XPLAT-004: Add root workspace guidance for Node installs. Status: Pending.
+- XPLAT-004: Add root workspace guidance for Node installs. Status: Committed.
 - XPLAT-005: Run final validation and close outcomes. Status: Pending.
 
 ## Surprises & Discoveries

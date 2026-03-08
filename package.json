@@ -3,6 +3,13 @@
   "private": true,
   "version": "0.1.0",
   "description": "Project X super monorepo tooling entrypoint",
+  "packageManager": "npm@10.9.4",
+  "workspaces": [
+    "apps/cloud-console",
+    "services/omnichannel/frontend",
+    "mcp",
+    "packages/*"
+  ],
   "engines": {
     "node": ">=20.19.0"
   },
