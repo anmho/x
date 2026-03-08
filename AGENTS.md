@@ -45,13 +45,15 @@ Reference runbook: `docs/runbooks/platform-cli-workflow.md`.
 ## Linear MCP Ticketing (Required)
 
 1. For every user-requested change and every autonomous change, create a Linear ticket using the Linear MCP tools before execution begins, including policy/docs changes such as `AGENTS.md` updates.
-2. Include additional context in each Linear ticket: request summary, scope, affected areas/files, validation plan, and risks/dependencies.
-3. Use the `XPLAT` Linear team/key so issue identifiers follow `XPLAT-<number>`; do not use other team prefixes for new work.
-4. If `XPLAT` is unavailable in MCP, stop and request workspace/team-key correction before creating new tickets.
-5. For every active ExecPlan, create or link a corresponding Linear ticket and add the issue ID/link in the plan before executing milestones.
-6. Before executing milestones, verify the Linear ticket context and status match the current plan state.
-7. Synchronize ticket status throughout execution (for example: backlog, in progress, blocked, done) whenever plan progress changes.
-8. At completion, ensure the Linear ticket status, plan `Progress`, and `Outcomes & Retrospective` are all aligned.
+2. **Prioritize tickets** when selecting work: prefer `major` (production-risk, security, blockers) over `medium` (correctness/reliability gaps) over `minor` (polish, refactors). When multiple tickets have the same category, prefer those that unblock other work or align with the active ExecPlan.
+3. Include additional context in each Linear ticket: request summary, scope, affected areas/files, validation plan, and risks/dependencies.
+4. Use the `Anmho` Linear team/key as the primary team so issue identifiers follow `ANM-<number>` for new work in this repository.
+5. If `Anmho` is unavailable in MCP, stop and request workspace/team-key correction before creating new tickets.
+6. For every active ExecPlan, create or link a corresponding Linear ticket and add the issue ID/link in the plan before executing milestones.
+7. Before executing milestones, verify the Linear ticket context and status match the current plan state.
+8. When taking a ticket off `Backlog`, immediately set it to `In Progress` before starting implementation work.
+9. Synchronize ticket status throughout execution (for example: backlog, in progress, blocked, done) whenever plan progress changes.
+10. At completion, ensure the Linear ticket status, plan `Progress`, and `Outcomes & Retrospective` are all aligned.
 
 ## Required Workflow For Implementation Work
 
@@ -80,13 +82,14 @@ An ExecPlan is complete only when:
 
 ## UI Theme Mode (Dark/Light)
 
-Frontend work must support both light and dark mode via system preference by default.
+Frontend work must support both light and dark mode via system preference by default, with optional user override from quick settings.
 
-1. Theme source of truth is `prefers-color-scheme`; do not force dark mode with wrapper classes like `<div className="dark">`.
+1. Default theme source is `prefers-color-scheme`; quick settings may override via `data-theme` (`light` or `dark`) and `localStorage` (`console:theme-mode`).
 2. Use semantic theme tokens in each frontend `app/globals.css` and shared shell helpers (`app-shell`, `app-shell-bg`, `app-shell-bg-95`) instead of hardcoded hex backgrounds.
 3. Prefer token-backed utilities (`bg-zinc-*`, `text-zinc-*`, `border-zinc-*`) over literal dark/light color values in components.
 4. Keep `apps/cloud-console` and `services/omnichannel/frontend` theme behavior aligned unless a plan explicitly documents divergence.
-5. When editing theme behavior, validate with frontend builds and visually verify both system light and dark modes.
+5. Quick settings UX should expose `Light`, `Dark`, and `System` in the avatar/account panel (Vercel-style segmented control).
+6. When editing theme behavior, validate with frontend builds and visually verify both system light and dark modes.
 
 ## Commit Discipline (Required)
 
