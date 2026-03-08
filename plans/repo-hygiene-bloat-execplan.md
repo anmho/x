@@ -15,7 +15,7 @@ After this change, contributors can keep the monorepo clean with one command, av
 - [x] (2026-03-08 02:03Z) Added `services/access-api/.gitignore` for local env/build/runtime artifacts.
 - [x] (2026-03-08 22:28Z) Extended `scripts/clean` with `--full` coverage for high-volume Node/Next artifacts and added Go service binaries to default cleanup paths.
 - [x] (2026-03-08 22:32Z) Added root `packageManager` pin and explicit npm workspace map for active Node packages.
-- [ ] Validate behavior and record final outcomes.
+- [x] (2026-03-08 22:33Z) Ran final ignore/cleanup validation and documented outcomes.
 
 ## Ticket Tracker (Project: X Platform / XPLAT)
 
@@ -23,7 +23,7 @@ After this change, contributors can keep the monorepo clean with one command, av
 - XPLAT-002: Add `services/access-api/.gitignore`. Status: Committed (`92c8659`).
 - XPLAT-003: Extend cleanup tooling and command surfaces. Status: Committed.
 - XPLAT-004: Add root workspace guidance for Node installs. Status: Committed.
-- XPLAT-005: Run final validation and close outcomes. Status: Pending.
+- XPLAT-005: Run final validation and close outcomes. Status: Committed.
 
 ## Surprises & Discoveries
 
@@ -46,9 +46,23 @@ After this change, contributors can keep the monorepo clean with one command, av
   Rationale: Preserves current behavior while enabling predictable deep cleanup when requested.
   Date/Author: 2026-03-08 / Codex
 
+- Decision: Standardize plan ticket namespace as `XPLAT-*` for this repository effort.
+  Rationale: Align with the single project naming convention (`X Platform` / `XPLAT`).
+  Date/Author: 2026-03-08 / Codex
+
 ## Outcomes & Retrospective
 
-Pending implementation.
+Completed outcomes:
+
+- Root and service ignore policies now cover generated Go binaries (`services/access-api/api`, `services/omnichannel/backend/api`, `services/omnichannel/backend/worker`) and explicitly ignore `bin/platform` instead of masking all `/bin`.
+- `services/access-api/.gitignore` now exists and codifies local env/build/log artifact handling.
+- `scripts/clean` now supports `--full` for high-volume Node/Next cleanup while preserving conservative default behavior.
+- Root package metadata now includes a pinned npm package manager version and explicit workspace map for active Node packages.
+
+Remaining gaps:
+
+- No full workspace dependency unification was performed; existing per-project lockfiles remain.
+- This plan tracks ticket-style items internally; no external issue tracker objects were created.
 
 ## Context And Orientation
 
@@ -106,6 +120,13 @@ Validation snippets captured:
 - `./scripts/clean --dry-run` lists default removals including `services/access-api/api` and omnichannel `api`/`worker` binaries.
 - `./scripts/clean --dry-run --full` additionally lists `apps/cloud-console/node_modules`, `apps/cloud-console/.next`, `services/omnichannel/frontend/node_modules`, `services/omnichannel/frontend/.next`, and `mcp/node_modules`.
 
+Commit list per fix:
+
+- `46d5ea0` (`XPLAT-001`): ignore generated service binaries and narrow root bin ignore scope.
+- `92c8659` (`XPLAT-002`): add `services/access-api/.gitignore`.
+- `f13478e` (`XPLAT-003`): expand cleanup tooling and command entrypoints.
+- `86f2f02` (`XPLAT-004`): add root npm workspace guidance.
+
 ## Interfaces And Dependencies
 
 Interfaces touched:
@@ -116,4 +137,4 @@ Interfaces touched:
 
 No external network dependencies are required for this work.
 
-Revision note: Initial plan created to execute repo hygiene fixes identified from artifact and ignore audit.
+Revision note: Added `XPLAT-*` ticket namespace, recorded validation evidence, and documented final outcomes for the hygiene implementation.
