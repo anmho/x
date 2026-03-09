@@ -88,6 +88,15 @@ Token and scaffold helpers through Go CLI:
 ./platform new service billing-api
 ```
 
+## Create PRs for Open Branches
+
+Create PRs for branches pushed to origin that don't yet have one. Requires `gh auth login`.
+
+```bash
+./scripts/create-prs-for-branches.sh --dry-run   # preview
+./scripts/create-prs-for-branches.sh             # create
+```
+
 ## Linear Issue Creation
 
 Use `scripts/linear/create-issues.mjs` to create Linear tickets from JSON payloads.
