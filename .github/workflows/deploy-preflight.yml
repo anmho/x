@@ -1,0 +1,39 @@
+name: Deploy Preflight
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Preflight target"
+        required: true
+        default: "platform"
+        type: choice
+        options:
+          - platform
+          - cloud-console
+          - omnichannel
+          - access-api
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: "npm"
+          cache-dependency-path: package-lock.json
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: services/omnichannel/backend/go.mod
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Run Deploy Preflight
+        run: ./scripts/deploy-preflight "${{ github.event.inputs.target }}"
