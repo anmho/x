@@ -267,7 +267,12 @@ export function AppShell({ active, children }: { active?: NavSection; children?:
 
   function openCommandItem(href: string) {
     closeCommandPalette();
-    router.push(href);
+    const isExternal = href.startsWith('http://') || href.startsWith('https://');
+    if (isExternal) {
+      window.open(href, '_blank', 'noopener,noreferrer');
+    } else {
+      router.push(href);
+    }
   }
 
   function toggleSidebar() {
