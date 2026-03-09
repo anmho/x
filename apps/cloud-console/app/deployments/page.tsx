@@ -93,6 +93,15 @@ const DEFAULT_KEYS: ApiKeyRecord[] = [
 
 const SCOPES = ['notifications:read', 'notifications:write', 'notifications:admin'];
 
+const CHANNEL_OPTIONS: { value: NotificationChannel; label: string }[] = [
+  { value: 'email', label: 'email' },
+  { value: 'sms', label: 'sms' },
+  { value: 'push', label: 'push' },
+  { value: 'webhook', label: 'webhook' },
+  { value: 'app', label: 'app (emulator)' },
+  { value: 'imessage', label: 'imessage (emulator)' },
+];
+
 function formatDate(date: string) {
   return new Date(date).toLocaleString(undefined, {
     month: 'short',
@@ -197,6 +206,26 @@ export default function NotificationsServicePage() {
     return counts;
   }, [deployments]);
 
+  const projectOptions = useMemo(
+    () =>
+      projects.map((project) => ({
+        value: project.id,
+        label: project.name,
+        description: `${catalogProjectCounts(project.id).applications} apps / ${deploymentCountsByProject[project.id] || 0} deployments`,
+      })),
+    [projects, deploymentCountsByProject],
+  );
+
+  const deploymentOptions = useMemo(
+    () =>
+      projectDeployments.map((deployment) => ({
+        value: deployment.id,
+        label: `Deployment: ${deployment.name}`,
+        description: `${deployment.env} • ${deployment.region}`,
+      })),
+    [projectDeployments],
+  );
+
   const selectedProjectCatalog = useMemo(
     () => CATALOG_PROJECTS.find((project) => project.id === selectedProjectId),
     [selectedProjectId],
@@ -238,10 +267,46 @@ export default function NotificationsServicePage() {
   }
 
   const stats = useMemo(() => {
-    const total = notifications.length;
-    const pending = notifications.filter((item) => item.status === 'pending' || item.status === 'processing').length;
-    const failed = notifications.filter((item) => item.status === 'failed').length;
-    return { total, pending, failed };
+    let received = notifications.length;
+    let opened = 0;
+    let dropped = 0;
+    let failed = 0;
+    let sent = 0;
+    let inFlight = 0;
+
+    for (const item of notifications) {
+      if (item.status === 'failed') failed += 1;
+      if (item.status === 'cancelled') dropped += 1;
+      if (item.status === 'sent') sent += 1;
+      if (item.status === 'pending' || item.status === 'processing') inFlight += 1;
+
+      const metadata = item.metadata;
+      if (!metadata) continue;
+
+      const event = typeof metadata.event === 'string' ? metadata.event.toLowerCase() : '';
+      const events = Array.isArray(metadata.events)
+        ? metadata.events.map((entry) => (typeof entry === 'string' ? entry.toLowerCase() : ''))
+        : [];
+
+      const hasOpenedSignal = metadata.opened === true
+        || metadata.open === true
+        || typeof metadata.opened_at === 'string'
+        || typeof metadata.openedAt === 'string'
+        || event === 'opened'
+        || events.includes('opened');
+
+      if (hasOpenedSignal) opened += 1;
+
+      const hasDroppedSignal = metadata.dropped === true
+        || typeof metadata.dropped_at === 'string'
+        || typeof metadata.droppedAt === 'string'
+        || event === 'dropped'
+        || events.includes('dropped');
+
+      if (hasDroppedSignal && item.status !== 'cancelled') dropped += 1;
+    }
+
+    return { received, opened, dropped, failed, sent, inFlight };
   }, [notifications]);
 
   function statusIcon(status: Notification['status']) {
@@ -365,9 +430,7 @@ export default function NotificationsServicePage() {
   }
 
   return (
-    <div className="min-h-screen app-shell">
-      <AppNav active="omnichannelStatus" />
-
+    <AppNav active="omnichannelStatus">
       <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
         <div className="mb-4 flex items-center justify-between gap-3">
           <div>
@@ -399,13 +462,23 @@ export default function NotificationsServicePage() {
               <KeyRound className="h-3.5 w-3.5" />
               API Keys
             </Link>
+            <Link
+              href="/workflows"
+              className="inline-flex items-center gap-1 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm text-zinc-200 hover:bg-zinc-800"
+            >
+              <Workflow className="h-3.5 w-3.5" />
+              Workflows
+            </Link>
           </div>
         </div>
 
-        <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <MetricCard title="Total" value={stats.total.toString()} />
-          <MetricCard title="Pending" value={stats.pending.toString()} />
+        <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-6">
+          <MetricCard title="Received" value={stats.received.toString()} />
+          <MetricCard title="Opened" value={stats.opened.toString()} />
+          <MetricCard title="Dropped" value={stats.dropped.toString()} />
           <MetricCard title="Failed" value={stats.failed.toString()} />
+          <MetricCard title="Sent" value={stats.sent.toString()} />
+          <MetricCard title="In Flight" value={stats.inFlight.toString()} />
         </div>
 
         {(error || success) && (
@@ -428,11 +501,7 @@ export default function NotificationsServicePage() {
             <HeadlessSelect
               value={selectedProjectId}
               onValueChange={setSelectedProjectId}
-              options={projects.map((project) => ({
-                value: project.id,
-                label: project.name,
-                description: `${catalogProjectCounts(project.id).applications} apps / ${deploymentCountsByProject[project.id] || 0} deployments`,
-              }))}
+              options={projectOptions}
               ariaLabel="Select project"
             />
           </div>
@@ -564,11 +633,7 @@ export default function NotificationsServicePage() {
                 <HeadlessSelect
                   value={newKeyDeploymentId}
                   onValueChange={setNewKeyDeploymentId}
-                  options={projectDeployments.map((deployment) => ({
-                    value: deployment.id,
-                    label: `Deployment: ${deployment.name}`,
-                    description: `${deployment.env} • ${deployment.region}`,
-                  }))}
+                  options={deploymentOptions}
                   ariaLabel="Select deployment"
                   placeholder="Select deployment"
                   disabled={projectDeployments.length === 0}
@@ -658,14 +723,7 @@ export default function NotificationsServicePage() {
               <HeadlessSelect
                 value={testChannel}
                 onValueChange={(value) => setTestChannel(value as NotificationChannel)}
-                options={[
-                  { value: 'email', label: 'email' },
-                  { value: 'sms', label: 'sms' },
-                  { value: 'push', label: 'push' },
-                  { value: 'webhook', label: 'webhook' },
-                  { value: 'app', label: 'app (emulator)' },
-                  { value: 'imessage', label: 'imessage (emulator)' },
-                ]}
+                options={CHANNEL_OPTIONS}
                 ariaLabel="Select channel"
               />
               <input
@@ -826,6 +884,6 @@ export default function NotificationsServicePage() {
           )}
         </section>
       </main>
-    </div>
+    </AppNav>
   );
 }
