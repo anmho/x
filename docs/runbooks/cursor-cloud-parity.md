@@ -20,6 +20,7 @@ Add these in **Dashboard → Cloud Agents → Secrets**:
 | `GITHUB_PERSONAL_ACCESS_TOKEN` | GitHub MCP (PR creation, repo access) | `repo`, `read:packages` |
 | `LINEAR_API_KEY` | Linear MCP (OAuth preferred) or CLI fallback (create-issues when MCP unavailable) | [linear.app/settings/api](https://linear.app/settings/api) — Ralph loop friendly |
 | `GREPTILE_API_KEY` | Greptile MCP (code search/analysis) | [app.greptile.com/settings/api](https://app.greptile.com/settings/api) |
+| `LINEAR_API_KEY` | Linear CLI fallback (create-issues when MCP unavailable) | [linear.app/settings/api](https://linear.app/settings/api) — Ralph loop friendly |
 
 Create a GitHub PAT at [github.com/settings/tokens/new](https://github.com/settings/tokens/new).
 

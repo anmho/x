@@ -15,11 +15,26 @@ This file is the permanent mistake memory for repository agents.
 ## <YYYY-MM-DDTHH:MM:SSZ> - <short title>
 - What happened:
 - Root cause:
-- Preventive rule/check added:
+- How to avoid it:
+- What to do instead:
 - Verification:
 ```
 
 ## Entries
+
+## 2026-03-09T02:00:00Z - Used scripts/verify instead of Nx targets for app checks
+- What happened: CI and scripts/verify apps used custom shell logic (nx run sdk:generate-es + npm run build) instead of Nx targets.
+- Root cause: Did not treat Nx as the single source of truth for build/verify orchestration.
+- How to avoid it: Prefer Nx targets for all build, test, and verify steps. Use nx run-many -t <target> instead of ad-hoc scripts.
+- What to do instead: Define verify/build as Nx targets in project.json; CI runs nx run-many directly. scripts/verify becomes a thin nx wrapper or is removed.
+- Verification: Migrated verify_apps to nx run-many -t build; CI apps job now runs nx directly. Ticket: docs/backlog/verify-nx-targets-tickets.json for full migration.
+
+## 2026-03-09T02:00:00Z - Did not push and check workflow logs after changes
+- What happened: Made multiple changes (CI fix, AGENTS.md, etc.) but did not push until the user asked. Did not run gh run list / gh run view --log-failed to verify CI.
+- Root cause: Focused on edits without completing the loop: commit → push → verify.
+- How to avoid it: After every logical change, commit, push, and check workflow status. Per AGENTS.md Ralph loop: complete the full loop.
+- What to do instead: Immediately after committing: git push; gh run list --limit 3; if failure, gh run view <id> --log-failed. Do not stop with uncommitted/unpushed work.
+- Verification: AGENTS.md Ralph Loop Friendly section; this entry.
 
 ## 2026-03-08T22:38:06Z - Used project-style ticket prefix instead of team-key issue identifiers
 - What happened: I initially tracked execution items as `XPLAT-*` in the ExecPlan and did not publish corresponding Linear issues before execution.
