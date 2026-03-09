@@ -1,0 +1,8 @@
+{
+  "name": "cloud-console",
+  "targets": {
+    "build": {
+      "dependsOn": ["sdk:generate-es"]
+    }
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "name": "sdk",
+  "projectType": "library",
+  "root": "services/omnichannel",
+  "sourceRoot": "services/omnichannel/backend/proto",
+  "targets": {
+    "generate-go": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "./scripts/sdk.sh generate-server",
+        "cwd": "services/omnichannel"
+      },
+      "configurations": {}
+    },
+    "generate-es": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "cd backend/proto && buf generate --template buf.gen.client.yaml",
+        "cwd": "services/omnichannel"
+      },
+      "configurations": {}
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "./scripts/sdk.sh lint",
+        "cwd": "services/omnichannel"
+      },
+      "configurations": {}
+    },
+    "publish": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "./scripts/sdk.sh publish-all",
+        "cwd": "services/omnichannel"
+      },
+      "configurations": {}
+    }
+  }
+}

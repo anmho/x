@@ -1,0 +1,13 @@
+# ConnectRPC ES/TypeScript client generation for local dev.
+# Output: packages/sdk-omnichannel/src/gen
+# Run via: nx run sdk:generate-es
+# Uses local plugins (fallback when remote buf.build is unavailable)
+version: v2
+plugins:
+  - local: protoc-gen-es
+    out: ../../../../packages/sdk-omnichannel/src/gen
+    include_imports: true
+    opt: target=ts
+  - local: protoc-gen-connect-es
+    out: ../../../../packages/sdk-omnichannel/src/gen
+    opt: target=ts

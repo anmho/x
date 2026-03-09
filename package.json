@@ -39,6 +39,16 @@
     "agents:pm": "node agents/pm-agent/run.mjs",
     "agents:code": "node agents/code-agents/run.mjs",
     "docs:dev": "cd docs/mintlify && npx mint dev",
-    "build:web": "npm --prefix services/omnichannel/frontend run build"
+    "build:web": "npm --prefix services/omnichannel/frontend run build",
+    "sdk:generate-go": "nx run sdk:generate-go",
+    "sdk:generate-es": "nx run sdk:generate-es",
+    "sdk:lint": "nx run sdk:lint",
+    "sdk:publish": "nx run sdk:publish"
+  },
+  "devDependencies": {
+    "@bufbuild/buf": "^1.66.0",
+    "@bufbuild/protoc-gen-es": "^1.10.1",
+    "@connectrpc/protoc-gen-connect-es": "^1.7.0",
+    "nx": "^22.5.4"
   }
 }

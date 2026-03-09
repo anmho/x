@@ -30,7 +30,7 @@ Improve developer experience, build system consistency, and agent-friendliness a
 ## Progress
 
 - [ ] (2026-03-08) ExecPlan created; subagents launched for tickets 3, 6, 7
-- [ ] ConnectRPC SDK + Nx (ticket 1) — cloud agent or dedicated subagent
+- [x] (2026-03-09) ConnectRPC SDK + Nx (ticket 1): Nx task graph (sdk:generate-go, sdk:generate-es, sdk:lint, sdk:publish), buf.gen.client.yaml for local ES generation, packages/sdk-omnichannel, frontends depend on local SDK, sdk.sh generate-es
 - [x] (2026-03-08) Unify Node dependency strategy (ticket 3) — single root lockfile, runbook, verify/deploy-preflight updated
 - [x] (2026-03-08) Fix docs and scaffolding drift (ticket 6): corrected `docs/top-three-priorities.md` path to `docs/mintlify/services/access-api.mdx`; scripts/README already had `new:mobile-app`; added docs lint in `scripts/verify docs` (broken path grep + mint.json nav page existence)
 - [x] (2026-03-08) Complete Access API OpenAPI schema (ticket 7)
