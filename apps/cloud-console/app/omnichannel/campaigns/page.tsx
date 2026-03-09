@@ -47,8 +47,11 @@ export default function OmnichannelCampaignsPage() {
     try {
       const response = await templateApi.list();
       setTemplates(response.data || []);
-    } catch {
+      setError(null);
+    } catch (err) {
+      console.error(err);
       setTemplates([]);
+      setError(err instanceof Error ? err.message : 'Failed to load templates');
     }
   }
 
@@ -140,9 +143,7 @@ export default function OmnichannelCampaignsPage() {
   );
 
   return (
-    <div className="min-h-screen app-shell">
-      <AppNav active="campaigns" />
-
+    <AppNav active="campaigns">
       <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
         <div className="mb-4 flex items-center justify-between gap-3">
           <div>
@@ -290,6 +291,6 @@ export default function OmnichannelCampaignsPage() {
           </article>
         </section>
       </main>
-    </div>
+    </AppNav>
   );
 }
