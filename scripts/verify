@@ -1,0 +1,164 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+MODE="${1:-all}"
+REQUIRED_NODE="20.19.0"
+
+run() {
+  echo "==> $*"
+  "$@"
+}
+
+cmp_version_ge() {
+  local current="$1"
+  local required="$2"
+  local first
+  first="$(printf "%s\n%s\n" "$required" "$current" | sort -V | head -n1)"
+  [[ "$first" == "$required" ]]
+}
+
+require_node_version() {
+  local current
+  current="$(node -v | sed 's/^v//')"
+  if ! cmp_version_ge "$current" "$REQUIRED_NODE"; then
+    echo "node version too old: v$current (required >= v$REQUIRED_NODE)"
+    echo "hint: run 'nvm install && nvm use' from repo root"
+    exit 1
+  fi
+}
+
+install_node_deps() {
+  if [[ -d node_modules ]]; then
+    run npm install
+  else
+    run npm ci
+  fi
+}
+
+usage() {
+  cat <<'EOF'
+Usage:
+  scripts/verify [all|platform|apps|docs|agents]
+
+Modes:
+  all      Run platform, apps, docs, and agent checks
+  platform Run Go/Rust service checks
+  apps     Run web app checks
+  docs     Run Mintlify docs checks
+  agents   Run agent blueprint checks
+EOF
+}
+
+verify_platform() {
+  (
+    cd "$ROOT_DIR/services/omnichannel/backend"
+    run env GOCACHE=/tmp/go-cache go test ./...
+  )
+  (
+    cd "$ROOT_DIR/services/access-api"
+    run env GOCACHE=/tmp/go-cache go test ./...
+  )
+  (
+    cd "$ROOT_DIR/platform-cli"
+    run env GOCACHE=/tmp/go-cache go test ./...
+  )
+  (
+    cd "$ROOT_DIR"
+    run python3 scripts/ci/materialize_platform_configs.py --check
+  )
+  (
+    cd "$ROOT_DIR"
+    run node scripts/ci/generate-project-registry.mjs
+  )
+  (
+    cd "$ROOT_DIR"
+    run npm --prefix mcp run check
+  )
+  (
+    cd "$ROOT_DIR/cli"
+    run cargo test
+  )
+  (
+    cd "$ROOT_DIR/services/x_stream_bot"
+    run cargo test
+  )
+}
+
+verify_apps() {
+  require_node_version
+  (
+    cd "$ROOT_DIR/apps/cloud-console"
+    install_node_deps
+    run npm run build
+  )
+}
+
+verify_docs() {
+  require_node_version
+  # Reject wrong docs path (access-api.md vs services/access-api.mdx)
+  if grep -r --exclude-dir=.git "docs/mintlify/access-api\.md" "$ROOT_DIR" \
+    --include="*.md" --include="*.mdx" --include="*.ts" --include="*.tsx" \
+    2>/dev/null | grep -q .; then
+    echo "error: found docs/mintlify/access-api.md — use docs/mintlify/services/access-api.mdx"
+    exit 1
+  fi
+  # Verify mint.json nav pages exist
+  ROOT_DIR="$ROOT_DIR" run node -e "
+    const fs = require('fs');
+    const path = require('path');
+    const root = process.env.ROOT_DIR;
+    const mint = JSON.parse(fs.readFileSync(path.join(root, 'docs/mintlify/mint.json'), 'utf8'));
+    const base = path.join(root, 'docs', 'mintlify');
+    const missing = [];
+    for (const g of mint.navigation || []) {
+      for (const p of g.pages || []) {
+        const mdx = path.join(base, p + '.mdx');
+        const md = path.join(base, p + '.md');
+        if (!fs.existsSync(mdx) && !fs.existsSync(md)) missing.push(p);
+      }
+    }
+    if (missing.length) {
+      console.error('error: mint.json nav pages missing:', missing.join(', '));
+      process.exit(1);
+    }
+  "
+  (
+    cd "$ROOT_DIR/docs/mintlify"
+    run npx mint --version
+  )
+}
+
+verify_agents() {
+  (
+    cd "$ROOT_DIR"
+    run ./agents/blueprints/verify
+  )
+}
+
+case "$MODE" in
+  all)
+    verify_platform
+    verify_apps
+    verify_docs
+    verify_agents
+    ;;
+  platform)
+    verify_platform
+    ;;
+  apps)
+    verify_apps
+    ;;
+  docs)
+    verify_docs
+    ;;
+  agents)
+    verify_agents
+    ;;
+  *)
+    usage
+    exit 1
+    ;;
+esac
+
+echo "verify: $MODE checks passed"

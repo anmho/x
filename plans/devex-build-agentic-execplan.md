@@ -22,7 +22,7 @@ Improve developer experience, build system consistency, and agent-friendliness a
 | 3 | Unify Node dependency strategy | Pending | Multiple lockfiles; document or consolidate |
 | 4 | Expand cleanup tooling | **Done** | `scripts/clean --full`, `make clean`, `make clean-full` exist |
 | 5 | Repo-level .gitignore | **Done** | Root `.gitignore` exists and is comprehensive |
-| 6 | Fix docs and scaffolding drift | Pending | `scripts/README` lists `new:ios-app` (should be `mobile-app`) |
+| 6 | Fix docs and scaffolding drift | **Done** | scripts/README already correct; fixed doc paths, added docs lint |
 | 7 | Complete Access API OpenAPI schema | **Done** | `/v1/policy/check` response schema added |
 | 8 | Add baseline automated tests | Pending | access-api, omnichannel |
 | 9 | Replace mock API-key console page | Pending | Real backend integration |
@@ -32,7 +32,7 @@ Improve developer experience, build system consistency, and agent-friendliness a
 - [ ] (2026-03-08) ExecPlan created; subagents launched for tickets 3, 6, 7
 - [ ] ConnectRPC SDK + Nx (ticket 1) — cloud agent or dedicated subagent
 - [ ] Unify Node dependency strategy (ticket 3)
-- [ ] Fix docs and scaffolding drift (ticket 6)
+- [x] (2026-03-08) Fix docs and scaffolding drift (ticket 6): corrected `docs/top-three-priorities.md` path to `docs/mintlify/services/access-api.mdx`; scripts/README already had `new:mobile-app`; added docs lint in `scripts/verify docs` (broken path grep + mint.json nav page existence)
 - [x] (2026-03-08) Complete Access API OpenAPI schema (ticket 7)
 - [ ] Add baseline tests (ticket 8)
 - [ ] Replace mock API-key page (ticket 9)
