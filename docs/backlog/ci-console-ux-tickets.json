@@ -1,0 +1,36 @@
+{
+  "generatedAt": "2026-03-09",
+  "source": "CI/CD + Cloud Console UX work from PR #1. Run: LINEAR_API_KEY=xxx node scripts/linear/create-issues.mjs --input docs/backlog/ci-console-ux-tickets.json --team-key ANM",
+  "teamKey": "ANM",
+  "tickets": [
+    {
+      "title": "[X Platform] CI/CD gating and Cloud Console UX",
+      "priority": 2,
+      "description": "## Summary\nParent ticket for DevEx CI/CD and Cloud Console UX changes. PR: https://github.com/anmho/x/pull/1\n\n## Scope\n- GitHub Actions workflows (ci.yml, deploy-preflight.yml)\n- scripts/verify and deploy-preflight behavior\n- Cloud Console: cmdk, project switcher, Temporal link, theme mode, API keys routes, notification datetime, deployments, Settings, Templates"
+    },
+    {
+      "title": "[X Platform] CI/CD workflows and verify gates",
+      "parentRef": "parent",
+      "priority": 2,
+      "description": "## Scope\nGitHub Actions: ci.yml (platform, apps, docs jobs), deploy-preflight.yml. scripts/verify and deploy-preflight behavior. .gitignore, PR template, runbooks for Node/workflow gates.\n\n## Risk\nMedium — changes CI/CD gating (new workflows)"
+    },
+    {
+      "title": "[X Platform] Cloud Console navigation and UX",
+      "parentRef": "parent",
+      "priority": 3,
+      "description": "## Scope\nnx.json defaults, cloud-console Nx config. cmdk command palette, project switcher, external Temporal UI link, theme mode quick setting. Settings and Templates pages (including fake-data fallback)."
+    },
+    {
+      "title": "[X Platform] Access API proxy routes for API keys",
+      "parentRef": "parent",
+      "priority": 2,
+      "description": "## Scope\nCloud Console server routes: list/mint/revoke API keys via Access API. Fail-fast on missing ACCESS_API_ADMIN_KEY.\n\n## Risk\nMedium — depends on ACCESS_API_ADMIN_KEY being correctly configured"
+    },
+    {
+      "title": "[X Platform] Notification datetime and deployment metrics",
+      "parentRef": "parent",
+      "priority": 3,
+      "description": "## Scope\nNotification creation: schedule sends with datetime. Deployments/status metrics expansion."
+    }
+  ]
+}

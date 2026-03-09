@@ -24,7 +24,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: omnichannel/backend/go.mod
+          go-version-file: services/omnichannel/backend/go.mod
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable

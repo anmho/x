@@ -1,15 +1,13 @@
+Linear: [ANM-XXX](https://linear.app/anmho/issue/ANM-XXX)
+
 ## Summary
 
-<!-- Describe the change in 1-2 sentences -->
+<!-- 1–2 sentences: what changed and why -->
 
-## Linear
+## Context
 
-<!-- Link this PR to the Linear issue. Replace ANM-XXX with the actual issue ID. -->
+<!-- Affected areas, validation steps, risks -->
 
-**Linear:** [ANM-XXX](https://linear.app/anmho/issue/ANM-XXX)
+## Screenshots
 
-## Checklist
-
-- [ ] Tests pass (or N/A)
-- [ ] Docs updated if needed
-- [ ] Linear issue linked above
+<!-- When UI/visual changes: before/after if relevant -->

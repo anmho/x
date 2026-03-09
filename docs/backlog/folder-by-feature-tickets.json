@@ -1,0 +1,12 @@
+{
+  "generatedAt": "2026-03-09",
+  "source": "User request: folder-by-feature repo structure. Run: LINEAR_API_KEY=xxx node scripts/linear/create-issues.mjs --input docs/backlog/folder-by-feature-tickets.json --team-key ANM",
+  "teamKey": "ANM",
+  "tickets": [
+    {
+      "title": "[X Platform] Restructure repo to folder-by-feature (apps contain everything)",
+      "priority": 2,
+      "description": "## Summary\nRestructure the monorepo from `apps/` + `services/` split to a folder-by-feature layout where `apps/` contains everything. Each app is self-contained with its frontend, backend, and deployment declarations.\n\n## Current state\n- `apps/`: user-facing apps (e.g. cloud-console)\n- `services/`: APIs, workers, backends (omnichannel, access-api) — a \"god-level\" services folder\n\n## Target state\n- `apps/`: one folder per feature/app\n- Each app folder contains:\n  - Frontend (Next.js, etc.)\n  - Backend/API (Go, etc.) when applicable\n  - Deployment declarations for each deployable (e.g. Vercel for frontend, Fly/Railway/Cloud Run for API)\n- No top-level `services/` folder — services are colocated with their apps\n\n## Example target layout\n```\napps/\n  cloud-console/\n    frontend/          # or . if single frontend\n    deployments/      # vercel.json, etc.\n  omnichannel/\n    frontend/\n    backend/\n    deployments/      # frontend → Vercel, backend → ?\n  access-api/\n    api/              # Go API\n    deployments/     # API target\n```\n\n## Acceptance criteria\n- All deployables live under `apps/<feature>/`\n- Each app declares its deployment targets (Vercel, etc.) in a consistent way\n- Remove or deprecate the top-level `services/` folder\n- Update platform-cli, scripts/verify, deploy-preflight, CI, and docs to reflect new paths\n- Nx/workspace config updated for new layout\n\n## Risks / dependencies\n- Large refactor; requires coordinated migration of paths, imports, and tooling\n- Platform CLI and dev-stack may need significant updates"
+    }
+  ]
+}

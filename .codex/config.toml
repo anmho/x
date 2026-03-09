@@ -1,0 +1,6 @@
+# Codex MCP configuration for Project X
+# Set GREPTILE_API_KEY before using: export GREPTILE_API_KEY=your-api-key
+
+[mcp_servers.greptile]
+url = "https://api.greptile.com/mcp"
+bearer_token_env_var = "GREPTILE_API_KEY"

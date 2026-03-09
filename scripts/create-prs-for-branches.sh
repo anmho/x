@@ -39,7 +39,7 @@ for branch in "${BRANCHES[@]}"; do
   case "$branch" in
     fix/top-10-audit-subagent-changes)
       title="feat: DevEx build system and agentic improvements"
-      body_file="$ROOT_DIR/.pr-body-devex.md"
+      body_file="$ROOT_DIR/.github/PULL_REQUEST_TEMPLATE.md"
       ;;
     *)
       title="$branch"

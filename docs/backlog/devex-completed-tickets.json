@@ -6,30 +6,35 @@
     {
       "title": "[X Platform] DevEx build system agentic improvements",
       "priority": 2,
-      "description": "## Summary\nParent ticket for DevEx ExecPlan execution. Subagent work completed: ConnectRPC SDK + Nx, Node dependency unification, docs drift fix, OpenAPI schema, baseline tests.\n\n## PR\nBranch: fix/top-10-audit-subagent-changes\nCommits: 9 (conventional)\n\n## Plan\nplans/devex-build-agentic-execplan.md"
+      "description": "## Summary\nParent ticket for DevEx ExecPlan execution. Subagent work completed: ConnectRPC SDK + Nx, Node dependency unification, docs drift fix, OpenAPI schema, baseline tests.\n\n## PR\n- Branch: fix/top-10-audit-subagent-changes\n- PR: https://github.com/anmho/x/pull/1\n- Commits: 9 (conventional)\n\n## Plan\nplans/devex-build-agentic-execplan.md"
     },
     {
       "title": "[X Platform] ConnectRPC SDK build system with Nx",
+      "parentRef": "parent",
       "priority": 2,
       "description": "## Completed\nNx task graph (sdk:generate-go, sdk:generate-es, sdk:lint, sdk:publish), buf.gen.client.yaml for local ES generation, packages/sdk-omnichannel, frontends depend on local SDK.\n\n## Validation\n- nx run sdk:generate-es\n- nx run sdk:lint\n- See plans/devex-build-agentic-execplan.md"
     },
     {
       "title": "[X Platform] Unify Node dependency strategy",
+      "parentRef": "parent",
       "priority": 3,
       "description": "## Completed\nSingle root package-lock.json, removed workspace lockfiles, docs/runbooks/node-dependencies.md, verify/deploy-preflight updated.\n\n## Validation\n- npm install from root\n- npm run verify platform"
     },
     {
       "title": "[X Platform] Fix docs and scaffolding drift",
+      "parentRef": "parent",
       "priority": 4,
       "description": "## Completed\nCorrected docs/top-three-priorities.md path to docs/mintlify/services/access-api.mdx; added docs lint in scripts/verify docs (broken path grep + mint.json nav check).\n\n## Validation\n- scripts/verify docs"
     },
     {
       "title": "[X Platform] Complete Access API OpenAPI response schema",
+      "parentRef": "parent",
       "priority": 3,
       "description": "## Completed\nFull response schema for POST /v1/policy/check (allowed, reason, principal.*).\n\n## Validation\n- schemas/access-api/openapi.yaml"
     },
     {
       "title": "[X Platform] Add baseline automated tests for key services",
+      "parentRef": "parent",
       "priority": 3,
       "description": "## Completed\n- access-api: auth/key lifecycle unit + integration tests\n- omnichannel: domain, middleware, handlers, repository tests\n\n## Validation\n- cd services/access-api && go test ./...\n- cd services/omnichannel/backend && go test ./..."
     }

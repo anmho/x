@@ -163,6 +163,7 @@ Use Claude Code subagents to parallelize independent work and protect the main c
 
 ### Subagent guidelines
 
+- **Launch subagents when necessary.** For multi-ticket execution, ExecPlan milestones, or parallelizable work, spawn subagents rather than executing sequentially. Do not block on single-threaded execution when the task can be parallelized.
 - Prefer `run_in_background: true` for work that does not block the next step.
 - Pass complete, self-contained prompts; subagents do not share main-thread context.
 - Resume a subagent (via `resume` parameter) for follow-up queries instead of spawning a new one.
@@ -179,10 +180,19 @@ Use Claude Code subagents to parallelize independent work and protect the main c
 
 ### PR creation and description
 
-1. Use `gh` CLI to create and publish PRs: `gh pr create` (or `gh pr create --fill`).
-2. PR description must include:
+1. When creating or managing PRs, use the **gh-pr-mcp** skill (`.cursor/skills/gh-pr-mcp/SKILL.md`): prefer GitHub MCP tools when available, fall back to `gh` CLI.
+2. Use `gh pr create` (or `gh pr create --fill`) when GitHub MCP is unavailable.
+3. PR description must include:
    - **Linear backlink:** `Linear: [ANM-XXX](https://linear.app/anmho/issue/ANM-XXX)` at the top.
    - **Summary:** What changed and why.
    - **Context:** Affected areas, validation steps, risks.
    - **Screenshots:** When UI or visual behavior changes, attach screenshots (before/after if relevant).
-3. Ensure the PR is linked to the Linear issue (via description or GitHub–Linear integration).
+4. Ensure the PR is linked to the Linear issue (via description or GitHub–Linear integration). Runbook: [docs/runbooks/linear-pr-linkage.md](docs/runbooks/linear-pr-linkage.md). After creating tickets: `./scripts/linear/link-pr-to-linear.sh ANM-XXX`.
+
+## Cursor Cloud Specific Instructions
+
+When running as a Cursor Cloud Agent:
+
+1. **Environment**: `.cursor/environment.json` defines `install: npm install`. The snapshot should already include Go, Rust, and Python from agent-driven setup at [cursor.com/onboard](https://cursor.com/onboard).
+2. **Validation**: Run `npm run verify all` for full checks, or `npm run verify platform` / `npm run verify apps` for specific checks.
+3. **Secrets and MCPs**: For parity with local Cursor, add secrets and MCP servers via the dashboard. See [docs/runbooks/cursor-cloud-parity.md](docs/runbooks/cursor-cloud-parity.md) for the full checklist (GitHub MCP, Linear MCP, Greptile MCP, `GITHUB_PERSONAL_ACCESS_TOKEN`, `GREPTILE_API_KEY`, etc.). Greptile setup: [docs/runbooks/greptile-mcp-setup.md](docs/runbooks/greptile-mcp-setup.md).
