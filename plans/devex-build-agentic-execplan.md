@@ -48,4 +48,7 @@ Improve developer experience, build system consistency, and agent-friendliness a
 
 ## Outcomes & Retrospective
 
-(To be filled at completion)
+### ConnectRPC SDK + Nx (ticket 1, 2026-03-09)
+
+- **Delivered:** Nx task graph (sdk:generate-go, sdk:generate-es, sdk:lint, sdk:publish), buf.gen.client.yaml for local ES generation, packages/sdk-omnichannel, frontend workspace deps, sdk.sh generate-es, verify:apps runs sdk:generate-es first.
+- **Note:** services/omnichannel/frontend has nested .git; add @x/sdk-omnichannel and project.json there when integrating. PR template already has Linear section (criterion 3).
