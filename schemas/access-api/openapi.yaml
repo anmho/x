@@ -1,0 +1,308 @@
+openapi: 3.1.0
+info:
+  title: Access API
+  version: 0.2.0
+  description: API key issuance, rotation, revocation, and policy checks for Cloud Console.
+servers:
+  - url: http://localhost:8090
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+  schemas:
+    ServiceCatalogEntry:
+      type: object
+      required: [id, name, description, scopes]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        scopes:
+          type: array
+          items:
+            type: string
+            enum: [read, write, admin]
+    ServiceScope:
+      type: object
+      required: [service, scope]
+      properties:
+        service:
+          type: string
+        scope:
+          type: string
+          enum: [read, write, admin]
+    MintApiKeyRequest:
+      type: object
+      required: [application, environment, owner, service_scopes]
+      properties:
+        application:
+          type: string
+        environment:
+          type: string
+          enum: [dev, staging, prod]
+        owner:
+          type: string
+        service_scopes:
+          type: array
+          items:
+            $ref: "#/components/schemas/ServiceScope"
+    PolicyCheckRequest:
+      type: object
+      required: [service, scope]
+      properties:
+        service:
+          type: string
+        scope:
+          type: string
+        environment:
+          type: string
+          enum: [dev, staging, prod]
+    PolicyCheckPrincipal:
+      type: object
+      description: Principal (caller) identity used for the policy decision
+      properties:
+        type:
+          type: string
+          description: Principal kind (e.g. admin, issued)
+        key_id:
+          type: string
+          description: API key ID when principal is issued key
+        environment:
+          type: string
+          description: Key environment (dev, staging, prod)
+        owner:
+          type: string
+          description: Key owner identifier
+    PolicyCheckResponse:
+      type: object
+      required: [allowed, reason]
+      properties:
+        allowed:
+          type: boolean
+          description: Whether the caller is allowed to access the requested service/scope
+        reason:
+          type: string
+          description: Human-readable explanation (e.g. scope allowed, scope not allowed for API key)
+        service:
+          type: string
+          description: Service that was checked
+        scope:
+          type: string
+          description: Scope that was checked
+        environment:
+          type: string
+          description: Environment filter if provided in request
+        principal:
+          $ref: "#/components/schemas/PolicyCheckPrincipal"
+    ApiKey:
+      type: object
+      required: [id, key_prefix, application, environment, owner, status, service_scopes, created_at]
+      properties:
+        id:
+          type: string
+        key:
+          type: string
+          description: Returned only once during create/rotate.
+        key_prefix:
+          type: string
+        application:
+          type: string
+        environment:
+          type: string
+          enum: [dev, staging, prod]
+        owner:
+          type: string
+        status:
+          type: string
+          enum: [active, rotated, revoked]
+        service_scopes:
+          type: array
+          items:
+            $ref: "#/components/schemas/ServiceScope"
+        rotated_from_key_id:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        last_used_at:
+          type: string
+          format: date-time
+          nullable: true
+        revoked_at:
+          type: string
+          format: date-time
+          nullable: true
+    AuditEvent:
+      type: object
+      required: [id, action, actor, created_at]
+      properties:
+        id:
+          type: string
+        action:
+          type: string
+          enum: [key_created, key_rotated, key_revoked]
+        key_id:
+          type: string
+        actor:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+  /v1/services:
+    get:
+      summary: List available services and scopes
+      responses:
+        "200":
+          description: Service catalog
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  services:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ServiceCatalogEntry"
+  /v1/keys:
+    get:
+      summary: List API keys
+      security:
+        - ApiKeyAuth: []
+      responses:
+        "200":
+          description: Key list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  keys:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ApiKey"
+    post:
+      summary: Mint API key
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MintApiKeyRequest"
+      responses:
+        "201":
+          description: Key minted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  key:
+                    $ref: "#/components/schemas/ApiKey"
+                  audit:
+                    $ref: "#/components/schemas/AuditEvent"
+  /v1/keys/{id}/rotate:
+    post:
+      summary: Rotate key secret
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Key rotated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  key:
+                    $ref: "#/components/schemas/ApiKey"
+                  audit:
+                    $ref: "#/components/schemas/AuditEvent"
+  /v1/keys/{id}/revoke:
+    post:
+      summary: Revoke key
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Key revoked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  key:
+                    $ref: "#/components/schemas/ApiKey"
+                  audit:
+                    $ref: "#/components/schemas/AuditEvent"
+  /v1/audit:
+    get:
+      summary: List audit events
+      security:
+        - ApiKeyAuth: []
+      responses:
+        "200":
+          description: Audit events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AuditEvent"
+  /v1/policy/check:
+    post:
+      summary: Check whether caller key can access service/scope
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PolicyCheckRequest"
+      responses:
+        "200":
+          description: Policy decision
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PolicyCheckResponse"
