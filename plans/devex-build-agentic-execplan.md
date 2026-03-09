@@ -17,7 +17,7 @@ Improve developer experience, build system consistency, and agent-friendliness a
 
 | # | Ticket | Status | Notes |
 |---|--------|--------|------|
-| 1 | ConnectRPC SDK + Nx | Pending | Major; subagent or cloud agent |
+| 1 | ConnectRPC SDK + Nx | **Done** | Nx task graph, local ES gen, packages/sdk-omnichannel |
 | 2 | Turbopack workspace root | **Done** | `next.config.ts` already has `turbopack.root` |
 | 3 | Unify Node dependency strategy | **Done** | Single root lockfile; runbook added |
 | 4 | Expand cleanup tooling | **Done** | `scripts/clean --full`, `make clean`, `make clean-full` exist |
@@ -29,7 +29,7 @@ Improve developer experience, build system consistency, and agent-friendliness a
 
 ## Progress
 
-- [ ] (2026-03-08) ExecPlan created; subagents launched for tickets 3, 6, 7
+- [x] (2026-03-08) ExecPlan created; subagents launched for tickets 3, 6, 7
 - [x] (2026-03-09) ConnectRPC SDK + Nx (ticket 1): Nx task graph (sdk:generate-go, sdk:generate-es, sdk:lint, sdk:publish), buf.gen.client.yaml for local ES generation, packages/sdk-omnichannel, frontends depend on local SDK, sdk.sh generate-es
 - [x] (2026-03-08) Unify Node dependency strategy (ticket 3) — single root lockfile, runbook, verify/deploy-preflight updated
 - [x] (2026-03-08) Fix docs and scaffolding drift (ticket 6): corrected `docs/top-three-priorities.md` path to `docs/mintlify/services/access-api.mdx`; scripts/README already had `new:mobile-app`; added docs lint in `scripts/verify docs` (broken path grep + mint.json nav page existence)
@@ -52,3 +52,7 @@ Improve developer experience, build system consistency, and agent-friendliness a
 
 - **Delivered:** Nx task graph (sdk:generate-go, sdk:generate-es, sdk:lint, sdk:publish), buf.gen.client.yaml for local ES generation, packages/sdk-omnichannel, frontend workspace deps, sdk.sh generate-es, verify:apps runs sdk:generate-es first.
 - **Note:** services/omnichannel/frontend has nested .git; add @x/sdk-omnichannel and project.json there when integrating. PR template already has Linear section (criterion 3).
+
+### Execution method
+
+All tickets were executed via **Cursor subagents** (mcp_task). Cloud agents were not used; for future runs, launch from [cursor.com/agents](https://cursor.com/agents) or use the Cloud Agents API with `CURSOR_API_KEY` for programmatic execution.
