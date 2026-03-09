@@ -24,7 +24,7 @@ Improve developer experience, build system consistency, and agent-friendliness a
 | 5 | Repo-level .gitignore | **Done** | Root `.gitignore` exists and is comprehensive |
 | 6 | Fix docs and scaffolding drift | **Done** | scripts/README already correct; fixed doc paths, added docs lint |
 | 7 | Complete Access API OpenAPI schema | **Done** | `/v1/policy/check` response schema added |
-| 8 | Add baseline automated tests | Pending | access-api, omnichannel |
+| 8 | Add baseline automated tests | **Done** | access-api, omnichannel |
 | 9 | Replace mock API-key console page | Pending | Real backend integration |
 
 ## Progress
@@ -34,7 +34,7 @@ Improve developer experience, build system consistency, and agent-friendliness a
 - [x] (2026-03-08) Unify Node dependency strategy (ticket 3) — single root lockfile, runbook, verify/deploy-preflight updated
 - [x] (2026-03-08) Fix docs and scaffolding drift (ticket 6): corrected `docs/top-three-priorities.md` path to `docs/mintlify/services/access-api.mdx`; scripts/README already had `new:mobile-app`; added docs lint in `scripts/verify docs` (broken path grep + mint.json nav page existence)
 - [x] (2026-03-08) Complete Access API OpenAPI schema (ticket 7)
-- [ ] Add baseline tests (ticket 8)
+- [x] (2026-03-08) Add baseline tests (ticket 8): access-api auth/key lifecycle unit + integration (skip when no DB); omnichannel domain, middleware, handlers, repository tests
 - [ ] Replace mock API-key page (ticket 9)
 
 ## Surprises & Discoveries
