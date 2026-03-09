@@ -63,6 +63,16 @@ Reference runbook: `docs/runbooks/platform-cli-workflow.md`.
 - Project URL: `https://linear.app/anmho/team/ANM/projects/all`
 - Rule: include this project link in ticket context and attach the ticket to this project when creating/updating work items.
 
+### Linear CLI Fallback (Ralph Loop Friendly)
+
+When Linear MCP is unavailable, create tickets via the CLI script. **Set `LINEAR_API_KEY` in the agent environment** (e.g. Cursor Cloud secrets, `.env` in project root, or shell export) so the agent can run:
+
+```bash
+LINEAR_API_KEY=xxx node scripts/linear/create-issues.mjs --input <payload> --team-key ANM
+```
+
+Payloads: `docs/backlog/devex-completed-tickets.json`, `docs/backlog/ci-console-ux-tickets.json`, `docs/backlog/folder-by-feature-tickets.json`, etc. After creating tickets, run `./scripts/linear/link-pr-to-linear.sh ANM-XXX` to add the backlink to the PR. Without `LINEAR_API_KEY`, the agent cannot create tickets; document the manual command for the user.
+
 ## Required Workflow For Implementation Work
 
 1. Choose the active ExecPlan in `plans/`.
@@ -189,10 +199,19 @@ Use Claude Code subagents to parallelize independent work and protect the main c
    - **Screenshots:** When UI or visual behavior changes, attach screenshots (before/after if relevant).
 4. Ensure the PR is linked to the Linear issue (via description or GitHub–Linear integration). Runbook: [docs/runbooks/linear-pr-linkage.md](docs/runbooks/linear-pr-linkage.md). After creating tickets: `./scripts/linear/link-pr-to-linear.sh ANM-XXX`.
 
+## Ralph Loop Friendly (Required)
+
+This repo is designed for autonomous agent loops (e.g. Ralph). Agents must:
+
+1. **Commit and push after each logical change.** Do not leave work uncommitted; push to the branch so the loop can resume or another agent can continue.
+2. **Create Linear tickets when instructed.** Use Linear MCP when available; otherwise run `node scripts/linear/create-issues.mjs` (requires `LINEAR_API_KEY` in environment). Do not defer ticket creation to the user when the key is set.
+3. **Link PRs to Linear.** After creating a parent ticket, run `./scripts/linear/link-pr-to-linear.sh ANM-XXX` to update the PR description.
+4. **Complete the full loop.** Ticket creation → implementation → commit → push → PR update. Do not stop mid-loop with "run this command yourself" when the required env vars are available.
+
 ## Cursor Cloud Specific Instructions
 
 When running as a Cursor Cloud Agent:
 
 1. **Environment**: `.cursor/environment.json` defines `install: npm install`. The snapshot should already include Go, Rust, and Python from agent-driven setup at [cursor.com/onboard](https://cursor.com/onboard).
 2. **Validation**: Run `npm run verify all` for full checks, or `npm run verify platform` / `npm run verify apps` for specific checks.
-3. **Secrets and MCPs**: For parity with local Cursor, add secrets and MCP servers via the dashboard. See [docs/runbooks/cursor-cloud-parity.md](docs/runbooks/cursor-cloud-parity.md) for the full checklist (GitHub MCP, Linear MCP, Greptile MCP, `GITHUB_PERSONAL_ACCESS_TOKEN`, `GREPTILE_API_KEY`, etc.). Greptile setup: [docs/runbooks/greptile-mcp-setup.md](docs/runbooks/greptile-mcp-setup.md).
+3. **Secrets and MCPs**: For parity with local Cursor, add secrets and MCP servers via the dashboard. See [docs/runbooks/cursor-cloud-parity.md](docs/runbooks/cursor-cloud-parity.md) for the full checklist (GitHub MCP, Linear MCP, Greptile MCP, `GITHUB_PERSONAL_ACCESS_TOKEN`, `GREPTILE_API_KEY`, `LINEAR_API_KEY`, etc.). **Ralph loop:** Add `LINEAR_API_KEY` so the agent can create tickets via CLI when Linear MCP is unavailable. Greptile setup: [docs/runbooks/greptile-mcp-setup.md](docs/runbooks/greptile-mcp-setup.md).
