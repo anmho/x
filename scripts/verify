@@ -36,6 +36,13 @@ install_node_deps() {
   fi
 }
 
+install_node_deps_from_root() {
+  (
+    cd "$ROOT_DIR"
+    install_node_deps
+  )
+}
+
 usage() {
   cat <<'EOF'
 Usage:
@@ -87,9 +94,9 @@ verify_platform() {
 
 verify_apps() {
   require_node_version
+  install_node_deps_from_root
   (
     cd "$ROOT_DIR/apps/cloud-console"
-    install_node_deps
     run npm run build
   )
 }
