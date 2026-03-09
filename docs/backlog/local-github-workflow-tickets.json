@@ -1,0 +1,12 @@
+{
+  "generatedAt": "2026-03-09",
+  "source": "User request: local GitHub workflow running for faster feedback. Run: LINEAR_API_KEY=xxx node scripts/linear/create-issues.mjs --input docs/backlog/local-github-workflow-tickets.json --team-key ANM",
+  "teamKey": "ANM",
+  "tickets": [
+    {
+      "title": "[X Platform] Run GitHub Actions workflows locally for faster feedback loops",
+      "priority": 3,
+      "description": "## Summary\nEnable running CI workflows (e.g. .github/workflows/ci.yml, deploy-preflight.yml) locally so developers get faster feedback without pushing to a branch.\n\n## Options\n- **act** (nektos/act): runs GitHub Actions in Docker locally\n- **Other**: custom script that mirrors workflow steps, or nx/verify as lightweight proxy\n\n## Acceptance criteria\n- Document and/or automate local workflow execution (e.g. `make ci-local` or `act -j platform`)\n- Reduce time-to-feedback for CI failures (run before push)\n- Integrate with existing scripts/verify where possible\n\n## Validation\n- Run equivalent of CI platform/apps/docs jobs locally and get same pass/fail signal"
+    }
+  ]
+}

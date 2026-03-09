@@ -1,0 +1,42 @@
+{
+  "generatedAt": "2026-03-09",
+  "source": "Session work items — create tickets then split into stacked PRs. Run: LINEAR_API_KEY=xxx node scripts/linear/create-issues.mjs --input docs/backlog/session-tickets.json --team-key ANM",
+  "teamKey": "ANM",
+  "tickets": [
+    {
+      "title": "[X Platform] Fix CI: add .nvmrc and correct go-version-file path",
+      "priority": 1,
+      "description": "## Summary\nCI failed: .nvmrc did not exist (untracked), go-version-file pointed to wrong path.\n\n## Changes\n- Add .nvmrc (20.19.0)\n- Fix go-version-file: omnichannel/backend/go.mod → services/omnichannel/backend/go.mod in ci.yml and deploy-preflight.yml\n\n## PR\nStack PR 1 — base"
+    },
+    {
+      "title": "[X Platform] Add Greptile MCP for Cursor, Claude, Codex",
+      "priority": 3,
+      "description": "## Summary\nConfigure Greptile MCP for code search/analysis across Cursor, Claude Code, and Codex.\n\n## Changes\n- .mcp.json (Claude Code)\n- .codex/config.toml (Codex)\n- docs/runbooks/greptile-mcp-setup.md\n- docs/runbooks/cursor-cloud-parity.md (Greptile + LINEAR_API_KEY)\n- .cursor/mcp.json (user adds manually)\n\n## PR\nStack PR 2"
+    },
+    {
+      "title": "[X Platform] Linear ticket creation with parent/child linking and PR linkage",
+      "priority": 2,
+      "description": "## Summary\nExtend create-issues.mjs for parentRef, add link-pr-to-linear.sh, runbooks, ticket payloads.\n\n## Changes\n- scripts/linear/create-issues.mjs (parentRef support)\n- scripts/linear/link-pr-to-linear.sh\n- scripts/linear/README.md\n- docs/runbooks/linear-pr-linkage.md\n- docs/backlog/*.json payloads\n- scripts/create-prs-for-branches.sh (use PR template)\n\n## PR\nStack PR 2"
+    },
+    {
+      "title": "[X Platform] Concise PR template and tech debt removal",
+      "priority": 3,
+      "description": "## Summary\nReplace verbose PR template; remove .pr-body-devex.md, __pycache__, connectrpc-sdk-nx-ticket.json; add Python to .gitignore.\n\n## Changes\n- .github/PULL_REQUEST_TEMPLATE.md\n- Remove .pr-body-devex.md\n- .gitignore (__pycache__, *.pyc)\n- Remove docs/backlog/connectrpc-sdk-nx-ticket.json\n\n## PR\nStack PR 2"
+    },
+    {
+      "title": "[X Platform] AGENTS.md: Ralph loop, Linear CLI fallback, mistake logging",
+      "priority": 2,
+      "description": "## Summary\nAdd Ralph loop friendly section, Linear CLI fallback when MCP unavailable, strengthen mistake logging with how-to-avoid and what-to-do-instead.\n\n## Changes\n- AGENTS.md\n- docs/agent-mistakes.md (template + new entries)\n- docs/runbooks/cursor-cloud-parity.md (LINEAR_API_KEY)\n\n## PR\nStack PR 3"
+    },
+    {
+      "title": "[X Platform] Migrate verify_apps to Nx targets",
+      "priority": 2,
+      "description": "## Summary\nReplace scripts/verify apps shell logic with nx run-many -t build. CI apps job runs nx directly.\n\n## Changes\n- scripts/verify (verify_apps uses nx run-many)\n- .github/workflows/ci.yml (apps job: npm ci + nx run-many)\n\n## PR\nStack PR 4"
+    },
+    {
+      "title": "[X Platform] Ticket payloads: folder-by-feature, local workflow, verify-nx",
+      "priority": 4,
+      "description": "## Summary\nBacklog payloads for future work.\n\n## Changes\n- docs/backlog/folder-by-feature-tickets.json\n- docs/backlog/local-github-workflow-tickets.json\n- docs/backlog/verify-nx-targets-tickets.json\n\n## PR\nStack PR 2"
+    }
+  ]
+}

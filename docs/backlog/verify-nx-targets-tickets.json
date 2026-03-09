@@ -1,0 +1,12 @@
+{
+  "generatedAt": "2026-03-09",
+  "source": "User request: verify should use Nx targets. Run: LINEAR_API_KEY=xxx node scripts/linear/create-issues.mjs --input docs/backlog/verify-nx-targets-tickets.json --team-key ANM",
+  "teamKey": "ANM",
+  "tickets": [
+    {
+      "title": "[X Platform] Migrate all verify steps to Nx targets",
+      "priority": 3,
+      "description": "## Summary\nReplace scripts/verify shell logic with Nx targets. CI and local runs should invoke nx run-many, not custom scripts.\n\n## Current state\n- verify_apps: now uses nx run-many -t build (done)\n- verify_platform: shell script with cd + go test, python, node, cargo\n- verify_docs: shell script with grep + node -e + mint\n- verify_agents: ./agents/blueprints/verify\n\n## Target state\n- platform: Nx targets for Go/Rust/Python checks (or nx:run-commands)\n- docs: Nx target for Mintlify verify\n- agents: Nx target or keep as script if no Nx project\n- CI: nx run-many -t verify (or per-job targets) instead of ./scripts/verify\n\n## Acceptance criteria\n- scripts/verify becomes a thin wrapper that runs nx, or is removed\n- CI workflows use nx run-many directly\n- All verify logic lives in project.json / nx.json targets"
+    }
+  ]
+}
