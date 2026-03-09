@@ -4,16 +4,17 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { NotificationChannel, notificationApi } from '@/lib/api';
-import { ArrowLeft, Send } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock } from 'lucide-react';
 import { AppNav } from '@/app/_components/app-nav';
 import { NotificationLivePreview } from '@/app/_components/notification-live-preview';
 
-export default function CreateNotification() {
+export default function ScheduleNotification() {
   const router = useRouter();
   const [channel, setChannel] = useState<NotificationChannel>('email');
   const [recipientEmail, setRecipientEmail] = useState('');
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
+  const [scheduledAt, setScheduledAt] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -24,25 +25,26 @@ export default function CreateNotification() {
     setError(null);
 
     try {
-      await notificationApi.create({
+      const payload = {
         channel,
         recipient_email: recipientEmail,
         subject,
         body,
-      });
+        ...(scheduledAt && { scheduled_at: new Date(scheduledAt).toISOString() }),
+      };
+      await notificationApi.create(payload);
       setSuccess(true);
       setTimeout(() => router.push('/deployments'), 1200);
-    } catch (err: any) {
-      setError(err.response?.data?.message || err.message || 'Failed to send notification');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to schedule notification';
+      setError(message);
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="min-h-screen app-shell">
-      <AppNav active="notifications" />
-
+    <AppNav active="notifications">
       <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
         <Link href="/omnichannel" className="mb-4 inline-flex items-center gap-1 text-sm text-zinc-400 hover:text-zinc-200">
           <ArrowLeft className="h-4 w-4" /> Back
@@ -50,27 +52,41 @@ export default function CreateNotification() {
 
         <section className="grid grid-cols-1 gap-4 xl:grid-cols-[1.05fr_0.95fr]">
           <article className="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
-            <h1 className="text-xl font-semibold tracking-tight">Send Notification</h1>
-            <p className="mt-1 text-sm text-zinc-500">Template management lives in Templates. This flow is for direct test and manual sends.</p>
+            <h1 className="text-xl font-semibold tracking-tight">Schedule Notification</h1>
+            <p className="mt-1 text-sm text-zinc-500">Schedules a Temporal workflow to deliver this notification at the specified time or on a recurring cadence.</p>
 
-            {success && <p className="mt-3 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">Notification sent. Redirecting...</p>}
+            {success && <p className="mt-3 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">Scheduled. Redirecting to status...</p>}
             {error && <p className="mt-3 rounded-md border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-300">{error}</p>}
 
             <form onSubmit={handleSubmit} className="mt-4 space-y-4 text-sm">
-              <Field label="Channel">
-                <select
-                  value={channel}
-                  onChange={(e) => setChannel(e.target.value as NotificationChannel)}
-                  className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2"
-                >
-                  <option value="email">email</option>
-                  <option value="sms">sms</option>
-                  <option value="push">push</option>
-                  <option value="webhook">webhook</option>
-                  <option value="app">app (emulator)</option>
-                  <option value="imessage">imessage (emulator)</option>
-                </select>
+
+              <Field label="Send at">
+                <input
+                  type="datetime-local"
+                  required
+                  value={scheduledAt}
+                  onChange={(e) => setScheduledAt(e.target.value)}
+                  className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-100"
+                />
+                <p className="mt-1 text-xs text-zinc-600">One-time schedule. Recurring notifications are available via the cron jobs page.</p>
               </Field>
+
+              <div className="border-t border-zinc-800/60 pt-4">
+                <Field label="Channel">
+                  <select
+                    value={channel}
+                    onChange={(e) => setChannel(e.target.value as NotificationChannel)}
+                    className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2"
+                  >
+                    <option value="email">email</option>
+                    <option value="sms">sms</option>
+                    <option value="push">push</option>
+                    <option value="webhook">webhook</option>
+                    <option value="app">app (emulator)</option>
+                    <option value="imessage">imessage (emulator)</option>
+                  </select>
+                </Field>
+              </div>
 
               <Field label={channel === 'webhook' ? 'Webhook URL' : channel === 'app' || channel === 'imessage' ? 'Device / Handle' : 'Recipient'}>
                 <input
@@ -98,7 +114,7 @@ export default function CreateNotification() {
                   required
                   value={body}
                   onChange={(e) => setBody(e.target.value)}
-                  rows={10}
+                  rows={8}
                   className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 font-mono"
                 />
               </Field>
@@ -109,8 +125,8 @@ export default function CreateNotification() {
                   disabled={loading}
                   className="inline-flex items-center gap-2 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 font-medium hover:bg-zinc-800 disabled:opacity-60"
                 >
-                  <Send className="h-4 w-4" />
-                  {loading ? 'Sending...' : 'Send Notification'}
+                  <Calendar className="h-4 w-4" />
+                  {loading ? 'Scheduling...' : 'Schedule via Temporal'}
                 </button>
               </div>
             </form>
@@ -129,7 +145,7 @@ export default function CreateNotification() {
           </article>
         </section>
       </main>
-    </div>
+    </AppNav>
   );
 }
 

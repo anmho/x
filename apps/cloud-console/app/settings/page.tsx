@@ -15,39 +15,6 @@ const GCLOUD_SCOPES = [
   'https://www.googleapis.com/auth/run.admin',
 ];
 
-const ADDITIONAL_INTEGRATIONS: {
-  id: 'posthog' | 'stripe' | 'vercel';
-  name: string;
-  description: string;
-  icon: React.ReactNode;
-  actionLabel: string;
-  note: string;
-}[] = [
-  {
-    id: 'posthog',
-    name: 'PostHog',
-    description: 'Capture product analytics, session replay, and feature-flag telemetry in one place.',
-    icon: <BarChart3 className="h-5 w-5 text-amber-300" />,
-    actionLabel: 'PostHog coming soon',
-    note: 'Connection flow will be exposed at /api/auth/posthog/connect when provider auth is enabled.',
-  },
-  {
-    id: 'stripe',
-    name: 'Stripe',
-    description: 'Sync billing events, payment health, and subscription status with platform projects.',
-    icon: <CreditCard className="h-5 w-5 text-indigo-300" />,
-    actionLabel: 'Stripe coming soon',
-    note: 'Billing provider setup will be available after Stripe account linking is released.',
-  },
-  {
-    id: 'vercel',
-    name: 'Vercel',
-    description: 'Authorize deployments and environment sync with Vercel projects managed by this workspace.',
-    icon: <Rocket className="h-5 w-5 text-cyan-300" />,
-    actionLabel: 'Vercel coming soon',
-    note: 'Vercel OAuth activation will unlock deployment/project linking from settings.',
-  },
-];
 
 export default function SettingsPage() {
   const [tab, setTab] = useState<Tab>('general');
@@ -311,65 +278,10 @@ function IntegrationsTab({
         </div>
       </section>
 
-      {ADDITIONAL_INTEGRATIONS.map((integration) => (
-        <IntegrationCard
-          key={integration.id}
-          name={integration.name}
-          description={integration.description}
-          icon={integration.icon}
-          actionLabel={integration.actionLabel}
-          note={integration.note}
-        />
-      ))}
     </div>
   );
 }
 
-function IntegrationCard({
-  name,
-  description,
-  icon,
-  actionLabel,
-  note,
-}: {
-  name: string;
-  description: string;
-  icon: React.ReactNode;
-  actionLabel: string;
-  note: string;
-}) {
-  return (
-    <section className="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900">
-            {icon}
-          </div>
-          <div>
-            <p className="font-medium text-zinc-100">{name}</p>
-            <p className="mt-0.5 text-sm text-zinc-400">{description}</p>
-          </div>
-        </div>
-        <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-zinc-700 bg-zinc-900 px-2.5 py-1 text-xs text-zinc-500">
-          Not connected
-        </span>
-      </div>
-
-      <div className="mt-4 flex gap-2">
-        <button
-          disabled
-          className="inline-flex cursor-not-allowed items-center gap-2 rounded-md border border-zinc-700 bg-zinc-900 px-4 py-2 text-sm text-zinc-500 opacity-80"
-        >
-          {actionLabel}
-        </button>
-      </div>
-
-      <div className="mt-4 border-t border-zinc-800 pt-4">
-        <p className="text-xs text-zinc-600">{note}</p>
-      </div>
-    </section>
-  );
-}
 
 function SecurityTab() {
   return (
