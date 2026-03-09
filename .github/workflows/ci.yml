@@ -45,8 +45,10 @@ jobs:
           cache: "npm"
           cache-dependency-path: package-lock.json
 
+      - name: Install dependencies
+        run: npm ci
       - name: Run App Verify
-        run: ./scripts/verify apps
+        run: npx nx run-many -t build --projects=cloud-console,omnichannel-frontend
 
   docs:
     name: Docs Checks
