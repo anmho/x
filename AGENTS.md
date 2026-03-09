@@ -70,6 +70,14 @@ Reference runbook: `docs/runbooks/platform-cli-workflow.md`.
 3. Record design changes and rationale directly in the active ExecPlan.
 4. Keep plan and code in sync in the same change set when possible.
 
+## Bug/Unfinished Audit And Ticket Reconciliation (Required)
+
+1. Before closing implementation, run a focused audit for bugs and unfinished modules (for example: TODO/FIXME markers, incomplete plan milestones, missing modules referenced by plans/docs).
+2. For each audit finding, check existing `Anmho` Linear tickets first (Backlog/Todo/In Progress/In Review) to avoid duplicates.
+3. Only create a new ticket when no existing issue already covers the finding; keep one ticket per distinct item.
+4. Include category (`major`/`medium`/`minor`) and execution context in each new ticket: observed issue, affected files/areas, expected outcome, validation notes, and dependencies.
+5. Record reconciliation results in the active ExecPlan (existing ticket links and newly created ticket IDs) before task completion.
+
 ## Post-Change Rescan & Follow-Up Ticketing (Required)
 
 1. After completing every change, rescan the codebase for additional bugs, follow-up work, and feature ideas before closing out the task.
@@ -99,6 +107,16 @@ Frontend work must support both light and dark mode via system preference by def
 5. Quick settings UX should expose `Light`, `Dark`, and `System` in the avatar/account panel (Vercel-style segmented control).
 6. When editing theme behavior, validate with frontend builds and visually verify both system light and dark modes.
 
+## Suggested Component Libraries
+
+For frontend component work, use this recommendation order unless a plan documents a different choice:
+
+1. Use `Tailwind CSS` as the default styling foundation and prefer semantic/token-backed utilities.
+2. Prefer `shadcn/ui` primitives for common app UI (dialogs, forms, menus, popovers, selects) when they fit the interaction.
+3. Use `Headless UI` when you need fully custom visual treatment with accessible behavior and `shadcn/ui` does not fit.
+4. Avoid mixing multiple component systems in one surface unless required; document exceptions in the active ExecPlan.
+5. Keep component-library choices aligned between `apps/cloud-console` and `services/omnichannel/frontend` unless divergence is explicitly planned.
+
 ## Commit Discipline (Required)
 
 All implementation work must be committed in logical slices, not as one monolithic commit.
@@ -124,3 +142,47 @@ For each entry include:
 5. Verification that the prevention is in place
 
 Do not defer logging mistakes until the end of a task.
+
+## Subagent Usage (Required When Applicable)
+
+Use Claude Code subagents to parallelize independent work and protect the main context window from large result sets. Subagents are especially valuable for audit, search, and research tasks that would otherwise flood context.
+
+### When to spawn a subagent
+
+1. **Codebase exploration / audit**: any open-ended scan across multiple directories or services (use `subagent_type: Explore`).
+2. **Multi-file parallel searches**: when more than ~3 independent Glob/Grep queries are needed before you can proceed.
+3. **Independent implementation slices**: when two or more milestones have no shared state and can safely run concurrently (use `subagent_type: general-purpose` with `run_in_background: true`).
+4. **Linear ticket batching**: when creating or syncing more than ~5 tickets, delegate bulk API calls to a background agent rather than blocking the main thread.
+5. **Heavy research**: doc fetches, web searches, or reading large dependency trees (use `subagent_type: Explore` or `general-purpose`).
+
+### When NOT to spawn a subagent
+
+- Single targeted file reads or Grep calls — use tools directly.
+- Sequential tasks where step N depends on step N-1 output.
+- Tasks that require interactive user decisions mid-execution.
+
+### Subagent guidelines
+
+- Prefer `run_in_background: true` for work that does not block the next step.
+- Pass complete, self-contained prompts; subagents do not share main-thread context.
+- Resume a subagent (via `resume` parameter) for follow-up queries instead of spawning a new one.
+- After all background agents complete, consolidate their outputs before updating Linear or plans.
+- **Subagents must commit their changes.** Each subagent must create atomic commits before returning; do not leave uncommitted changes in the working tree.
+
+## Commit and PR Discipline (Required)
+
+### Atomic commits
+
+1. Each commit must be atomic: one logical unit of change, independently reviewable and testable.
+2. Use detailed commit messages: Conventional Commits format with a descriptive body explaining the problem, approach, and validation (for example: `fix(api): remove hardcoded auth fallback — ACCESS_API_ADMIN_KEY now required; fail fast when unset`).
+3. Never combine unrelated subsystems in the same commit.
+
+### PR creation and description
+
+1. Use `gh` CLI to create and publish PRs: `gh pr create` (or `gh pr create --fill`).
+2. PR description must include:
+   - **Linear backlink:** `Linear: [ANM-XXX](https://linear.app/anmho/issue/ANM-XXX)` at the top.
+   - **Summary:** What changed and why.
+   - **Context:** Affected areas, validation steps, risks.
+   - **Screenshots:** When UI or visual behavior changes, attach screenshots (before/after if relevant).
+3. Ensure the PR is linked to the Linear issue (via description or GitHub–Linear integration).
