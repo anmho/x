@@ -209,7 +209,7 @@ Use Claude Code subagents to parallelize independent work and protect the main c
    - **Context:** Affected areas, validation steps, risks.
    - **Screenshots:** When UI or visual behavior changes, attach screenshots (before/after if relevant).
 4. Ensure the PR is linked to the Linear issue (via description or GitHub–Linear integration). Runbook: [docs/runbooks/linear-pr-linkage.md](docs/runbooks/linear-pr-linkage.md). After creating tickets: `./scripts/linear/link-pr-to-linear.sh ANM-XXX`.
-5. Every PR must reference the owning Linear ticket. The PR body backlink is mandatory even if the branch name or title already includes the ticket ID.
+5. Every PR must reference the owning Linear ticket. The PR body backlink is mandatory even if the branch name or title already includes the ticket ID; once the PR exists, add its link back into the Linear ticket so each issue records its review URL.
 6. Default merge strategy is **Squash and Merge** into `main`. Do not use merge commits or rebase merges unless the user explicitly asks for an exception.
 7. Treat `main` as the only default integration branch unless a plan explicitly documents a different long-lived branch.
 
