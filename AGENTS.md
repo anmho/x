@@ -2,10 +2,10 @@
 
 This repository uses two planning layers:
 
-- `PLANS.md`: the canonical specification for writing and maintaining execution plans ("ExecPlans").
 - `plans/*.md`: concrete, living ExecPlan documents for specific initiatives.
+- Existing ExecPlans are also the canonical template reference (section order and required living updates).
 
-If you are creating or updating an ExecPlan, read `PLANS.md` completely before editing any file under `plans/`.
+If you are creating or updating an ExecPlan, read one or more recent plans in `plans/` first and follow the same section structure.
 
 ## Repository Orientation
 
@@ -18,22 +18,21 @@ Project X is both a platform and a monorepo. High-level directories:
 - `scripts/`: local automation and verification entrypoints.
 - `platform-cli/`: source for the platform CLI.
 
-## Platform CLI First Workflow (Required)
+## Platform CLI Focus (Required)
 
-Use the platform entrypoint for runtime validation and stack control.
+Use platform-cli for repository scaffolding and console workflow operations.
 
-1. From repo root, prefer `./platform start`, `./platform status`, `./platform stop`, and `./platform logs <service>` for day-to-day environment checks.
-2. Use `scripts/dev-stack <start|status|stop|logs>` only when you specifically need the dev-stack supervisor behavior.
-3. Use `scripts/dev-stack` when you need supervisor semantics; prefer `./platform` for routine stack control.
-4. Treat `npm run build` and similar package commands as compile validation only; do not present them as stack/runtime validation.
-5. In status updates and final summaries, explicitly name which stack command was used (`./platform ...`, `scripts/dev-stack ...`, or service-local stack script).
+1. Prefer platform-cli workflow commands for scaffolding and service/resource operations (for example `platform create ...`, `platform config ...`, `platform project ...`, `platform tokens ...`, `platform notifications ...`, `platform control-plane ...`, `platform deploy ...`).
+2. For validation evidence, prefer `scripts/verify` and `scripts/deploy-preflight` (or their npm wrappers) instead of local runtime lifecycle checks.
+3. Treat local lifecycle helpers (`platform start|status|stop|logs`, `platform stack ...`, `scripts/dev-stack ...`) as optional troubleshooting paths, not default workflow requirements.
+4. In status updates and final summaries, explicitly name the scaffolding/workflow or verification command that was run.
 
 Reference runbook: `docs/runbooks/platform-cli-workflow.md`.
 
 ## Required Workflow For Planning Work
 
 1. Start by checking whether a relevant plan already exists in `plans/`.
-2. If no plan exists, create one using the section structure mandated by `PLANS.md`.
+2. If no plan exists, create one using the section structure used by the current ExecPlans in `plans/`.
 3. Keep plan sections current as work progresses, especially:
    - `Progress`
    - `Surprises & Discoveries`
@@ -68,7 +67,7 @@ Reference runbook: `docs/runbooks/platform-cli-workflow.md`.
 When Linear MCP is unavailable, create tickets via the CLI script. **Set `LINEAR_API_KEY` in the agent environment** (e.g. Cursor Cloud secrets, `.env` in project root, or shell export) so the agent can run:
 
 ```bash
-LINEAR_API_KEY=xxx node scripts/linear/create-issues.mjs --input <payload> --team-key ANM
+Use Linear MCP to create issues from <payload>
 ```
 
 Payloads: `docs/backlog/devex-completed-tickets.json`, `docs/backlog/ci-console-ux-tickets.json`, `docs/backlog/folder-by-feature-tickets.json`, etc. After creating tickets, run `./scripts/linear/link-pr-to-linear.sh ANM-XXX` to add the backlink to the PR. Without `LINEAR_API_KEY`, the agent cannot create tickets; document the manual command for the user.
@@ -79,6 +78,12 @@ Payloads: `docs/backlog/devex-completed-tickets.json`, `docs/backlog/ci-console-
 2. Execute milestones in order; do not skip validation.
 3. Record design changes and rationale directly in the active ExecPlan.
 4. Keep plan and code in sync in the same change set when possible.
+
+## Dirty Worktree Handling (Required)
+
+1. Do not halt execution solely because the git worktree already contains unrelated modified or untracked files.
+2. Continue implementation by scoping edits to requested files and leave unrelated changes untouched.
+3. Stop and ask for guidance only when pre-existing changes directly conflict with files required for the current task or make safe progress impossible.
 
 ## Bug/Unfinished Audit And Ticket Reconciliation (Required)
 
@@ -188,6 +193,12 @@ Use Claude Code subagents to parallelize independent work and protect the main c
 2. Use detailed commit messages: Conventional Commits format with a descriptive body explaining the problem, approach, and validation (for example: `fix(api): remove hardcoded auth fallback — ACCESS_API_ADMIN_KEY now required; fail fast when unset`).
 3. Never combine unrelated subsystems in the same commit.
 
+### PR inspection and triage
+
+1. When evaluating open PRs, statuses, checks, or CI failures, prefer GitHub MCP tools first and `gh` CLI second instead of inferring state from local branches alone.
+2. Use GitHub surfaces that expose live PR/check state when possible (for example `gh pr list`, `gh pr checks`, `gh pr view`, and `gh run view --log-failed`).
+3. In status updates and final summaries, distinguish GitHub-observed failures from local reproduction attempts.
+
 ### PR creation and description
 
 1. When creating or managing PRs, use the **gh-pr-mcp** skill (`.cursor/skills/gh-pr-mcp/SKILL.md`): prefer GitHub MCP tools when available, fall back to `gh` CLI.
@@ -198,13 +209,16 @@ Use Claude Code subagents to parallelize independent work and protect the main c
    - **Context:** Affected areas, validation steps, risks.
    - **Screenshots:** When UI or visual behavior changes, attach screenshots (before/after if relevant).
 4. Ensure the PR is linked to the Linear issue (via description or GitHub–Linear integration). Runbook: [docs/runbooks/linear-pr-linkage.md](docs/runbooks/linear-pr-linkage.md). After creating tickets: `./scripts/linear/link-pr-to-linear.sh ANM-XXX`.
+5. Every PR must reference the owning Linear ticket. The PR body backlink is mandatory even if the branch name or title already includes the ticket ID.
+6. Default merge strategy is **Squash and Merge** into `main`. Do not use merge commits or rebase merges unless the user explicitly asks for an exception.
+7. Treat `main` as the only default integration branch unless a plan explicitly documents a different long-lived branch.
 
 ## Ralph Loop Friendly (Required)
 
 This repo is designed for autonomous agent loops (e.g. Ralph). Agents must:
 
 1. **Commit and push after each logical change.** Do not leave work uncommitted; push to the branch so the loop can resume or another agent can continue.
-2. **Create Linear tickets when instructed.** Use Linear MCP when available; otherwise run `node scripts/linear/create-issues.mjs` (requires `LINEAR_API_KEY` in environment). Do not defer ticket creation to the user when the key is set.
+2. **Create Linear tickets when instructed.** Use the Linear MCP tool (create_issue or equivalent). Do not defer ticket creation when Linear MCP is available.
 3. **Link PRs to Linear.** After creating a parent ticket, run `./scripts/linear/link-pr-to-linear.sh ANM-XXX` to update the PR description.
 4. **Complete the full loop.** Ticket creation → implementation → commit → push → PR update. Do not stop mid-loop with "run this command yourself" when the required env vars are available.
 

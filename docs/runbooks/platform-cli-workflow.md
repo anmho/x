@@ -1,33 +1,28 @@
 # Platform CLI Workflow Runbook
 
-This runbook is the canonical quick guide for local stack operations in Project X.
+This runbook is the canonical quick guide for platform-cli scaffolding and console workflows in Project X.
 
-## Default Entry Point
+## Default Focus
 
-From repository root (`/Users/andrewho/repos/projects/x`), use:
-
-```bash
-./platform start
-./platform status
-./platform logs <service>
-./platform stop
-```
-
-Use this path by default for validation and user-facing status reporting.
-
-## When To Use `scripts/dev-stack`
-
-Use `scripts/dev-stack` when you explicitly need its supervisor semantics:
+Use platform-cli to scaffold repository components and run service/resource workflows:
 
 ```bash
-scripts/dev-stack start
-scripts/dev-stack status
-scripts/dev-stack logs cloud-console
-scripts/dev-stack stop
+platform create service billing-api
+platform create integration add vercel --project cloud-console
+platform config init
+platform project list
+platform project keys mint --project cloud-console --owner andrew --env dev
+platform tokens list --project cloud-console
+platform notifications list
+platform control-plane plan --project cloud-console
+platform deploy --project cloud-console --dry-run
+platform docs
 ```
+
+This runbook intentionally avoids local stack lifecycle playbooks as a default developer workflow.
 
 ## Validation Rules
 
 1. `npm run build` is compile validation only.
-2. Stack/runtime validation must come from `./platform ...` or `scripts/dev-stack ...`.
-3. In summaries, always cite the exact command used for runtime checks.
+2. Prefer `scripts/verify` (targeted `docs`, `apps`, `platform`, `agents`) when verifying docs, frontends, or agent tooling; `scripts/deploy-preflight` remains the go/no-go step before deploying.
+3. When summaries require evidence, cite the exact scaffolding/workflow or validation command executed (`platform stack`, `scripts/verify`, `scripts/deploy-preflight`, etc.).
