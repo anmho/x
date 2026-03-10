@@ -47,6 +47,7 @@ Add and enable these in **cursor.com/agents** → MCP dropdown:
 - **Type:** HTTP
 - **URL:** `https://api.greptile.com/mcp`
 - **Auth:** Bearer token — use `GREPTILE_API_KEY` from Secrets
+- If startup reports missing `GREPTILE_API_KEY`, the secret is absent from the active agent/session environment and the agent must be restarted after adding it.
 
 See [greptile-mcp-setup.md](./greptile-mcp-setup.md) for full setup (Cursor, Claude Code, Codex).
 
@@ -99,4 +100,5 @@ Cloud agents pick up MCP from the dashboard; project-level `.cursor/mcp.json` is
 
 1. Add secrets and MCPs in the dashboard.
 2. Restart or launch a new cloud agent.
-3. Ask the agent to list GitHub repos or Linear issues to confirm MCP access.
+3. Confirm the restarted agent no longer reports a missing `GREPTILE_API_KEY` for Greptile MCP.
+4. Ask the agent to list GitHub repos or Linear issues to confirm MCP access.

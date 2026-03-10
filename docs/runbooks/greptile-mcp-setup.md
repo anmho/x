@@ -4,6 +4,8 @@ Greptile provides AI-powered code search and analysis via MCP. Configure it for 
 
 **Prerequisite:** Get your API key from [app.greptile.com/settings/api](https://app.greptile.com/settings/api)
 
+If MCP startup says `Environment variable GREPTILE_API_KEY ... is not set`, the project config is present but the shell that launched the client did not export the key yet. Fix the environment first, then restart the client from a fresh shell.
+
 ---
 
 ## Cursor
@@ -40,6 +42,13 @@ export GREPTILE_API_KEY=your-api-key-here
 claude
 ```
 
+To make it persistent across new terminals:
+
+```bash
+echo 'export GREPTILE_API_KEY=your-api-key-here' >> ~/.zshrc
+exec zsh -l
+```
+
 ---
 
 ## Codex (CLI)
@@ -58,6 +67,8 @@ Or use project-level `.codex/config.toml` (already in repo):
 export GREPTILE_API_KEY=your-api-key-here
 codex
 ```
+
+If Codex already started before the export was added, restart Codex from a shell that can already run `printenv GREPTILE_API_KEY`.
 
 ---
 
@@ -81,13 +92,17 @@ Uses the stdio `greptile-mcp-server` package. Add to `claude_desktop_config.json
 ## Verify
 
 ```bash
+zsh -lc 'printenv GREPTILE_API_KEY'
 curl -X POST https://api.greptile.com/mcp \
   -H "Authorization: Bearer YOUR_GREPTILE_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","id":1,"method":"ping"}'
 ```
 
-Expected: `{"jsonrpc":"2.0","id":1,"result":{}}`
+Expected:
+
+- First command prints a non-empty key value.
+- Second command returns `{"jsonrpc":"2.0","id":1,"result":{}}`
 
 ---
 
