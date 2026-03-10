@@ -24,7 +24,7 @@ Use the platform entrypoint for runtime validation and stack control.
 
 1. From repo root, prefer `./platform start`, `./platform status`, `./platform stop`, and `./platform logs <service>` for day-to-day environment checks.
 2. Use `scripts/dev-stack <start|status|stop|logs>` only when you specifically need the dev-stack supervisor behavior.
-3. Use service-local stack scripts (for example, `services/omnichannel/scripts/stack.sh`) only when intentionally working inside that single service stack.
+3. Use `scripts/dev-stack` when you need supervisor semantics; prefer `./platform` for routine stack control.
 4. Treat `npm run build` and similar package commands as compile validation only; do not present them as stack/runtime validation.
 5. In status updates and final summaries, explicitly name which stack command was used (`./platform ...`, `scripts/dev-stack ...`, or service-local stack script).
 
@@ -113,7 +113,7 @@ Frontend work must support both light and dark mode via system preference by def
 1. Default theme source is `prefers-color-scheme`; quick settings may override via `data-theme` (`light` or `dark`) and `localStorage` (`console:theme-mode`).
 2. Use semantic theme tokens in each frontend `app/globals.css` and shared shell helpers (`app-shell`, `app-shell-bg`, `app-shell-bg-95`) instead of hardcoded hex backgrounds.
 3. Prefer token-backed utilities (`bg-zinc-*`, `text-zinc-*`, `border-zinc-*`) over literal dark/light color values in components.
-4. Keep `apps/cloud-console` and `services/omnichannel/frontend` theme behavior aligned unless a plan explicitly documents divergence.
+4. Keep `apps/cloud-console` theme behavior consistent across all routes unless a plan explicitly documents divergence.
 5. Quick settings UX should expose `Light`, `Dark`, and `System` in the avatar/account panel (Vercel-style segmented control).
 6. When editing theme behavior, validate with frontend builds and visually verify both system light and dark modes.
 
@@ -125,7 +125,7 @@ For frontend component work, use this recommendation order unless a plan documen
 2. Prefer `shadcn/ui` primitives for common app UI (dialogs, forms, menus, popovers, selects) when they fit the interaction.
 3. Use `Headless UI` when you need fully custom visual treatment with accessible behavior and `shadcn/ui` does not fit.
 4. Avoid mixing multiple component systems in one surface unless required; document exceptions in the active ExecPlan.
-5. Keep component-library choices aligned between `apps/cloud-console` and `services/omnichannel/frontend` unless divergence is explicitly planned.
+5. Keep component-library choices consistent across `apps/cloud-console` unless divergence is explicitly planned.
 
 ## Commit Discipline (Required)
 

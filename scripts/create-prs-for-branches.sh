@@ -19,7 +19,7 @@ for ref in $(git for-each-ref --format='%(refname:short)' refs/remotes/origin 2>
   branch="${ref#origin/}"
   [[ "$branch" == "main" || "$branch" == "HEAD" ]] && continue
   # Skip if PR already exists
-  if gh pr list --head "$branch" --state all -q . 2>/dev/null | grep -q .; then
+  if gh pr list --head "$branch" --state all --json number -q '.[0].number' 2>/dev/null | grep -q .; then
     echo "skip: $branch (PR exists)"
     continue
   fi

@@ -97,7 +97,7 @@ verify_apps() {
   install_node_deps_from_root
   (
     cd "$ROOT_DIR"
-    run npx nx run-many -t build --projects=cloud-console,omnichannel-frontend
+    run npx nx run-many -t build --projects=cloud-console
   )
 }
 

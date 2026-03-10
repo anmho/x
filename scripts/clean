@@ -24,8 +24,6 @@ Removes generated local artifacts:
 `--full` additionally removes high-volume frontend artifacts:
   - apps/cloud-console/node_modules/
   - apps/cloud-console/.next/
-  - services/omnichannel/frontend/node_modules/
-  - services/omnichannel/frontend/.next/
   - mcp/node_modules/
 EOF
 }
@@ -89,8 +87,6 @@ if [[ "$FULL" -eq 1 ]]; then
   paths_full=(
     "apps/cloud-console/node_modules"
     "apps/cloud-console/.next"
-    "services/omnichannel/frontend/node_modules"
-    "services/omnichannel/frontend/.next"
     "mcp/node_modules"
   )
 

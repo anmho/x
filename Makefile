@@ -74,7 +74,7 @@ build-cli:
 	./platform build
 
 build-web:
-	npm --prefix services/omnichannel/frontend run build
+	npm --prefix apps/cloud-console run build
 
 build-access-api:
 	cd services/access-api && GOCACHE="$(GOCACHE_DIR)" go build ./cmd/api

@@ -48,7 +48,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Run App Verify
-        run: npx nx run-many -t build --projects=cloud-console,omnichannel-frontend
+        run: ./scripts/verify apps
 
   docs:
     name: Docs Checks

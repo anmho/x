@@ -63,12 +63,13 @@ If a host port is already in use, override it inline:
 API_PORT=18080 FRONTEND_PORT=3000 TEMPORAL_UI_PORT=8234 ./scripts/dev-up.sh
 ```
 
-The main helper accepts subcommands too:
+Use the platform CLI for stack control:
 
 ```bash
-./scripts/stack.sh up
-./scripts/stack.sh logs api
-./scripts/stack.sh down
+./platform start
+./platform status
+./platform logs <service>
+./platform stop
 ```
 
 ## ConnectRPC SDK Publishing
@@ -224,7 +225,6 @@ omnichannel/
 ├── infra/docker/initdb/                # DB bootstrap SQL (schema + auth + seed)
 ├── docker-compose.yml                  # One-command local stack
 └── scripts/
-    ├── stack.sh                        # Compose helper
     ├── sdk.sh                          # Buf lint/push/publish/generate helper
     ├── dev-up.sh                       # Start all services
     ├── dev-down.sh                     # Stop all services

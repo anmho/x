@@ -59,7 +59,7 @@ This starts/stops:
 - Temporal dev server
 - `services/access-api`
 - `services/omnichannel/backend` API + worker
-- `services/omnichannel/frontend` (Cloud Console routes under `/services/notifications`) on `:3000`
+- `apps/cloud-console` (includes omnichannel routes at `/omnichannel`) on `:3000`
 
 For Go live reload, run with `wgo` enabled:
 

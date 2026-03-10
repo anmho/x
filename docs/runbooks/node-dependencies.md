@@ -14,7 +14,6 @@ The monorepo uses **npm workspaces** with a **single root lockfile** (`package-l
 Defined in root `package.json`:
 
 - `apps/cloud-console`
-- `services/omnichannel/frontend`
 - `mcp`
 - `packages/*`
 
@@ -48,7 +47,6 @@ Or build a specific app:
 
 ```bash
 npm run build --workspace=@x/cloud-console
-npm run build --workspace=frontend
 ```
 
 ## MCP Package Note

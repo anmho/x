@@ -31,7 +31,7 @@
     {
       "title": "[X Platform][medium] Follow-up: unify Node dependency strategy across workspaces",
       "priority": 3,
-      "description": "## Observed issue/opportunity\nWorkspace-level package manager guidance was added, but multiple lockfiles and duplicated node_modules caches remain.\n\n## Affected areas/files\n- apps/cloud-console/package-lock.json\n- services/omnichannel/frontend/package-lock.json\n- mcp/package-lock.json\n\n## Expected outcome\nDefine and implement a consistent dependency strategy (single lockfile or documented multi-lock policy) with clear install instructions.\n\n## Validation notes\n- Fresh install workflow should be deterministic and documented.\n- Build tooling should not emit ambiguous workspace-root warnings.\n\n## Category\nmedium\n\n## Project\nX Platform"
+      "description": "## Observed issue/opportunity\nWorkspace-level package manager guidance was added. Omnichannel frontend was consolidated into cloud-console; single root lockfile is in use.\n\n## Affected areas/files\n- package-lock.json (root)\n- mcp/ (uses root lockfile via workspaces)\n\n## Expected outcome\nConfirm single lockfile strategy is documented. Ensure mcp workspace install is deterministic.\n\n## Validation notes\n- npm ci from root; npm run mcp:check passes.\n\n## Category\nmedium\n\n## Project\nX Platform"
     }
   ]
 }

@@ -1,0 +1,17 @@
+{
+  "generatedAt": "2026-03-09",
+  "source": "Backlog completion session: stack.sh removal, doc updates, create-all-backlog-tickets script. Link to PR #5.",
+  "teamKey": "ANM",
+  "tickets": [
+    {
+      "title": "[X Platform] Remove stack.sh references and consolidate docs",
+      "priority": 2,
+      "description": "## Summary\nRemove references to non-existent stack.sh; consolidate platform CLI as single stack entry point.\n\n## Changes\n- docs/repository-architecture-deep-dive.md: remove stack.sh, update frontend description\n- docs/runbooks/platform-cli-workflow.md: remove service-local stack section\n- AGENTS.md: simplify stack script guidance\n- services/omnichannel/README.md: replace stack.sh with platform CLI\n\n## Validation\n- grep -r stack.sh docs/ AGENTS.md services/ returns no matches\n\n## PR\n#5 (pr/4-verify-nx)"
+    },
+    {
+      "title": "[X Platform] Linear backlog completion runbook and batch script",
+      "priority": 3,
+      "description": "## Summary\nAdd runbook and script for creating all Linear tickets from backlog payloads.\n\n## Changes\n- docs/runbooks/linear-backlog-completion.md\n- scripts/linear/create-all-backlog-tickets.sh\n- docs/backlog/x-platform-repo-hygiene-tickets.json: update Node dependency ticket\n\n## Validation\n- ./scripts/linear/create-all-backlog-tickets.sh --dry-run (or with LINEAR_API_KEY)\n\n## PR\n#5"
+    }
+  ]
+}
