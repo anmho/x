@@ -51,10 +51,12 @@ Reference runbook: `docs/runbooks/platform-cli-workflow.md`.
 6. Use `X Platform` as the default Linear project for repository work; if the project is missing, create or restore it before starting implementation.
 7. For every active ExecPlan, create or link a corresponding Linear ticket and add the issue ID/link in the plan before executing milestones.
 8. Before executing milestones, verify the Linear ticket context and status match the current plan state.
-9. When taking a ticket off `Backlog`, immediately set it to `In Progress` before starting implementation work.
-10. Synchronize ticket status throughout execution (for example: backlog, in progress, blocked, done) whenever plan progress changes.
-11. At completion, ensure the Linear ticket status, plan `Progress`, and `Outcomes & Retrospective` are all aligned.
-11. Link each new ticket to the canonical repo tracking project listed in `Linear Project Reference`.
+9. Assign every active ticket to the current session owner (`me` in Linear MCP) before starting implementation work. If assignee ownership is missing, fix it before changing code or docs.
+10. Record the active Codex session UUID on the ticket before implementation begins. Use `CODEX_THREAD_ID` when available and store it in the ticket description or a comment so the execution session is traceable even though Linear cannot use a UUID as the actual assignee.
+11. When taking a ticket off `Backlog`, immediately set it to `In Progress` before starting implementation work.
+12. Synchronize ticket status throughout execution (for example: backlog, in progress, blocked, done) whenever plan progress changes.
+13. At completion, ensure the Linear ticket status, assignee, recorded session UUID, plan `Progress`, and `Outcomes & Retrospective` are all aligned.
+14. Link each new ticket to the canonical repo tracking project listed in `Linear Project Reference`.
 
 ### Linear Project Reference
 
