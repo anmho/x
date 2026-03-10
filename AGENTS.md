@@ -212,6 +212,7 @@ Use Claude Code subagents to parallelize independent work and protect the main c
 5. Every PR must reference the owning Linear ticket. The PR body backlink is mandatory even if the branch name or title already includes the ticket ID; once the PR exists, add its link back into the Linear ticket so each issue records its review URL.
 6. Default merge strategy is **Squash and Merge** into `main`. Do not use merge commits or rebase merges unless the user explicitly asks for an exception.
 7. Treat `main` as the only default integration branch unless a plan explicitly documents a different long-lived branch.
+8. Use judgment when grouping work into an epic (Linear does not enforce a formal “epic” type here); only create or assign a summary issue when it clearly organizes multiple distinct tickets, and clearly document which specific tickets belong to that bundle before linking PRs back.
 
 ## Ralph Loop Friendly (Required)
 
