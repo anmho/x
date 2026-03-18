@@ -1,0 +1,9 @@
+{
+  "name": "mcp",
+  "cwd": ".",
+  "run": "cd services/mcp && go run ./cmd/server",
+  "env": {
+    "MCP_PORT": "${MCP_PORT:-8765}",
+    "MCP_ROOT": "${PWD}"
+  }
+}
