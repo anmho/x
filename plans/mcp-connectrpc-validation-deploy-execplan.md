@@ -19,6 +19,8 @@ Verify that the new `services/mcp` ConnectRPC gateway and CLI actually work end 
 - [x] (2026-03-18 07:05Z) Validated authenticated `./platform mcp ... tools list` and `./platform mcp ... tools call gcp_configured_projects` against a live local server using an auto-generated key.
 - [x] (2026-03-18 07:04Z) Re-scanned for follow-up issues, reconciled ticket coverage, and created `ANM-167` for the deployment-safe auth gap.
 - [x] (2026-03-18 07:06Z) Reconciled the existing broader platform CLI source-drift blocker with `ANM-153` instead of opening a duplicate ticket.
+- [x] (2026-03-18 07:21Z) Revalidated the clean PR branch directly from `services/mcp` with `buf generate`, `go test ./...`, `go build -o ../../bin/mcp-server ./cmd/server`, `go build -o ../../bin/mcp ./cmd/mcp`, `make build-mcp`, `GET /health`, authenticated `./bin/mcp ... tools list`, authenticated `./platform mcp ... tools list`, and authenticated JSON-RPC `POST /mcp`.
+- [x] (2026-03-18 07:21Z) Confirmed the clean branch still inherits two pre-existing base-branch gaps: `./scripts/deploy-preflight mcp` is absent and is reconciled to existing deploy-workflow ticket `ANM-158`, while `./platform control-plane plan --project mcp` / `./platform deploy --project mcp --dry-run` fail under the broader `platform-cli` compile drift already tracked in `ANM-153`.
 
 ## Surprises & Discoveries
 
@@ -39,6 +41,9 @@ Verify that the new `services/mcp` ConnectRPC gateway and CLI actually work end 
 
 - Observation: Docker validation is currently blocked by the local environment because the Docker daemon is not running.
   Evidence: both `docker build -f services/mcp/Dockerfile -t x-mcp .` and `docker ps` failed with `Cannot connect to the Docker daemon at unix:///Users/andrewho/.docker/run/docker.sock`.
+
+- Observation: the clean branch cut from `origin/main` does not currently provide `scripts/deploy-preflight`, and the root `./platform` build path still hits the separately tracked `platform-cli` compile drift.
+  Evidence: `./scripts/deploy-preflight mcp` returned `no such file or directory`, while both `./platform control-plane plan --project mcp` and `./platform deploy --project mcp --dry-run` failed with `undefined: runStack` and related symbol errors already reconciled to `ANM-153`.
 
 ## Decision Log
 
@@ -65,6 +70,12 @@ Completed outcomes:
   - authenticated ConnectRPC via `./platform mcp ... tools list`
   - authenticated ConnectRPC via `./platform mcp ... tools call gcp_configured_projects`
   - authenticated JSON-RPC via `POST /mcp` with `tools/list`
+- Clean PR branch validation also passed for:
+  - `cd services/mcp/proto && PATH="$PATH:$HOME/go/bin" buf generate`
+  - `cd services/mcp && GOCACHE=/tmp/go-cache go test ./...`
+  - `cd services/mcp && GOCACHE=/tmp/go-cache go build -o ../../bin/mcp-server ./cmd/server`
+  - `cd services/mcp && GOCACHE=/tmp/go-cache go build -o ../../bin/mcp ./cmd/mcp`
+  - `make build-mcp`
 - Declarative deployment validation passed for:
   - `./scripts/deploy-preflight mcp`
   - `./platform control-plane plan --project mcp`
@@ -75,6 +86,7 @@ Completed outcomes:
 Remaining gaps:
 
 - The current MCP auth model is still file-local and auto-generated, which is not yet a deployment-safe Cloud Run operator story; tracked in `ANM-167`.
+- The clean PR branch cut from `origin/main` still lacks `scripts/deploy-preflight`, so repo-standard preflight validation cannot run there until that base-branch tooling is restored.
 - The full `platform-cli` Go source tree still does not compile cleanly; that broader source-drift issue is already tracked separately in `ANM-153`.
 - Docker build/run was not validated because the local Docker daemon is unavailable in this environment.
 - Remote deployment execution has not been attempted; this slice validated the repo-aligned dry-run path only.
@@ -153,6 +165,7 @@ Re-running the validation commands should be safe. Rebuilding should overwrite t
 - Related earlier issues: `ANM-149`, `ANM-150`, `ANM-151`, `ANM-152`
 - Follow-up created during validation: `ANM-167`
 - Existing broader blocker confirmed during validation: `ANM-153`
+- Existing deploy-workflow follow-up reconciled during PR hardening: `ANM-158`
 
 ## Interfaces And Dependencies
 
