@@ -1,0 +1,70 @@
+{
+  "name": "mcp",
+  "root": "services/mcp",
+  "tags": ["app", "mcp"],
+  "targets": {
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "cd services/mcp && MCP_ROOT=\"${PWD}/..\" GOCACHE=/tmp/go-cache go run ./cmd/server",
+        "cwd": "."
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "cd services/mcp && GOCACHE=/tmp/go-cache go build -o ../bin/mcp-server ./cmd/server",
+        "cwd": "."
+      }
+    },
+    "build-cli": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "cd services/mcp && GOCACHE=/tmp/go-cache go build -o ../bin/mcp ./cmd/mcp",
+        "cwd": "."
+      }
+    },
+    "generate-proto": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "cd services/mcp/proto && PATH=\"$PATH:$HOME/go/bin\" buf generate",
+        "cwd": "."
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "cd services/mcp && GOCACHE=/tmp/go-cache go test ./...",
+        "cwd": "."
+      }
+    },
+    "verify": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "cd services/mcp && GOCACHE=/tmp/go-cache go build ./...",
+        "cwd": "."
+      }
+    },
+    "preflight": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "cd services/mcp && GOCACHE=/tmp/go-cache go test ./... && GOCACHE=/tmp/go-cache go build ./...",
+        "cwd": "."
+      }
+    },
+    "docker-build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "docker build -f services/mcp/Dockerfile -t x-mcp .",
+        "cwd": "."
+      }
+    },
+    "docker-run": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "docker run -p 8765:8765 -v \"$HOME/.x-mcp:/root/.x-mcp\" -e MCP_ROOT=/app x-mcp",
+        "cwd": "."
+      }
+    }
+  }
+}

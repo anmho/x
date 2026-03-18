@@ -4,6 +4,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "rm -rf /tmp/mcp-build-check && bun build vercel-observability/server.ts gcp-observability/server.ts --target bun --outdir /tmp/mcp-build-check"
+    "check": "rm -rf /tmp/mcp-build-check && bun build vercel-observability/server.ts gcp-observability/server.ts --target bun --outdir /tmp/mcp-build-check && bun build ../services/mcp/server.ts --target bun --outdir /tmp/mcp-build-check"
   }
 }
