@@ -20,6 +20,36 @@ This file is the permanent mistake memory for repository agents.
 - Verification:
 ```
 
+## Entries
+
+## 2026-03-18T07:48:00Z - Sent a string instead of a boolean to `gh api`
+- What happened: I retried the branch-protection update with correctly quoted array flags but used `-f strict=false`, and GitHub rejected the request because `strict` arrived as the string `"false"` instead of a boolean.
+- Root cause: I used the generic form field flag without checking whether this endpoint required typed boolean serialization.
+- How to avoid it: For `gh api` requests that need booleans or numbers, prefer typed flags such as `-F strict=false` or pass a JSON body with explicit types.
+- What to do instead: Use `-F strict=false` alongside the quoted `contexts[]` fields when updating required status checks.
+- Verification: After adding this entry, I reran the branch-protection request with a boolean-typed `strict=false` parameter.
+
+## 2026-03-18T07:47:00Z - Forgot to quote `gh api` array parameters in zsh
+- What happened: I tried to update branch protection with `gh api ... -f contexts[]=...` in zsh without quoting the array-style flags, and the shell rejected the command with `no matches found`.
+- Root cause: I treated the GitHub CLI flag syntax as shell-safe even though unquoted brackets trigger zsh glob parsing.
+- How to avoid it: Quote every `-f 'contexts[]=...'` style argument in zsh when calling `gh api`, especially for GitHub array parameters.
+- What to do instead: Use `-f 'contexts[]=Affected Docs'` style quoted flags or disable globbing for the command.
+- Verification: After adding this entry, I reran the branch-protection update with quoted array arguments instead of bare bracket syntax.
+
+## 2026-03-18T07:44:00Z - Repeated parallel git write after documenting the rule
+- What happened: While staging the Mintlify docs follow-up, I again launched `git add` and `git commit` in parallel, which recreated the `.git/index.lock` commit failure I had just documented.
+- Root cause: I fell back to the multi-tool wrapper out of habit instead of switching to strictly sequential Git write steps after logging the first mistake.
+- How to avoid it: Once a Git-write sequencing mistake is logged, stop using the parallel wrapper for any subsequent `git add`, `git commit`, or `git push` calls in the same task.
+- What to do instead: Run repository-mutating Git commands one at a time and wait for each to complete before starting the next.
+- Verification: After adding this entry, I resumed the remaining Git write flow only with sequential single-command executions.
+
+## 2026-03-18T07:39:30Z - Created overlapping collaboration tickets before finishing a backlog search
+- What happened: I created new collaboration/mailbox tickets for the MCP mailbox work and only afterward discovered overlapping existing collaboration issues during the required reconciliation scan.
+- Root cause: I moved from architecture discussion into execution too quickly and skipped the focused Linear search that should happen before ticket creation.
+- How to avoid it: Before creating any ticket for a new workstream, search Linear using the exact domain nouns from the task and reconcile open issues first.
+- What to do instead: Reuse the existing issue when it already covers the scope, and create only the missing delta.
+- Verification: Ran a focused collaboration/mailbox issue search after implementation, documented the overlap in the active ExecPlan, and constrained the current slice to the mailbox MCP core only.
+
 ## 2026-03-18T08:02:00Z - Ran `git add` and `git commit` in parallel
 - What happened: I used the parallel tool to launch `git add` and `git commit` at the same time while trying to record the final ExecPlan update, and `git commit` failed on `.git/index.lock`.
 - Root cause: I treated dependent git write operations as parallel-safe even though both mutate the repository index.
@@ -27,7 +57,19 @@ This file is the permanent mistake memory for repository agents.
 - What to do instead: Run `git add`, wait for it to finish, then run `git commit` sequentially.
 - Verification: After this entry, I re-ran the plan-only commit flow sequentially instead of through the parallel wrapper.
 
-## Entries
+## 2026-03-18T07:23:50Z - Computed extension workspace root one directory too high
+- What happened: I wrote the new Chrome extension build and verify scripts with `workspaceRoot` resolving three directories above `apps/linear-ticket-sidepanel`, which made the build try to create `/Users/andrewho/repos/projects/dist` outside the repository and caused Nx build/verify failures.
+- Root cause: I translated the folder depth from memory instead of checking the actual `apps/<app>/scripts` path relationship back to the repo root.
+- How to avoid it: For every new app-local script that computes repository-relative paths, explicitly derive the expected absolute target once and verify it against the current repo root before running Nx targets.
+- What to do instead: Use `path.resolve(appRoot, "..", "..")` for app-local scripts under `apps/<name>/scripts`, and make verify targets depend on build so missing dist output cannot masquerade as a separate issue.
+- Verification: Updated both extension scripts to resolve the repo root two levels above `appRoot`, added `dependsOn: [\"build\"]` for `verify` and `preflight`, and re-ran the Nx targets.
+
+## 2026-03-18T07:16:12Z - Started agent-control with ad hoc REST and fetch helpers instead of the repo RPC contract
+- What happened: I initially added a hand-written HTTP/JSON client/server surface for `services/agent-control-api` and `apps/cloud-console` before reconfirming that this repository expects control-plane APIs to be protobuf-first ConnectRPC services with generated SDKs.
+- Root cause: I optimized for speed on the MVP path and failed to stop at the architecture boundary to verify whether the control plane should follow the existing ConnectRPC/Buf SDK pattern.
+- How to avoid it: For any new control-plane or service-to-UI contract in this repository, inspect existing protobuf/Connect patterns and confirm SDK generation/consumption before creating request handlers or frontend clients by hand.
+- What to do instead: Define the `.proto` contract first, generate Go/TS stubs, implement the server against generated interfaces, and make the UI consume the generated Connect client or a thin wrapper over it.
+- Verification: Added `services/agent-control-api/proto/agentcontrol/v1/agent_control.proto`, generated Go/TS Connect stubs, switched the server toward `agentcontrol.v1.AgentControlService`, and updated Mintlify docs to describe the ConnectRPC control-plane model.
 
 ## 2026-03-18T06:24:00Z - Docs verifier missed tabbed Mintlify navigation structure
 - What happened: I added `scripts/ci/verify_docs_config.mjs`, but the first implementation only handled array-style `navigation` and reported `0 nav page entries` for the tabbed `docs.json` shape.
@@ -70,6 +112,13 @@ This file is the permanent mistake memory for repository agents.
 - How to avoid it: Always wrap URLs containing `?`, `&`, or `*` in single quotes when running shell commands.
 - What to do instead: Use `curl 'http://localhost:3000/api/domains?project=cloud-console'`.
 - Verification: Re-ran with quoted URL and reached network connectivity check correctly.
+
+## 2026-03-18T07:36:06Z - Linked new Linear child issues to the wrong parent on first pass
+- What happened: I created the mailbox MCP child tickets with `parentId` pointing at `ANM-175` instead of the newly created parent issue `ANM-181`.
+- Root cause: I pre-filled the expected parent identifier before the actual Linear create responses returned and reused the wrong placeholder.
+- How to avoid it: Always wait for the created parent issue ID before attaching child issues; never assume the final Linear identifier.
+- What to do instead: Create the parent first, capture the real returned ID, then create or update children against that exact ID.
+- Verification: Updated `ANM-182`, `ANM-183`, and `ANM-184` so each now has `parentId: ANM-181`.
 
 ## 2026-03-18T07:06:08Z - Patched services/mcp/project.json against a stale snapshot
 - What happened: I attempted an `apply_patch` against `services/mcp/project.json` using an outdated command string and the patch failed because the file had already changed to a different `MCP_ROOT` value.

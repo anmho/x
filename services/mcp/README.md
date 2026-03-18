@@ -34,6 +34,43 @@ The repo-level wrapper delegates to the same binary directly:
 ./platform mcp tools list --server http://localhost:8765 --key <api-key>
 ```
 
+## Collaboration mailbox tools
+
+The MCP service now includes mailbox-style collaboration tools intended for agent-to-agent coordination via normal MCP tool calls.
+
+Preferred mailbox tool names:
+
+- `mail_find_channels`
+- `mail_get_channel_for_agent`
+- `mail_send`
+- `mail_read`
+
+Compatibility aliases remain available under the older `collab_*` names:
+
+- `collab_get_or_create_channel`
+- `collab_list_channels`
+- `collab_find_channels_by_agent`
+- `collab_post_message`
+- `collab_read_messages`
+
+The initial slice is synchronous and storage-backed. It is intentionally separate from any watcher/broadcast or Slack bridge layer.
+
+Mailbox state is persisted locally by default at `~/.x-mcp/collab.json`. Override with `MCP_MAILBOX_FILE` or `MCP_COLLAB_STORE` if needed.
+
+Example flow:
+
+```bash
+./platform mcp --server http://localhost:8765 --key <api-key> \
+  tools call mail_get_channel_for_agent agent_id=agent-a
+
+# use the returned channel id from the previous call
+./platform mcp --server http://localhost:8765 --key <api-key> \
+  tools call mail_send channel_id=<channel-id> sender=agent-b body='Picked up the storage slice'
+
+./platform mcp --server http://localhost:8765 --key <api-key> \
+  tools call mail_read channel_id=<channel-id> after_sequence=0 limit=20
+```
+
 ## Docker
 
 Build from the repo root:
