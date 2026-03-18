@@ -6,21 +6,21 @@
     "dev": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "cd services/mcp && MCP_ROOT=\"${PWD}/..\" GOCACHE=/tmp/go-cache go run ./cmd/server",
+        "command": "cd services/mcp && GOCACHE=/tmp/go-cache go run ./cmd/server",
         "cwd": "."
       }
     },
     "build": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "cd services/mcp && GOCACHE=/tmp/go-cache go build -o ../bin/mcp-server ./cmd/server",
+        "command": "cd services/mcp && GOCACHE=/tmp/go-cache go build -o ../../bin/mcp-server ./cmd/server",
         "cwd": "."
       }
     },
     "build-cli": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "cd services/mcp && GOCACHE=/tmp/go-cache go build -o ../bin/mcp ./cmd/mcp",
+        "command": "cd services/mcp && GOCACHE=/tmp/go-cache go build -o ../../bin/mcp ./cmd/mcp",
         "cwd": "."
       }
     },

@@ -1,0 +1,148 @@
+# Validate and align MCP ConnectRPC service deployment
+
+This ExecPlan is a living document. The sections `Progress`, `Surprises & Discoveries`, `Decision Log`, and `Outcomes & Retrospective` must be kept up to date as work proceeds.
+
+Linear ticket linkage for this plan: `ANM-163` ([issue link](https://linear.app/anmho/issue/ANM-163/medium-validate-mcp-service-end-to-end-and-align-deployment-with-repo)).
+
+## Purpose / Big Picture
+
+Verify that the new `services/mcp` ConnectRPC gateway and CLI actually work end to end, repair any broken Nx/local wiring, and align deployment with the repository's existing declarative platform workflow. The goal is to avoid leaving MCP as a partially wired local prototype or introducing a second deployment control plane when the repo already has a preferred pattern.
+
+## Progress
+
+- [x] (2026-03-18 06:50Z) Created `ANM-163`, set it to `In Progress`, assigned it to `me`, and recorded the active Codex session UUID.
+- [x] (2026-03-18 06:51Z) Inspected the current `services/mcp` server, CLI, Dockerfile, Nx project, platform CLI entrypoints, and deploy-preflight script.
+- [x] (2026-03-18 06:51Z) Confirmed `services/mcp/project.json` still writes binaries to `services/bin`, while repo-local tooling expects root-level `bin/`.
+- [x] (2026-03-18 07:04Z) Reproduced the MCP runtime and CLI flows with `npx nx run mcp:generate-proto`, `npx nx run mcp:test`, `npx nx run mcp:build`, `npx nx run mcp:build-cli`, `./scripts/deploy-preflight mcp`, `./platform control-plane plan --project mcp`, and `./platform deploy --project mcp --dry-run`.
+- [x] (2026-03-18 07:04Z) Patched `services/mcp/project.json` so Nx build outputs land in repo-root `bin/` and fixed the `dev` target's `MCP_ROOT` to point at the actual repo root.
+- [ ] Close the remaining deployment-safe auth/bootstrap gap for `mcp` so the declarative deploy path is production-safe, not only dry-run validated.
+- [x] (2026-03-18 07:04Z) Re-scanned for follow-up issues, reconciled ticket coverage, and created `ANM-167` for the deployment-safe auth gap.
+
+## Surprises & Discoveries
+
+- Observation: the current Nx `mcp:build` and `mcp:build-cli` targets build successfully but emit into `services/bin`, not the repo-root `bin/` directory used by `platform-cli/mcp.go`.
+  Evidence: `services/mcp/project.json` uses `go build -o ../bin/...`; `platform-cli/mcp.go` resolves `bin/mcp` relative to the platform executable.
+
+- Observation: the earlier failed smoke test was caused by launching `go run ./services/mcp/cmd/server` from the repo root instead of running inside the `services/mcp` module.
+  Evidence: the previous terminal transcript showed GOPATH-style import failures for `connectrpc.com/connect` and `github.com/anmhela/x/mcp/...`, which occur when the module root is not active.
+
+- Observation: this repo already has a declarative deployment/control-plane system for Cloud Run-backed services.
+  Evidence: `infra/platform/declarative_spec.py`, generated `platform.controlplane.json`, and `platform-cli/control_plane_ops.go` declare and reconcile `gcp-cloud-run` deployments.
+
+- Observation: the MCP server does not honor `MCP_API_KEYS=testkey`; it only authenticates keys present in the local key store and auto-generates one on first startup.
+  Evidence: the local smoke test failed with `invalid API key` until the generated key from `~/.x-mcp/keys.json` was used; `services/mcp/internal/keys/store.go` only validates keys loaded from disk.
+
+- Observation: sandboxed local processes could not complete the MCP smoke test because binding and connecting to the localhost server required unsandboxed execution.
+  Evidence: sandboxed `go run ./cmd/server` failed with `bind: operation not permitted`, and sandboxed client calls failed with `connect: operation not permitted`; the same commands worked once run outside the sandbox.
+
+## Decision Log
+
+- Decision: start by validating and repairing the existing declarative platform path instead of introducing ArgoCD immediately.
+  Rationale: the repo already materializes deployment intent from `infra/platform/declarative_spec.py` into `platform.controlplane.json`, and `./platform deploy --project <name>` is documented as the standard workflow. Adding ArgoCD before proving the current path insufficient would create an extra control plane.
+  Date/Author: 2026-03-18 / Codex
+
+- Decision: split the deployment-safe auth/bootstrap problem into follow-up ticket `ANM-167` instead of inflating this validation slice into a full secret-management implementation.
+  Rationale: `ANM-163` successfully validated the existing local runtime and declarative deploy path, but the remaining gap is a broader production auth design question that deserves its own implementation ticket and reviewable change set.
+  Date/Author: 2026-03-18 / Codex
+
+## Outcomes & Retrospective
+
+Completed outcomes:
+
+- `services/mcp/project.json` now writes `mcp` and `mcp-server` into repo-root `bin/`, matching the rest of the repo tooling.
+- Local smoke tests passed for:
+  - `GET /health`
+  - authenticated ConnectRPC via `./bin/mcp ... tools list`
+  - authenticated JSON-RPC via `POST /mcp` with `tools/list`
+- Declarative deployment validation passed for:
+  - `./scripts/deploy-preflight mcp`
+  - `./platform control-plane plan --project mcp`
+  - `./platform deploy --project mcp --dry-run`
+- Follow-up deployment auth gap captured in `ANM-167`.
+
+Remaining gaps:
+
+- The current MCP auth model is still file-local and auto-generated, which is not yet a deployment-safe Cloud Run operator story; tracked in `ANM-167`.
+- `platform mcp ...` was wired in source but not revalidated through a freshly rebuilt `platform` binary because broader platform CLI source drift is already tracked separately in `ANM-153`.
+- Remote deployment execution has not been attempted; this slice validated the repo-aligned dry-run path only.
+
+## Context And Orientation
+
+Relevant files for this task:
+
+- `services/mcp/project.json`
+- `services/mcp/cmd/server/main.go`
+- `services/mcp/cmd/mcp/main.go`
+- `services/mcp/Dockerfile`
+- `platform-cli/main.go`
+- `platform-cli/mcp.go`
+- `platform-cli/README.md`
+- `infra/platform/declarative_spec.py`
+- `platform.controlplane.json`
+- `scripts/deploy-preflight`
+- `scripts/verify`
+
+## Plan Of Work
+
+1. Reproduce the current Nx, local CLI, and server flows to identify real failures instead of inferred ones.
+2. Patch pathing or runtime defects in `services/mcp`, `Makefile`, and `platform-cli` until local smoke tests pass.
+3. Align MCP deployment with the declarative platform workflow and update any missing docs or validation hooks.
+4. Run targeted validation, rescan for follow-up work, and sync the plan plus `ANM-163`.
+
+## Concrete Steps
+
+From repo root (`/Users/andrewho/repos/projects/x`):
+
+1. Re-run MCP validation:
+   - `npx nx run mcp:generate-proto`
+   - `npx nx run mcp:test`
+   - `npx nx run mcp:build`
+   - `npx nx run mcp:build-cli`
+   - `scripts/deploy-preflight mcp`
+2. Smoke-test the server and CLI from the module root:
+   - `cd services/mcp && GOCACHE=/tmp/go-cache go run ./cmd/server`
+   - read the generated key from `~/.x-mcp/keys.json`
+   - `../../bin/mcp --server http://127.0.0.1:18765 --key <generated-key> tools list`
+   - `curl -H "Authorization: Bearer <generated-key>" -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' http://127.0.0.1:18765/mcp`
+3. Inspect the deployment path:
+   - `./platform control-plane plan --project mcp`
+   - `./platform deploy --project mcp --dry-run`
+4. Patch documentation and wiring based on the validated path.
+
+## Validation And Acceptance
+
+Acceptance criteria:
+
+- `mcp` Nx targets build and test successfully without writing binaries into the wrong directory.
+- The local MCP server responds on `/health`, serves authenticated ConnectRPC calls, and serves authenticated `/mcp` JSON-RPC requests.
+- `platform mcp ...` and/or the standalone `mcp` CLI can successfully talk to the local server.
+- The repo has one clear deployment path for `mcp`, documented and wired through the existing platform workflow.
+
+Validation commands:
+
+- `npx nx run mcp:generate-proto`
+- `npx nx run mcp:test`
+- `npx nx run mcp:build`
+- `npx nx run mcp:build-cli`
+- `scripts/deploy-preflight mcp`
+- `./platform control-plane plan --project mcp`
+- `./platform deploy --project mcp --dry-run`
+
+## Idempotence And Recovery
+
+Re-running the validation commands should be safe. Rebuilding should overwrite the same `bin/mcp` and `bin/mcp-server` outputs once paths are corrected. If remote deploy commands require unavailable credentials, dry-run evidence and local smoke-test evidence will still keep the deployment path reviewable.
+
+## Artifacts And Notes
+
+- Linear issue: `ANM-163`
+- Session UUID: `019cffb4-e861-7a31-b41f-5e3eeb6c35a9`
+- Validation continuation session UUID: `019cffb5-3acf-7193-ad5c-8e7965ec70e9`
+- Related earlier issues: `ANM-149`, `ANM-150`, `ANM-151`, `ANM-152`
+- Follow-up created during validation: `ANM-167`
+
+## Interfaces And Dependencies
+
+- Go module in `services/mcp`
+- Nx target wiring in `services/mcp/project.json` and `nx.json`
+- Platform CLI `mcp`, `deploy`, and `control-plane` commands
+- Generated platform configs from `infra/platform/declarative_spec.py`
