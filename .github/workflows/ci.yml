@@ -8,11 +8,47 @@ on:
   pull_request:
 
 jobs:
-  platform:
-    name: Platform Checks
+  shas:
+    name: Resolve Nx SHAs
     runs-on: ubuntu-latest
+    outputs:
+      nx_base: ${{ steps.resolve.outputs.nx_base }}
+      nx_head: ${{ steps.resolve.outputs.nx_head }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve base and head SHAs
+        id: resolve
+        shell: bash
+        run: |
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            echo "nx_base=${{ github.event.pull_request.base.sha }}" >> "$GITHUB_OUTPUT"
+            echo "nx_head=${{ github.event.pull_request.head.sha }}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [[ -n "${{ github.event.before }}" && "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ]]; then
+            echo "nx_base=${{ github.event.before }}" >> "$GITHUB_OUTPUT"
+            echo "nx_head=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "nx_base=$(git rev-parse HEAD~1)" >> "$GITHUB_OUTPUT"
+          echo "nx_head=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+
+  platform:
+    name: Affected Platform
+    needs: shas
+    runs-on: ubuntu-latest
+    env:
+      NX_BASE: ${{ needs.shas.outputs.nx_base }}
+      NX_HEAD: ${{ needs.shas.outputs.nx_head }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -24,19 +60,45 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: services/agent-control-api/go.mod
+          go-version-file: services/mcp/go.mod
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Run Platform Verify
-        run: ./scripts/verify platform
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run affected platform verify targets
+        shell: bash
+        run: |
+          projects="$(npx nx show projects --affected --withTarget=verify --projects=platform,sdk,mcp,omnichannel-api,omnichannel-worker --base="$NX_BASE" --head="$NX_HEAD" --sep=,)"
+          if [[ -z "$projects" ]]; then
+            echo "No affected platform verify targets."
+            exit 0
+          fi
+          npx nx run-many -t verify --projects="$projects" --outputStyle=static
+
+      - name: Run affected platform test targets
+        shell: bash
+        run: |
+          projects="$(npx nx show projects --affected --withTarget=test --projects=agent-control-api --base="$NX_BASE" --head="$NX_HEAD" --sep=,)"
+          if [[ -z "$projects" ]]; then
+            echo "No affected platform test targets."
+            exit 0
+          fi
+          npx nx run-many -t test --projects="$projects" --outputStyle=static
 
   apps:
-    name: App Checks
+    name: Affected Apps
+    needs: shas
     runs-on: ubuntu-latest
+    env:
+      NX_BASE: ${{ needs.shas.outputs.nx_base }}
+      NX_HEAD: ${{ needs.shas.outputs.nx_head }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -47,19 +109,87 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-      - name: Run App Verify
-        run: ./scripts/verify apps
+
+      - name: Run affected app verify targets
+        shell: bash
+        run: |
+          projects="$(npx nx show projects --affected --withTarget=verify --projects=cloud-console --base="$NX_BASE" --head="$NX_HEAD" --sep=,)"
+          if [[ -z "$projects" ]]; then
+            echo "No affected app verify targets."
+            exit 0
+          fi
+          npx nx run-many -t verify --projects="$projects" --outputStyle=static
+
+      - name: Run affected app build targets
+        shell: bash
+        run: |
+          projects="$(npx nx show projects --affected --withTarget=build --projects=omnichannel-frontend,agent-runner,agent-tools --base="$NX_BASE" --head="$NX_HEAD" --sep=,)"
+          if [[ -z "$projects" ]]; then
+            echo "No affected app build targets."
+            exit 0
+          fi
+          npx nx run-many -t build --projects="$projects" --outputStyle=static
 
   docs:
-    name: Docs Checks
+    name: Affected Docs
+    needs: shas
     runs-on: ubuntu-latest
+    env:
+      NX_BASE: ${{ needs.shas.outputs.nx_base }}
+      NX_HEAD: ${{ needs.shas.outputs.nx_head }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version-file: ".nvmrc"
+          cache: "npm"
+          cache-dependency-path: package-lock.json
 
-      - name: Verify Mintlify Tooling
-        run: ./scripts/verify docs
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run affected docs verify targets
+        shell: bash
+        run: |
+          projects="$(npx nx show projects --affected --withTarget=verify --projects=docs --base="$NX_BASE" --head="$NX_HEAD" --sep=,)"
+          if [[ -z "$projects" ]]; then
+            echo "No affected docs verify targets."
+            exit 0
+          fi
+          npx nx run-many -t verify --projects="$projects" --outputStyle=static
+
+  agents:
+    name: Affected Agents
+    needs: shas
+    runs-on: ubuntu-latest
+    env:
+      NX_BASE: ${{ needs.shas.outputs.nx_base }}
+      NX_HEAD: ${{ needs.shas.outputs.nx_head }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: "npm"
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run affected agent verify targets
+        shell: bash
+        run: |
+          projects="$(npx nx show projects --affected --withTarget=verify --projects=agents --base="$NX_BASE" --head="$NX_HEAD" --sep=,)"
+          if [[ -z "$projects" ]]; then
+            echo "No affected agent verify targets."
+            exit 0
+          fi
+          npx nx run-many -t verify --projects="$projects" --outputStyle=static

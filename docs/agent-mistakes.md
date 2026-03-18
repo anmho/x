@@ -71,6 +71,12 @@ This file is the permanent mistake memory for repository agents.
 - What to do instead: Read the current file, patch only the live lines, then validate with a targeted diff.
 - Verification: Re-read `services/mcp/project.json`, applied the corrected patch successfully, and validated the updated Nx build outputs plus `./platform mcp` smoke test afterward.
 
+## 2026-03-18T07:12:27Z - Used `nx affected --projects` as if it were a hard filter for run-commands targets
+- What happened: I initially rewired CI jobs to use `npx nx affected -t <target> --projects=...`, but Nx treated `--projects=...` as an extra task argument and forwarded it into `nx:run-commands` targets such as `go build`, breaking the command invocation.
+- Root cause: I assumed `affected` scoped target execution the same way `run-many` does and did not verify how Nx v22 handles `--projects` with run-commands executors.
+- Preventive rule/check added: For scoped affected CI, first compute the project list with `nx show projects --affected --withTarget=... --projects=...`, then call `nx run-many` on the resulting list. Do not rely on `nx affected --projects=...` for run-commands targets.
+- Verification: Replaced the workflow logic to use `nx show projects ... --sep=,` plus `nx run-many`, and local spot checks succeeded for docs and mcp scopes without forwarding stray CLI flags into underlying commands.
+
 ## 2026-03-10T06:06:30Z - Used wrong frontend root path while inspecting domains implementation
 - What happened: I attempted to inspect and patch `services/omnichannel/frontend/...` for domains files, but this workspace keeps the active frontend under `apps/omnichannel/frontend/...`.
 - Root cause: I reused an older repository layout assumption from prior tasks without confirming current paths first.
