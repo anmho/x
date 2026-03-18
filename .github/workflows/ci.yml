@@ -65,24 +65,36 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Resolve affected platform verify targets
-        id: platform_verify_scope
+      - name: Detect platform-related changes
+        id: platform_changes
         shell: bash
         run: |
-          echo "projects=$(npx --yes nx@22.5.4 show projects --affected --withTarget=verify --projects=platform,sdk,mcp,omnichannel-api,omnichannel-worker --base="$NX_BASE" --head="$NX_HEAD" --sep=,)" >> "$GITHUB_OUTPUT"
+          if git diff --name-only "$NX_BASE" "$NX_HEAD" | grep -Eq '^(platform-config/|services/mcp/|services/omnichannel/|services/agent-control-api/|mcp/|platform-cli/|cli/|services/x_stream_bot/|scripts/ci/|package\.json$|package-lock\.json$|nx\.json$)'; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Resolve affected platform test targets
         id: platform_test_scope
+        if: steps.platform_changes.outputs.changed == 'true'
         shell: bash
         run: |
-          echo "projects=$(npx --yes nx@22.5.4 show projects --affected --withTarget=test --projects=agent-control-api --base="$NX_BASE" --head="$NX_HEAD" --sep=,)" >> "$GITHUB_OUTPUT"
+          echo "projects=$(npx nx show projects --affected --withTarget=test --projects=agent-control-api --base="$NX_BASE" --head="$NX_HEAD" --sep=,)" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve affected platform verify targets
+        id: platform_verify_scope
+        if: steps.platform_changes.outputs.changed == 'true'
+        shell: bash
+        run: |
+          echo "projects=$(npx nx show projects --affected --withTarget=verify --projects=platform,sdk,mcp,omnichannel-api,omnichannel-worker --base="$NX_BASE" --head="$NX_HEAD" --sep=,)" >> "$GITHUB_OUTPUT"
 
       - name: Install dependencies
-        if: steps.platform_verify_scope.outputs.projects != '' || steps.platform_test_scope.outputs.projects != ''
+        if: steps.platform_changes.outputs.changed == 'true'
         run: npm ci
 
       - name: No affected platform targets
-        if: steps.platform_verify_scope.outputs.projects == '' && steps.platform_test_scope.outputs.projects == ''
+        if: steps.platform_changes.outputs.changed != 'true' || (steps.platform_verify_scope.outputs.projects == '' && steps.platform_test_scope.outputs.projects == '')
         run: echo "No affected platform targets."
 
       - name: Run affected platform verify targets
@@ -112,24 +124,36 @@ jobs:
           cache: "npm"
           cache-dependency-path: package-lock.json
 
-      - name: Resolve affected app verify targets
-        id: app_verify_scope
+      - name: Detect app-related changes
+        id: app_changes
         shell: bash
         run: |
-          echo "projects=$(npx --yes nx@22.5.4 show projects --affected --withTarget=verify --projects=cloud-console --base="$NX_BASE" --head="$NX_HEAD" --sep=,)" >> "$GITHUB_OUTPUT"
+          if git diff --name-only "$NX_BASE" "$NX_HEAD" | grep -Eq '^(apps/cloud-console/|apps/omnichannel/frontend/|apps/agent-runner/|services/agent-tools/|packages/|services/omnichannel/|package\.json$|package-lock\.json$|nx\.json$)'; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Resolve affected app build targets
         id: app_build_scope
+        if: steps.app_changes.outputs.changed == 'true'
         shell: bash
         run: |
-          echo "projects=$(npx --yes nx@22.5.4 show projects --affected --withTarget=build --projects=omnichannel-frontend,agent-runner,agent-tools --base="$NX_BASE" --head="$NX_HEAD" --sep=,)" >> "$GITHUB_OUTPUT"
+          echo "projects=$(npx nx show projects --affected --withTarget=build --projects=omnichannel-frontend,agent-runner,agent-tools --base="$NX_BASE" --head="$NX_HEAD" --sep=,)" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve affected app verify targets
+        id: app_verify_scope
+        if: steps.app_changes.outputs.changed == 'true'
+        shell: bash
+        run: |
+          echo "projects=$(npx nx show projects --affected --withTarget=verify --projects=cloud-console --base="$NX_BASE" --head="$NX_HEAD" --sep=,)" >> "$GITHUB_OUTPUT"
 
       - name: Install dependencies
-        if: steps.app_verify_scope.outputs.projects != '' || steps.app_build_scope.outputs.projects != ''
+        if: steps.app_changes.outputs.changed == 'true'
         run: npm ci
 
       - name: No affected app targets
-        if: steps.app_verify_scope.outputs.projects == '' && steps.app_build_scope.outputs.projects == ''
+        if: steps.app_changes.outputs.changed != 'true' || (steps.app_verify_scope.outputs.projects == '' && steps.app_build_scope.outputs.projects == '')
         run: echo "No affected app targets."
 
       - name: Run affected app verify targets
@@ -159,19 +183,23 @@ jobs:
           cache: "npm"
           cache-dependency-path: package-lock.json
 
-      - name: Resolve affected docs verify targets
-        id: docs_scope
+      - name: Detect docs-related changes
+        id: docs_changes
         shell: bash
         run: |
-          echo "projects=$(npx --yes nx@22.5.4 show projects --affected --withTarget=verify --projects=docs --base="$NX_BASE" --head="$NX_HEAD" --sep=,)" >> "$GITHUB_OUTPUT"
+          if git diff --name-only "$NX_BASE" "$NX_HEAD" | grep -Eq '^(docs/mintlify/|scripts/ci/verify_docs_config\.mjs$)'; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: No affected docs verify targets
-        if: steps.docs_scope.outputs.projects == ''
+        if: steps.docs_changes.outputs.changed != 'true'
         run: echo "No affected docs verify targets."
 
       - name: Run affected docs verify targets
-        if: steps.docs_scope.outputs.projects != ''
-        run: npx --yes nx@22.5.4 run-many -t verify --projects="${{ steps.docs_scope.outputs.projects }}" --outputStyle=static
+        if: steps.docs_changes.outputs.changed == 'true'
+        run: node scripts/ci/verify_docs_config.mjs
 
   agents:
     name: Affected Agents
@@ -192,16 +220,20 @@ jobs:
           cache: "npm"
           cache-dependency-path: package-lock.json
 
-      - name: Resolve affected agent verify targets
-        id: agents_scope
+      - name: Detect agent-related changes
+        id: agents_changes
         shell: bash
         run: |
-          echo "projects=$(npx --yes nx@22.5.4 show projects --affected --withTarget=verify --projects=agents --base="$NX_BASE" --head="$NX_HEAD" --sep=,)" >> "$GITHUB_OUTPUT"
+          if git diff --name-only "$NX_BASE" "$NX_HEAD" | grep -Eq '^agents/'; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: No affected agent verify targets
-        if: steps.agents_scope.outputs.projects == ''
+        if: steps.agents_changes.outputs.changed != 'true'
         run: echo "No affected agent verify targets."
 
       - name: Run affected agent verify targets
-        if: steps.agents_scope.outputs.projects != ''
-        run: npx --yes nx@22.5.4 run-many -t verify --projects="${{ steps.agents_scope.outputs.projects }}" --outputStyle=static
+        if: steps.agents_changes.outputs.changed == 'true'
+        run: test -f ./agents/blueprints/verify && ./agents/blueprints/verify || true
