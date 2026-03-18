@@ -15,8 +15,10 @@ Verify that the new `services/mcp` ConnectRPC gateway and CLI actually work end 
 - [x] (2026-03-18 06:51Z) Confirmed `services/mcp/project.json` still writes binaries to `services/bin`, while repo-local tooling expects root-level `bin/`.
 - [x] (2026-03-18 07:04Z) Reproduced the MCP runtime and CLI flows with `npx nx run mcp:generate-proto`, `npx nx run mcp:test`, `npx nx run mcp:build`, `npx nx run mcp:build-cli`, `./scripts/deploy-preflight mcp`, `./platform control-plane plan --project mcp`, and `./platform deploy --project mcp --dry-run`.
 - [x] (2026-03-18 07:04Z) Patched `services/mcp/project.json` so Nx build outputs land in repo-root `bin/` and fixed the `dev` target's `MCP_ROOT` to point at the actual repo root.
-- [ ] Close the remaining deployment-safe auth/bootstrap gap for `mcp` so the declarative deploy path is production-safe, not only dry-run validated.
+- [x] (2026-03-18 07:05Z) Added `services/mcp/README.md`, copied `platform.controlplane.json` into the Docker image, and routed `./platform mcp ...` through the repo wrapper so the root entrypoint works without rebuilding the broken full `platform-cli`.
+- [x] (2026-03-18 07:05Z) Validated authenticated `./platform mcp ... tools list` and `./platform mcp ... tools call gcp_configured_projects` against a live local server using an auto-generated key.
 - [x] (2026-03-18 07:04Z) Re-scanned for follow-up issues, reconciled ticket coverage, and created `ANM-167` for the deployment-safe auth gap.
+- [x] (2026-03-18 07:06Z) Reconciled the existing broader platform CLI source-drift blocker with `ANM-153` instead of opening a duplicate ticket.
 
 ## Surprises & Discoveries
 
@@ -35,6 +37,9 @@ Verify that the new `services/mcp` ConnectRPC gateway and CLI actually work end 
 - Observation: sandboxed local processes could not complete the MCP smoke test because binding and connecting to the localhost server required unsandboxed execution.
   Evidence: sandboxed `go run ./cmd/server` failed with `bind: operation not permitted`, and sandboxed client calls failed with `connect: operation not permitted`; the same commands worked once run outside the sandbox.
 
+- Observation: Docker validation is currently blocked by the local environment because the Docker daemon is not running.
+  Evidence: both `docker build -f services/mcp/Dockerfile -t x-mcp .` and `docker ps` failed with `Cannot connect to the Docker daemon at unix:///Users/andrewho/.docker/run/docker.sock`.
+
 ## Decision Log
 
 - Decision: start by validating and repairing the existing declarative platform path instead of introducing ArgoCD immediately.
@@ -45,6 +50,10 @@ Verify that the new `services/mcp` ConnectRPC gateway and CLI actually work end 
   Rationale: `ANM-163` successfully validated the existing local runtime and declarative deploy path, but the remaining gap is a broader production auth design question that deserves its own implementation ticket and reviewable change set.
   Date/Author: 2026-03-18 / Codex
 
+- Decision: route `./platform mcp ...` through the repo wrapper now instead of trying to rebuild the full `platform-cli` package in this slice.
+  Rationale: the broader `platform-cli` source tree is already broken and tracked in `ANM-153`; the wrapper route restores the MCP user path without broadening this task into a repo-wide CLI reconstruction.
+  Date/Author: 2026-03-18 / Codex
+
 ## Outcomes & Retrospective
 
 Completed outcomes:
@@ -53,17 +62,21 @@ Completed outcomes:
 - Local smoke tests passed for:
   - `GET /health`
   - authenticated ConnectRPC via `./bin/mcp ... tools list`
+  - authenticated ConnectRPC via `./platform mcp ... tools list`
+  - authenticated ConnectRPC via `./platform mcp ... tools call gcp_configured_projects`
   - authenticated JSON-RPC via `POST /mcp` with `tools/list`
 - Declarative deployment validation passed for:
   - `./scripts/deploy-preflight mcp`
   - `./platform control-plane plan --project mcp`
   - `./platform deploy --project mcp --dry-run`
+- Docker image wiring now includes `platform.controlplane.json` and defaults `MCP_ROOT=/app`, making config-backed tools available in containerized environments.
 - Follow-up deployment auth gap captured in `ANM-167`.
 
 Remaining gaps:
 
 - The current MCP auth model is still file-local and auto-generated, which is not yet a deployment-safe Cloud Run operator story; tracked in `ANM-167`.
-- `platform mcp ...` was wired in source but not revalidated through a freshly rebuilt `platform` binary because broader platform CLI source drift is already tracked separately in `ANM-153`.
+- The full `platform-cli` Go source tree still does not compile cleanly; that broader source-drift issue is already tracked separately in `ANM-153`.
+- Docker build/run was not validated because the local Docker daemon is unavailable in this environment.
 - Remote deployment execution has not been attempted; this slice validated the repo-aligned dry-run path only.
 
 ## Context And Orientation
@@ -139,6 +152,7 @@ Re-running the validation commands should be safe. Rebuilding should overwrite t
 - Validation continuation session UUID: `019cffb5-3acf-7193-ad5c-8e7965ec70e9`
 - Related earlier issues: `ANM-149`, `ANM-150`, `ANM-151`, `ANM-152`
 - Follow-up created during validation: `ANM-167`
+- Existing broader blocker confirmed during validation: `ANM-153`
 
 ## Interfaces And Dependencies
 

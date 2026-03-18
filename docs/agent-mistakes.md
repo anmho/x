@@ -22,6 +22,62 @@ This file is the permanent mistake memory for repository agents.
 
 ## Entries
 
+## 2026-03-18T06:24:00Z - Docs verifier missed tabbed Mintlify navigation structure
+- What happened: I added `scripts/ci/verify_docs_config.mjs`, but the first implementation only handled array-style `navigation` and reported `0 nav page entries` for the tabbed `docs.json` shape.
+- Root cause: I implemented the page collector against an older Mintlify config shape and did not verify against the actual nested `navigation.tabs[].groups[].pages[]` structure before relying on output.
+- How to avoid it: For schema-dependent validation scripts, run a real sample parse from current repository config and assert non-zero expected values in the same edit cycle.
+- What to do instead: Implement recursive traversal that handles `navigation`, `tabs`, `groups`, and `pages` nodes and verify expected page count before finalizing.
+- Verification: Updated collector recursion to traverse tabbed/grouped structures and re-ran `npm run verify:docs`, which now reports `docs config verified: docs.json (4 nav page entries)`.
+
+## 2026-03-10T09:31:51Z - Touched unrelated dirty doc content while patching Greptile guidance
+- What happened: I patched `docs/runbooks/cursor-cloud-parity.md` for Greptile guidance and accidentally removed a pre-existing duplicate `LINEAR_API_KEY` row from the user's dirty worktree.
+- Root cause: I applied the patch against the file without first checking whether adjacent hunks already had uncommitted user edits that needed to be preserved verbatim.
+- How to avoid it: When editing a dirty file, inspect the local diff around the target hunk before patching and constrain changes to the smallest possible context.
+- What to do instead: Re-read the touched hunk after patching, restore any unrelated local edits immediately, and keep the task diff scoped to the requested topic only.
+- Verification: Restored the `LINEAR_API_KEY` rows, rechecked the focused diff for `docs/runbooks/cursor-cloud-parity.md`, and kept only the Greptile-specific additions.
+
+## 2026-03-10T09:28:00Z - Ran retired docs verify mode during validation
+- What happened: I ran the retired docs-mode verify command during validation even though that command path had already been removed from expected workflow usage.
+- Root cause: I followed stale validation muscle memory from earlier plan steps instead of reconfirming current approved command surfaces before execution.
+- How to avoid it: Before running validation commands, re-check the active command surface in `package.json`, `scripts/verify`, and current policy docs for deprecated paths.
+- What to do instead: Use only current workflow/verification commands and remove deprecated command references immediately when discovered.
+- Verification: Created `ANM-128`, removed `docs` mode from `scripts/verify`, removed the retired docs-verify alias from `package.json`, and scrubbed stale command references.
+
+## 2026-03-10T08:44:00Z - Introduced duplicate constant while patching docs verifier
+- What happened: I initially edited `scripts/verify` and declared `const base` twice inside the Node docs-check snippet, which would have caused a runtime syntax error.
+- Root cause: I inserted compatibility logic quickly and missed a redundant pre-existing declaration during the same patch.
+- How to avoid it: After each inline script patch, re-read the full modified block for duplicate declarations before moving to the next file edit.
+- What to do instead: Apply the compatibility insertion in one pass and run an immediate focused diff/scan on the edited function.
+- Verification: Removed the duplicate declaration and confirmed the `verify_docs` block now parses with a single `const base` declaration.
+
+## 2026-03-10T08:41:53Z - Added non-existent agent schema path during docs refresh
+- What happened: I updated `docs/repository-architecture-deep-dive.md` to reference `agents/blueprints/agent.schema.json`, then discovered that path does not exist in this repository snapshot.
+- Root cause: I carried over an outdated repository layout assumption without verifying the actual `agents/` tree first.
+- How to avoid it: Before adding any path reference in docs, verify existence with `ls`/`find` in the target directory.
+- What to do instead: Resolve concrete paths from current filesystem state, then write doc references.
+- Verification: Rechecked `agents/` with `find`, removed the invalid path reference, and replaced it with a valid statement about current contract anchors.
+
+## 2026-03-10T06:17:16Z - Forgot to quote URL containing query string in zsh command
+- What happened: I ran `curl http://localhost:3000/api/domains?project=cloud-console` without quotes and zsh treated `?` as glob syntax, causing `no matches found`.
+- Root cause: I skipped shell-escaping for a URL with special characters.
+- How to avoid it: Always wrap URLs containing `?`, `&`, or `*` in single quotes when running shell commands.
+- What to do instead: Use `curl 'http://localhost:3000/api/domains?project=cloud-console'`.
+- Verification: Re-ran with quoted URL and reached network connectivity check correctly.
+
+## 2026-03-18T07:06:08Z - Patched services/mcp/project.json against a stale snapshot
+- What happened: I attempted an `apply_patch` against `services/mcp/project.json` using an outdated command string and the patch failed because the file had already changed to a different `MCP_ROOT` value.
+- Root cause: I reused an earlier read of the file instead of re-reading the live contents immediately before editing.
+- How to avoid it: Before every patch, re-open the exact file if I have reason to believe another agent or earlier edit may have changed it.
+- What to do instead: Read the current file, patch only the live lines, then validate with a targeted diff.
+- Verification: Re-read `services/mcp/project.json`, applied the corrected patch successfully, and validated the updated Nx build outputs plus `./platform mcp` smoke test afterward.
+
+## 2026-03-10T06:06:30Z - Used wrong frontend root path while inspecting domains implementation
+- What happened: I attempted to inspect and patch `services/omnichannel/frontend/...` for domains files, but this workspace keeps the active frontend under `apps/omnichannel/frontend/...`.
+- Root cause: I reused an older repository layout assumption from prior tasks without confirming current paths first.
+- How to avoid it: Before reading/editing files, verify path ownership with `rg --files` or `ls` in the expected subtree.
+- What to do instead: Resolve target files from current search results first, then run edits only on confirmed paths.
+- Verification: Re-ran inspection commands on `apps/omnichannel/frontend/...` and completed changes there.
+
 ## 2026-03-09T02:00:00Z - Used scripts/verify instead of Nx targets for app checks
 - What happened: CI and scripts/verify apps used custom shell logic (nx run sdk:generate-es + npm run build) instead of Nx targets.
 - Root cause: Did not treat Nx as the single source of truth for build/verify orchestration.
@@ -39,14 +95,14 @@ This file is the permanent mistake memory for repository agents.
 ## 2026-03-08T22:38:06Z - Used project-style ticket prefix instead of team-key issue identifiers
 - What happened: I initially tracked execution items as `XPLAT-*` in the ExecPlan and did not publish corresponding Linear issues before execution.
 - Root cause: I treated the project label as the issue identifier prefix and deferred external ticket creation.
-- Preventive rule/check added: Before editing plan ticket IDs, confirm team key vs project naming and run `node scripts/linear/create-issues.mjs` (dry-run first, then publish) at task start.
+- Preventive rule/check added: Before editing plan ticket IDs, confirm team key vs project naming. Use Linear MCP to create tickets at task start.
 - Verification: Updated the plan tracker to `ANM`-scoped placeholders, prepared `docs/backlog/x-platform-repo-hygiene-tickets.json`, and executed the Linear dry-run command with `--team-key ANM`.
 
-## 2026-03-08T22:29:00Z - Used compile build checks instead of platform stack command for runtime validation
-- What happened: I validated frontend changes mainly with `npm run build` before checking stack state via `./platform status`.
-- Root cause: I optimized for fast compile feedback and skipped the repository-default runtime validation command in initial checks.
-- Preventive rule/check added: For runtime/environment claims, always run and report `./platform status` (or an explicitly scoped stack command) before finalizing.
-- Verification: Added `Platform CLI First Workflow (Required)` to `AGENTS.md` and created `docs/runbooks/platform-cli-workflow.md`.
+## 2026-03-08T22:29:00Z - Used compile-only checks instead of task-scoped validation commands
+- What happened: I validated frontend changes mainly with `npm run build` without running broader task-scoped validation/workflow checks.
+- Root cause: I optimized for fast compile feedback and skipped validation commands that better matched the task scope.
+- Preventive rule/check added: For validation claims, always run and report task-scoped workflow/verification commands (`platform` workflow commands, `scripts/verify`, `scripts/deploy-preflight`) before finalizing.
+- Verification: Superseded by `ANM-126` policy update in `AGENTS.md` and `docs/runbooks/platform-cli-workflow.md` to remove local-runtime-first requirements.
 
 ## 2026-03-08T22:14:08Z - Committed in wrong repository
 - What happened: I tried to commit frontend route changes from the top-level repository, but the files live in a nested Git repository at `services/omnichannel/frontend`.
