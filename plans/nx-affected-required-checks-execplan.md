@@ -16,6 +16,9 @@ Replace coarse GitHub Actions verification buckets on `anmho/x` with stable requ
 - [x] (2026-03-18 07:12Z) Corrected the initial implementation mistake where `nx affected --projects=...` forwarded extra args into `nx:run-commands` targets; switched the workflow to `nx show projects --affected ...` plus `nx run-many`.
 - [x] (2026-03-18 07:12Z) Ran local spot checks proving docs-only changes trigger only docs verification, cloud-console no-ops for docs changes, and `services/mcp` changes scope cleanly to `mcp:verify`.
 - [ ] Inspect and record the unrelated local `agent-control-api:test` failure exposed during platform-spot validation so it is not conflated with the CI scoping change.
+- [x] (2026-03-18 07:16Z) Pushed a throwaway docs-only validation branch and confirmed the new live GitHub job names: `Affected Platform`, `Affected Apps`, `Affected Docs`, and `Affected Agents`.
+- [x] (2026-03-18 07:18Z) Identified a workflow bug from the first remote validation pass: no-op jobs still ran `npm ci` before checking affected scope, causing false failures from the branch's existing lockfile drift.
+- [ ] Patch the workflow to resolve affected scope before dependency installation, then rerun the throwaway validation branch.
 - [ ] Update GitHub branch protection on `main` to require the new stable check contexts.
 - [ ] Push a throwaway validation branch and inspect the resulting GitHub Actions/check status.
 - [ ] Reconcile the plan outcomes and `ANM-168` with the final validation evidence.
@@ -33,6 +36,9 @@ Replace coarse GitHub Actions verification buckets on `anmho/x` with stable requ
 
 - Observation: `agent-control-api:test` currently fails locally for reasons unrelated to this CI-scoping refactor.
   Evidence: `npx nx run-many -t test --projects=agent-control-api --outputStyle=static` failed with both a network resolution error for `proxy.golang.org` and build-time API mismatches around `runner.NewLocalRunner`.
+
+- Observation: the first remote validation run proved the scoped job names were correct, but unconditional `npm ci` made unaffected jobs fail before they reached the no-op logic.
+  Evidence: GitHub Actions run `23233401413` on `codex/nx-affected-validation-20260318` showed `Affected Apps`, `Affected Agents`, and `Affected Docs` failing in `Install dependencies` with `npm ci` reporting an unsynced `package-lock.json`; the failure happened before any Nx affected target step ran.
 
 ## Decision Log
 
@@ -55,6 +61,7 @@ Remaining gaps:
 
 - Branch-protection updates and live GitHub validation are still in progress.
 - `agent-control-api:test` remains broken locally; dummy validation should avoid touching that project so the scoping test isolates the workflow behavior.
+- The first live validation run must be superseded by a second pass after moving dependency installation behind affected-scope resolution.
 
 ## Context And Orientation
 
