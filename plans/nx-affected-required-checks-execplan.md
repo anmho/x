@@ -19,6 +19,9 @@ Replace coarse GitHub Actions verification buckets on `anmho/x` with stable requ
 - [x] (2026-03-18 07:16Z) Pushed a throwaway docs-only validation branch and confirmed the new live GitHub job names: `Affected Platform`, `Affected Apps`, `Affected Docs`, and `Affected Agents`.
 - [x] (2026-03-18 07:18Z) Identified a workflow bug from the first remote validation pass: no-op jobs still ran `npm ci` before checking affected scope, causing false failures from the branch's existing lockfile drift.
 - [ ] Patch the workflow to resolve affected scope before dependency installation, then rerun the throwaway validation branch.
+- [x] (2026-03-18 07:22Z) Validated that the prefilter workflow path produces a fully green no-op run on the throwaway branch (`23233613371`).
+- [x] (2026-03-18 07:24Z) Confirmed that a real docs-only rerun hits `Affected Docs`, but the job fails because the referenced verifier script exists locally and is still untracked on the branch.
+- [ ] Track the docs verifier script needed by `Affected Docs`, rerun the docs-only validation branch, and then update branch protection.
 - [ ] Update GitHub branch protection on `main` to require the new stable check contexts.
 - [ ] Push a throwaway validation branch and inspect the resulting GitHub Actions/check status.
 - [ ] Reconcile the plan outcomes and `ANM-168` with the final validation evidence.
@@ -39,6 +42,12 @@ Replace coarse GitHub Actions verification buckets on `anmho/x` with stable requ
 
 - Observation: the first remote validation run proved the scoped job names were correct, but unconditional `npm ci` made unaffected jobs fail before they reached the no-op logic.
   Evidence: GitHub Actions run `23233401413` on `codex/nx-affected-validation-20260318` showed `Affected Apps`, `Affected Agents`, and `Affected Docs` failing in `Install dependencies` with `npm ci` reporting an unsynced `package-lock.json`; the failure happened before any Nx affected target step ran.
+
+- Observation: after moving installs behind path-prefiltering, the workflow itself went green for a no-op validation run, which confirms the stable required check contexts can stay present and succeed even when no group is affected.
+  Evidence: GitHub Actions run `23233613371` completed successfully on the validation branch with `Affected Apps`, `Affected Agents`, `Affected Docs`, and `Affected Platform` all succeeding via no-op or prefilter paths.
+
+- Observation: the current docs verification failure is caused by a missing tracked file, not by the scoped-check wiring.
+  Evidence: GitHub Actions run `23233641301` failed in `Affected Docs` with `Error: Cannot find module '/home/runner/work/x/x/scripts/ci/verify_docs_config.mjs'`; local git status shows `scripts/ci/verify_docs_config.mjs` is currently untracked.
 
 ## Decision Log
 
@@ -62,6 +71,7 @@ Remaining gaps:
 - Branch-protection updates and live GitHub validation are still in progress.
 - `agent-control-api:test` remains broken locally; dummy validation should avoid touching that project so the scoping test isolates the workflow behavior.
 - The first live validation run must be superseded by a second pass after moving dependency installation behind affected-scope resolution.
+- The final docs-only validation still needs the tracked verifier script before branch protection can safely require the docs context.
 
 ## Context And Orientation
 
