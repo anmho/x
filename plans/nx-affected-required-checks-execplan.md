@@ -26,7 +26,9 @@ Replace coarse GitHub Actions verification buckets on `anmho/x` with stable requ
 - [x] (2026-03-18 07:28Z) Updated `main` branch protection to require `Affected Platform`, `Affected Apps`, and `Affected Agents` while preserving the existing review and branch-safety rules.
 - [x] (2026-03-18 07:29Z) Reconciled the final validation evidence and omission rationale in this ExecPlan for handoff.
 - [x] (2026-03-18 07:41Z) Created follow-up ticket `ANM-186`, moved it to `In Progress`, and scoped the docs-required-check unblock work.
-- [ ] Track the existing untracked `docs/mintlify` config/pages needed by `Affected Docs`, rerun live validation, and then require `Affected Docs` on `main` if the check goes green.
+- [x] (2026-03-18 07:43Z) Tracked the existing `docs/mintlify` config/pages required by `Affected Docs` and pushed them as `docs(ci): track mintlify config for affected docs`.
+- [x] (2026-03-18 07:44Z) Validated on GitHub Actions run `23234271677` that `Affected Docs` now completes successfully on the branch while unrelated `Affected Apps` and `Affected Platform` failures remain separate.
+- [x] (2026-03-18 07:49Z) Updated `main` branch protection to require `Affected Docs` in addition to the other stable affected contexts.
 
 ## Surprises & Discoveries
 
@@ -57,6 +59,9 @@ Replace coarse GitHub Actions verification buckets on `anmho/x` with stable requ
 - Observation: the docs failure is caused by the `docs/mintlify` tree being present only as local untracked files rather than tracked repository content.
   Evidence: local `git ls-files docs/mintlify/docs.json docs/mintlify/mint.json docs/mintlify/project.json` returns no tracked files, while `ls docs/mintlify` shows the expected config and page files and `node scripts/ci/verify_docs_config.mjs` succeeds locally with `docs config verified: docs.json (5 nav page entries)`.
 
+- Observation: after tracking the Mintlify tree, the docs required check is viable; the branch-wide CI failure on the current work branch is caused by unrelated app/platform target-resolution issues.
+  Evidence: GitHub Actions run `23234271677` completed `Affected Docs` successfully while `Affected Apps` failed in `Resolve affected app build targets` and `Affected Platform` failed in `Resolve affected platform test targets`.
+
 ## Decision Log
 
 - Decision: use a small number of stable GitHub job names and let Nx scope the internal work with `affected`.
@@ -73,15 +78,14 @@ Completed outcomes:
 
 - `.github/workflows/ci.yml` now exposes stable GitHub Actions job names intended for branch protection while computing actual work via Nx affected project resolution.
 - The workflow no longer relies on coarse `./scripts/verify platform|apps|docs` buckets for required checks.
-- `main` branch protection now requires the proven green contexts `Affected Platform`, `Affected Apps`, and `Affected Agents`.
+- `main` branch protection now requires `Affected Platform`, `Affected Apps`, `Affected Agents`, and `Affected Docs`.
 - Live GitHub validation established two distinct truths:
   - no-op scoped contexts stay green and present on unrelated changes
-  - docs-specific validation still has an unrelated repository-content blocker that should be fixed before requiring `Affected Docs`
-- The outstanding docs blocker is now understood precisely: the Mintlify config and page files need to be tracked in Git so GitHub runners can see them.
+  - docs-specific validation became green once the Mintlify config and page files were tracked in Git
+- The docs blocker was resolved by committing the previously local-only `docs/mintlify` tree so GitHub runners can see `docs.json` and the referenced pages.
 
 Remaining gaps:
 
-- `Affected Docs` is intentionally not required yet because the repo still lacks tracked Mintlify config on the validated branch path; `ANM-186` now covers adding that content and promoting the docs check to required once validated.
 - `agent-control-api:test` remains broken locally and on platform-triggering validation paths, but the pure docs-only run proved the required no-op context behavior independently of that separate platform issue.
 
 ## Context And Orientation
@@ -122,8 +126,8 @@ Acceptance criteria:
 - GitHub Actions exposes a stable set of Nx-aware check names on PRs.
 - Those jobs always appear, even when no relevant projects are affected.
 - The jobs scope internal work through `nx affected` rather than coarse `scripts/verify` buckets.
-- `main` branch protection requires the stable contexts that are presently viable.
-- A throwaway remote validation branch demonstrates the expected check names/statuses and isolates the remaining docs-specific blocker.
+- `main` branch protection requires all four stable affected contexts.
+- A throwaway remote validation branch and the current work-branch run demonstrate the expected check names/statuses and show that docs validation is now green.
 
 Validation commands:
 
@@ -145,6 +149,7 @@ Re-running this task should converge on the same stable required-check names and
 - Key validation runs:
   - `23233613371` no-op success run for the prefilter workflow
   - `23233739261` pure docs-only run showing green `Affected Platform` / `Affected Apps` / `Affected Agents` and the remaining `Affected Docs` content failure
+  - `23234271677` branch run showing green `Affected Docs` after tracking the Mintlify tree and confirming `main` can now require that context
 
 ## Interfaces And Dependencies
 
