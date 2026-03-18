@@ -1,0 +1,5 @@
+{
+  "name": "docs",
+  "cwd": "docs/mintlify",
+  "run": "npx --yes mint@4.2.420 dev"
+}

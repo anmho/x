@@ -1,0 +1,58 @@
+---
+title: Internal Workflows
+description: Workflows that require internal credentials or environment-specific infrastructure access.
+---
+
+# Internal Workflows
+
+These flows require project credentials and/or environment resources.
+
+## Deploy and Preflight
+
+```bash
+npm run preflight
+npm run preflight:cloud-console
+npm run preflight:omnichannel
+./platform deploy --project cloud-console --dry-run
+```
+
+Current blockers:
+
+- `preflight` fails because platform verify fails in omnichannel Go checks.
+- `preflight:omnichannel` fails in omnichannel Go checks (missing module/dependency wiring and undefined symbols).
+- `platform deploy ... --dry-run` requires provider secrets (for example `CLOUDFLARE_API_TOKEN`).
+
+## SDK Publish to Buf Registry
+
+```bash
+./scripts/sdk.sh push
+./scripts/sdk.sh publish-all
+```
+
+Required setup:
+
+- `buf registry login` with a valid Buf API token.
+- Optional `SDK_VERSION=vX.Y.Z` for explicit version creation when supported.
+
+For agent control, publish generated SDKs as the default consumption path and treat local generated output as development-only override material.
+
+## Agent Control Deployment Notes
+
+When documenting or reviewing agent-control deploy changes:
+
+- keep the public contract aligned to the ConnectRPC control-plane API
+- keep the browser/client base URL configurable via `NEXT_PUBLIC_AGENT_CONTROL_URL`
+- distinguish between SDK source selection (published BSR package versus local override) and runtime service endpoint selection (local versus deployed control plane)
+
+## Local Stack Operations
+
+```bash
+./platform status
+./platform start
+./platform logs <service>
+./platform stop
+```
+
+Current blocker:
+
+- `./platform start` currently collides on Postgres port `54322` when `supabase_db_omnichannel` is already bound to that port.

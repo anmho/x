@@ -1,0 +1,37 @@
+---
+title: Workflow Status
+description: Verified workflow status for build, test, deploy, publish, docs, and local stack operations.
+---
+
+# Workflow Status (March 10, 2026)
+
+This table reflects commands executed from `/Users/andrewho/repos/projects/x` on March 10, 2026.
+
+| Workflow | Command | Status | Notes |
+| --- | --- | --- | --- |
+| Root test | `npm run test` | Broken | No `test` script is defined in root `package.json`. |
+| Root build | `npm run build` | Broken | No `build` script is defined in root `package.json`. |
+| App verify/build | `npm run verify:apps` (with Node `24.14.0`) | Working | Cloud Console build succeeds. |
+| Platform verify | `npm run verify:platform` (with Node `24.14.0`) | Broken | Omnichannel Go tests fail due missing Go module/dependencies and undefined middleware symbols. |
+| Agent verify | `npm run verify:agents` | Broken | `agents/blueprints/verify` path is missing. |
+| Deploy preflight (platform) | `npm run preflight` (with Node `24.14.0`) | Broken | Fails through platform verify failures. |
+| Deploy preflight (cloud-console) | `npm run preflight:cloud-console` (with Node `24.14.0`) | Working | Next.js production build passes. |
+| Deploy preflight (omnichannel) | `npm run preflight:omnichannel` | Broken | Omnichannel Go checks fail (missing module/dependency wiring and undefined symbols). |
+| Stack status | `./platform status` | Working | Lists discovered services and running state. |
+| Stack start | `./platform start` | Blocked | Postgres port `54322` conflict with existing container (`supabase_db_omnichannel`). |
+| SDK lint | `./scripts/sdk.sh lint` | Working | Omnichannel Buf lint succeeds. |
+| SDK generate (ES/Go) | `./scripts/sdk.sh generate-es` / `generate-go` | Working | Omnichannel local generation succeeds. |
+| Agent control proto generate | `buf generate --template ...` from `services/agent-control-api/proto` | Working | ConnectRPC Go server stubs and local TypeScript SDK output generate from the service-local proto module. |
+| Agent control local API | `go run ./cmd/api` in `services/agent-control-api` | Working | Local control plane starts with Postgres and serves the ConnectRPC `agentcontrol.v1.AgentControlService`. |
+| SDK push/publish | `./scripts/sdk.sh push` / `publish-all` | Blocked | Requires valid `BUF_TOKEN` / `buf registry login`. |
+| Docs verify | `npm run verify:docs` (with Node `24.14.0`) | Working | Verifies docs config structure and that all navigation pages exist. |
+| Docs dev server | `npm run docs:dev` | Working (manual) | Starts Mintlify dev mode; long-running command intended for interactive use. |
+| Deploy dry-run | `./platform deploy --project cloud-console --dry-run` | Blocked | Requires secrets such as `CLOUDFLARE_API_TOKEN`. |
+
+## Prerequisites
+
+- Use Node `24.14.0` from `.nvmrc`: `nvm install && nvm use`.
+- Install dependencies: `npm install`.
+- For SDK publishing, authenticate with Buf Registry (`buf registry login`).
+- For local console-to-control-plane work, set `NEXT_PUBLIC_AGENT_CONTROL_URL=http://localhost:8090`.
+- For deploy workflows, export required cloud/provider credentials.

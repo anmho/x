@@ -2,7 +2,7 @@
 
 This ExecPlan is a living document. The sections `Progress`, `Surprises & Discoveries`, `Decision Log`, and `Outcomes & Retrospective` must be kept up to date as work proceeds.
 
-Linear ticket linkage for this plan: `ANM-168` ([issue link](https://linear.app/anmho/issue/ANM-168/medium-switch-main-branch-required-checks-to-nx-affected-ci-in-x)).
+Linear ticket linkage for this plan: `ANM-168` ([issue link](https://linear.app/anmho/issue/ANM-168/medium-switch-main-branch-required-checks-to-nx-affected-ci-in-x)), follow-up `ANM-186` ([issue link](https://linear.app/anmho/issue/ANM-186/medium-make-affected-docs-required-check-eligible-in-x)).
 
 ## Purpose / Big Picture
 
@@ -25,6 +25,8 @@ Replace coarse GitHub Actions verification buckets on `anmho/x` with stable requ
 - [x] (2026-03-18 07:27Z) Ran a pure docs-only validation branch diff (`23233739261`) and confirmed `Affected Apps`, `Affected Agents`, and `Affected Platform` all succeed while `Affected Docs` remains the sole failing check.
 - [x] (2026-03-18 07:28Z) Updated `main` branch protection to require `Affected Platform`, `Affected Apps`, and `Affected Agents` while preserving the existing review and branch-safety rules.
 - [x] (2026-03-18 07:29Z) Reconciled the final validation evidence and omission rationale in this ExecPlan for handoff.
+- [x] (2026-03-18 07:41Z) Created follow-up ticket `ANM-186`, moved it to `In Progress`, and scoped the docs-required-check unblock work.
+- [ ] Track the existing untracked `docs/mintlify` config/pages needed by `Affected Docs`, rerun live validation, and then require `Affected Docs` on `main` if the check goes green.
 
 ## Surprises & Discoveries
 
@@ -52,6 +54,9 @@ Replace coarse GitHub Actions verification buckets on `anmho/x` with stable requ
 - Observation: after tracking the verifier script, `Affected Docs` still fails for a separate repository-content issue: the branch does not contain `docs/mintlify/docs.json` or `docs/mintlify/mint.json`.
   Evidence: GitHub Actions run `23233739261` failed in `Affected Docs` with `error: missing docs/mintlify/docs.json or docs/mintlify/mint.json`, while the other three stable contexts all completed successfully.
 
+- Observation: the docs failure is caused by the `docs/mintlify` tree being present only as local untracked files rather than tracked repository content.
+  Evidence: local `git ls-files docs/mintlify/docs.json docs/mintlify/mint.json docs/mintlify/project.json` returns no tracked files, while `ls docs/mintlify` shows the expected config and page files and `node scripts/ci/verify_docs_config.mjs` succeeds locally with `docs config verified: docs.json (5 nav page entries)`.
+
 ## Decision Log
 
 - Decision: use a small number of stable GitHub job names and let Nx scope the internal work with `affected`.
@@ -72,10 +77,11 @@ Completed outcomes:
 - Live GitHub validation established two distinct truths:
   - no-op scoped contexts stay green and present on unrelated changes
   - docs-specific validation still has an unrelated repository-content blocker that should be fixed before requiring `Affected Docs`
+- The outstanding docs blocker is now understood precisely: the Mintlify config and page files need to be tracked in Git so GitHub runners can see them.
 
 Remaining gaps:
 
-- `Affected Docs` is intentionally not required yet because the repo still lacks tracked Mintlify config on the validated branch path. Existing docs CI follow-up should be handled before adding that context to protection.
+- `Affected Docs` is intentionally not required yet because the repo still lacks tracked Mintlify config on the validated branch path; `ANM-186` now covers adding that content and promoting the docs check to required once validated.
 - `agent-control-api:test` remains broken locally and on platform-triggering validation paths, but the pure docs-only run proved the required no-op context behavior independently of that separate platform issue.
 
 ## Context And Orientation
@@ -134,7 +140,7 @@ Re-running this task should converge on the same stable required-check names and
 
 ## Artifacts And Notes
 
-- Linear issue: `ANM-168`
+- Linear issues: `ANM-168`, `ANM-186`
 - Session UUID: `019cffb5-6166-7b41-9c23-db12149403ea`
 - Key validation runs:
   - `23233613371` no-op success run for the prefilter workflow
