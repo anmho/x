@@ -47,7 +47,7 @@ How to read this:
 ## Runtime languages
 
 - TypeScript/Node.js (Next.js frontends, scripts, MCP servers, agent runners).
-- Go (platform CLI, access-api, omnichannel backend/worker).
+- Go (platform CLI, omnichannel backend/worker).
 - Rust (`apps/x-stream-bot`, `cli`).
 - Python (config materialization utility under `scripts/ci/`).
 - Shell (`platform`, `scripts/*`, operational wrappers).
@@ -65,7 +65,7 @@ How to read this:
 
 - `./platform` wrapper script + `platform-cli` Go source.
 - `make` orchestrates common tasks (`setup`, `test`, `build`, `stack-up`, etc.).
-- `scripts/verify`, `scripts/doctor`, `scripts/dev-stack`, `scripts/deploy-preflight`.
+- `scripts/verify`, `scripts/dev-stack`, `scripts/deploy-preflight`, `scripts/clean`, `scripts/sdk.sh`.
 - Supabase + Temporal used by omnichannel local stack workflows.
 
 ## 4. Module-by-Module Explanation
@@ -74,7 +74,7 @@ How to read this:
 
 - `README.md`: broad architecture and mission overview.
 - `AGENTS.md`: execution policy for agents/coding workflow.
-- `PLANS.md`: rules for writing/updating ExecPlans.
+- `plans/*.md`: task-scoped ExecPlans and execution logs.
 - `Makefile`: top-level operator commands.
 - `platform`: shell entrypoint that builds/runs Go CLI in `platform-cli`.
 - `package.json`: workspace config and cross-repo npm scripts.
@@ -87,7 +87,7 @@ Primary product UI package currently present:
 
 What it does:
 - Hosts admin/operator routes for notifications, templates, deployments, API keys, omnichannel operations, and bots.
-- Shares navigation and UX patterns with `services/omnichannel/frontend` (mirrored shell behavior).
+- Shares navigation and UX patterns with other console surfaces.
 
 Key directories:
 - `app/`: route handlers, pages, and shared UI components.
@@ -103,30 +103,17 @@ Each app is self-contained with its frontend, backend (if any), and deployment d
 Purpose:
 - Web dashboard for service access and API key workflows.
 
-### `apps/access-api`
+### `services/omnichannel`
 
 Purpose:
-- API key issuance, key lifecycle operations, and policy-check endpoint used by platform/app clients.
-
-Key behavior:
-- Exposes health, key mint/list/rotate/revoke, audit, and policy-check APIs.
-- Uses Postgres via `pgx`.
-
-Key paths:
-- `cmd/api/main.go`: service entrypoint.
-- `README.md`: endpoint/auth/config quick reference.
-
-### `apps/omnichannel`
-
-Purpose:
-- Notification platform stack with API + worker + frontend + infra scripts.
+- Notification platform stack with API + worker + supporting runtime modules.
 
 Submodules:
 - `backend/`: Go API + Temporal worker runtime.
-- `frontend/`: Next.js operations surface (mirrors cloud-console patterns).
-- `infra/`: docker/init assets.
+- `backend-api/`: API-focused module split.
+- `backend-worker/`: worker-focused module split.
 - `scripts/`: stack helpers and SDK publishing helpers.
-- `supabase/`: migrations and local DB-related artifacts.
+- `stack.json`: service registration for local stack discovery.
 
 Backend internals (high-level):
 - `internal/api`: HTTP routes/middleware/handlers.
@@ -165,8 +152,7 @@ Purpose:
 - Shared libraries/SDKs intended for reuse.
 
 Current notable packages:
-- `packages/sdk-access`: lightweight TypeScript client for Access API.
-- `packages/iac`: integration/types scaffolding for infra-related abstractions.
+- `packages/sdk-omnichannel`: shared SDK/client package for omnichannel integrations.
 
 ## `platform-cli/` and `platform`
 
@@ -188,13 +174,12 @@ Purpose:
 - Lower-level automation and verification entrypoints used directly or behind `make`/`platform`.
 
 Key scripts:
-- `scripts/doctor`: local environment smoke checks.
-- `scripts/verify`: multi-mode verification (platform/apps/docs/agents).
+- `scripts/verify`: multi-mode verification (platform/apps/agents).
 - `scripts/dev-stack`: process supervisor for local multi-service stack.
 - `scripts/deploy-preflight`: pre-deploy checks.
-- `scripts/ci/materialize_platform_configs.py`: declarative config materialization/check.
-- `scripts/ci/generate-project-registry.mjs`: project and MCP registry generation.
-- `scripts/new`: scaffolding helper for new modules.
+- `scripts/clean`: local artifact cleanup (`--dry-run`, `--full`).
+- `scripts/sdk.sh`: Nx-backed SDK generation/publish wrapper.
+- `scripts/ci/materialize_platform_configs.py`: declarative config materialization/check that writes `platform.projects*.json`, `platform.controlplane*.json`, and `infra/platform/deployments.generated.json`.
 
 ## `infra/`
 
@@ -206,8 +191,6 @@ Key files:
 - `infra/platform/integrations.overrides.json`: mutable integration overrides.
 - generated outputs:
   - `infra/platform/deployments.generated.json`
-  - `infra/platform/registry/projects.generated.json`
-  - `infra/platform/mcp/servers.generated.json`
 
 ## `mcp/`
 
@@ -230,9 +213,8 @@ Purpose:
 - Contract/source-of-truth definitions for cross-module interfaces.
 
 Current contract anchors:
-- Protobuf: `protos/access/v1/access.proto`
-- OpenAPI: `schemas/access-api/openapi.yaml`
-- Agent schema: `schemas/agents/agent-blueprint.schema.json`
+- Omnichannel proto module: `services/omnichannel/backend/proto/`
+- Root `schemas/` is currently available for future OpenAPI/JSON schema additions.
 
 Usage:
 - Drives consistency for clients, services, and agent contract validation.
@@ -254,7 +236,7 @@ Purpose:
 - Living execution plans (ExecPlans) for implementation tasks.
 
 Governance:
-- Structure and maintenance rules are defined in `PLANS.md`.
+- Structure and maintenance rules are documented in `AGENTS.md` and reflected in existing files under `plans/`.
 
 ## `cli/`
 
@@ -280,13 +262,12 @@ Purpose:
 5. Provider adapter (email/app/push/etc.) delivers or relays.
 6. Status/history visible in frontend status/deployments workflows.
 
-## Flow B: API key and policy check
+## Flow B: Token and runtime access flow
 
-1. Operator or automation calls Access API key endpoints.
-2. Access API stores key metadata/scope and returns secret material (where applicable).
-3. Downstream services use issued key for scoped requests.
-4. Policy checks happen through `/v1/policy/check`.
-5. Audit logs provide lifecycle trail.
+1. Operator or automation mints/list/revokes tokens via `./platform tokens ...`.
+2. Runtime services validate token scope and ownership for incoming requests.
+3. Downstream calls use scoped credentials for service-specific operations.
+4. Stack logs and status checks provide operational visibility.
 
 ## Flow C: Local stack lifecycle
 
@@ -301,7 +282,7 @@ Alternative supervisor mode:
 
 ## Flow D: Agent issue triage
 
-1. `agents/code-agents/run.mjs` ingests issues (Linear API or JSON).
+1. External automation ingests issues (Linear API or JSON) for code-agent triage.
 2. Router maps each issue to feature/bugfix/refactor profile.
 3. Briefs are emitted into `agents/code-agents/out/briefs`.
 4. Contributors/automation consume briefs for implementation execution.
@@ -321,7 +302,6 @@ Alternative supervisor mode:
 ```bash
 make setup
 ./platform status
-scripts/doctor
 ```
 
 ## Validation paths
@@ -330,7 +310,6 @@ scripts/doctor
 scripts/verify all
 scripts/verify platform
 scripts/verify apps
-scripts/verify docs
 scripts/verify agents
 ```
 
@@ -338,7 +317,6 @@ scripts/verify agents
 
 ```bash
 make build
-./platform build
 npm --prefix apps/cloud-console run build
 ```
 
@@ -347,7 +325,7 @@ npm --prefix apps/cloud-console run build
 ```bash
 ./platform start
 ./platform status
-./platform logs access-api
+./platform logs omnichannel-api
 ./platform stop
 ```
 
@@ -373,7 +351,7 @@ Rule of thumb:
 
 Add a new:
 - UI app: `apps/<name>`
-- backend service/worker: `apps/<name>/backend` or `apps/<name>`
+- backend service/worker: `services/<name>` or `apps/<name>/backend`
 - shared SDK/library: `packages/<name>`
 - agent blueprint: `agents/blueprints/<agent-id>/`
 - schema/contract: `schemas/` or `protos/`
@@ -385,9 +363,8 @@ Add a new:
 
 ## 10. Quick Orientation Checklist for New Contributors
 
-1. Read `AGENTS.md`, `PLANS.md`, and this document.
-2. Run `scripts/doctor`.
+1. Read `AGENTS.md` and this document.
+2. Run `scripts/verify platform`.
 3. Start stack with `./platform start` and verify with `./platform status`.
 4. Review `README.md` plus the specific module README you will touch.
 5. Create/update an ExecPlan in `plans/` and sync the corresponding Linear issue.
-

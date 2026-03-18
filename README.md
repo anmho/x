@@ -47,10 +47,10 @@ The repository uses one canonical layout:
 
 Current notable components:
 
-- `services/omnichannel/`: notifications platform stack (backend, worker, frontend, infra).
-- `services/access-api/`: API key issuance and policy service.
-- `apps/cloud-console/`: dashboard for API key and service access workflows.
-- `services/x_stream_bot/`: Rust stream bridge for X signals.
+- `services/omnichannel/`: notifications platform stack (backend API/worker/runtime modules).
+- `apps/cloud-console/`: dashboard for service access and operations workflows.
+- `packages/sdk-omnichannel/`: shared SDK package for omnichannel integrations.
+- `apps/x-stream-bot/`: Rust stream bridge for X signals.
 
 ## Cloud Console Dashboard (`cloud.anmhela.com`)
 
@@ -113,7 +113,7 @@ Bot capabilities:
 Proposed implementation modules:
 
 - `apps/cloud-console`: cloud console frontend (service picker, key management, docs shell)
-- `services/access-api`: backend for key issuance, policy enforcement, and audit logs
+- `services/omnichannel`: backend runtime for notification delivery and orchestration
 - `packages/sdk-*`: generated clients and helper libraries
 - `docs/mintlify`: source content for API docs and usage guides
 
@@ -193,9 +193,9 @@ Project X standardizes foundational capabilities across all products:
 To reduce command sprawl, use these two primary entrypoints:
 
 - `make`: high-level repo tasks (`make setup`, `make test`, `make build`, `make stack-up`).
-- `platform`: platform operations (`./platform start`, `./platform deploy --project ...`, `./platform tokens ...`).
+- `platform`: scaffolding and service/resource workflows (`platform create ...`, `platform deploy --project ...`, `platform tokens ...`, `platform project ...`).
 
-Low-level scripts in `scripts/` still exist, but should be treated as implementation details behind `make` and `platform`.
+Low-level scripts in `scripts/` still exist, but should be treated as implementation details behind `make` and platform-cli workflow commands.
 
 ## Project Registry and MCP Observability
 
@@ -229,14 +229,9 @@ Validate generated config is current with:
 
 - `python3 scripts/ci/materialize_platform_configs.py --check`
 
-Generate canonical registry artifacts with:
+Generate canonical platform artifacts with:
 
 - `make project-registry`
-
-Generated outputs:
-
-- `infra/platform/registry/projects.generated.json`
-- `infra/platform/mcp/servers.generated.json`
 
 MCP servers:
 
@@ -379,18 +374,22 @@ Use these commands from repo root:
 nvm install
 nvm use
 npm install
-npm run doctor
 npm run verify
+npm run verify:docs
 npm run preflight
 ```
 
 Node dependencies use a single root lockfile; see `docs/runbooks/node-dependencies.md`.
 
+Audited working/broken status for every core workflow is tracked in:
+
+- `docs/runbooks/workflow-status-matrix.md`
+- `docs/mintlify/workflow-status.mdx`
+
 For target-specific checks:
 
 - `npm run preflight:cloud-console`
 - `npm run preflight:omnichannel`
-- `npm run preflight:access-api`
 
 CI workflows:
 
@@ -404,16 +403,14 @@ Project X is in early foundation stage.
 Completed in this repo (March 2026):
 
 - Canonical top-level structure and ownership guide: `docs/repo-structure.md`
-- Scaffolding command set in `scripts/new`:
-  - app/service/package/proto/agent/mobile-app/cloud-console/smart-contract
-- Cloud Console MVP starter modules:
+- Core operator/scaffolding surfaces:
+  - `platform-cli` command modules (create/project/tokens/notifications/control-plane/deploy/docs)
+  - `scripts/verify` and `scripts/deploy-preflight` for validation gates
+- Active product/runtime modules:
   - `apps/cloud-console`
-  - `services/access-api`
-  - `protos/access/v1/access.proto`
-  - `schemas/access-api/openapi.yaml`
-  - `docs/mintlify/services/access-api.mdx`
+  - `services/omnichannel`
+  - `packages/sdk-omnichannel`
 - Reliability and release gates:
-  - `scripts/doctor`
   - `scripts/verify`
   - `scripts/deploy-preflight`
   - `.github/workflows/ci.yml`

@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { BarChart3, Check, CheckCircle2, Cloud, CreditCard, Key, Link2, Rocket, Settings, Shield, Unlink } from 'lucide-react';
+import { BarChart3, Check, CheckCircle2, Cloud, CreditCard, KeyRound, Link2, Rocket, Settings, Shield, Unlink } from 'lucide-react';
 import { AppNav } from '@/app/_components/app-nav';
 
-type Tab = 'general' | 'integrations' | 'security';
+type Tab = 'general' | 'integrations' | 'security' | 'auth';
 
 type GCloudStatus = 'disconnected' | 'connecting' | 'connected';
 
@@ -27,7 +27,7 @@ export default function SettingsPage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const t = params.get('tab');
-    if (t === 'integrations' || t === 'security' || t === 'general') setTab(t);
+    if (t === 'integrations' || t === 'security' || t === 'general' || t === 'auth') setTab(t);
   }, []);
 
   function handleConnectGCloud() {
@@ -53,6 +53,7 @@ export default function SettingsPage() {
     { id: 'general', label: 'General', icon: <Settings className="h-4 w-4" /> },
     { id: 'integrations', label: 'Integrations', icon: <Link2 className="h-4 w-4" /> },
     { id: 'security', label: 'Security', icon: <Shield className="h-4 w-4" /> },
+    { id: 'auth', label: 'Auth', icon: <KeyRound className="h-4 w-4" /> },
   ];
 
   return (
@@ -96,6 +97,16 @@ export default function SettingsPage() {
               />
             )}
             {tab === 'security' && <SecurityTab />}
+            {tab === 'auth' && (
+              <AuthTab
+                gcloudStatus={gcloudStatus}
+                gcloudEmail={gcloudEmail}
+                gcloudProject={gcloudProject}
+                connectError={connectError}
+                onConnect={handleConnectGCloud}
+                onDisconnect={handleDisconnect}
+              />
+            )}
           </div>
         </div>
       </main>
@@ -283,22 +294,220 @@ function IntegrationsTab({
 }
 
 
+function AuthTab({
+  gcloudStatus,
+  gcloudEmail,
+  gcloudProject,
+  connectError,
+  onConnect,
+  onDisconnect,
+}: {
+  gcloudStatus: GCloudStatus;
+  gcloudEmail: string;
+  gcloudProject: string;
+  connectError: string | null;
+  onConnect: () => void;
+  onDisconnect: () => void;
+}) {
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-zinc-400">
+        Connected accounts and identity providers used to authenticate with external services.
+      </p>
+
+      {/* Google Cloud */}
+      <section className="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900">
+              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12.34 9.27L14.8 6.81C14.17 6.29 13.38 6 12.5 6C10.57 6 9 7.57 9 9.5C9 9.67 9.01 9.83 9.04 10H6.04C6.01 9.84 6 9.67 6 9.5C6 5.91 8.91 3 12.5 3C14.32 3 15.96 3.74 17.14 4.93L15.55 6.52C15.16 6.2 14.73 5.96 14.27 5.81" fill="#4285F4"/>
+                <path d="M17.96 9.5C17.96 9.83 17.93 10.16 17.87 10.47H15.04C15.1 10.16 15.13 9.83 15.13 9.5C15.13 8.63 14.83 7.83 14.33 7.19L15.92 5.6C17.18 6.76 17.96 8.05 17.96 9.5Z" fill="#EA4335"/>
+                <path d="M12.5 13C14.43 13 16 11.43 16 9.5H13C13 10.33 12.33 11 11.5 11C11.17 11 10.86 10.89 10.62 10.69L8.17 13.14C8.83 13.69 9.63 14 10.5 14C11.2 14 11.87 13.79 12.42 13.43L12.5 13Z" fill="#34A853"/>
+                <path d="M9 9.5C9 8.67 9.31 7.91 9.82 7.34L7.87 5.39C6.72 6.55 6 8.15 6 9.5H9Z" fill="#FBBC05"/>
+              </svg>
+            </div>
+            <div>
+              <p className="font-medium text-zinc-100">Google Cloud</p>
+              <p className="mt-0.5 text-sm text-zinc-400">
+                OAuth identity used to manage GCP resources on your behalf.
+              </p>
+            </div>
+          </div>
+
+          {gcloudStatus === 'connected' ? (
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-xs text-emerald-300">
+              <CheckCircle2 className="h-3 w-3" /> Connected
+            </span>
+          ) : (
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-zinc-700 bg-zinc-900 px-2.5 py-1 text-xs text-zinc-500">
+              Not connected
+            </span>
+          )}
+        </div>
+
+        {gcloudStatus === 'connected' && (
+          <div className="mt-4 rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <p className="text-xs text-zinc-500">Account</p>
+                <p className="mt-1 text-zinc-200">{gcloudEmail}</p>
+              </div>
+              <div>
+                <p className="text-xs text-zinc-500">GCP Project</p>
+                <p className="mt-1 text-zinc-200">{gcloudProject}</p>
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <p className="mb-2 text-xs font-medium text-zinc-500">Granted scopes</p>
+              <div className="space-y-1">
+                {GCLOUD_SCOPES.map((scope) => (
+                  <div key={scope} className="flex items-center gap-2 text-xs text-zinc-400">
+                    <Check className="h-3 w-3 shrink-0 text-emerald-400" />
+                    <span className="font-mono">{scope}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {connectError && (
+          <p className="mt-3 rounded-md border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-300">{connectError}</p>
+        )}
+
+        <div className="mt-4 flex gap-2">
+          {gcloudStatus !== 'connected' ? (
+            <button
+              onClick={onConnect}
+              disabled={gcloudStatus === 'connecting'}
+              className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-60 transition-colors"
+            >
+              {gcloudStatus === 'connecting' ? (
+                <>
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                  Connecting…
+                </>
+              ) : (
+                <>
+                  <Cloud className="h-4 w-4" />
+                  Connect with Google Cloud
+                </>
+              )}
+            </button>
+          ) : (
+            <button
+              onClick={onDisconnect}
+              className="inline-flex items-center gap-2 rounded-md border border-zinc-700 bg-zinc-900 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-rose-400 transition-colors"
+            >
+              <Unlink className="h-4 w-4" />
+              Disconnect
+            </button>
+          )}
+        </div>
+      </section>
+
+      {/* PostHog — placeholder */}
+      <section className="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900">
+              <BarChart3 className="h-5 w-5 text-orange-400" />
+            </div>
+            <div>
+              <p className="font-medium text-zinc-100">PostHog</p>
+              <p className="mt-0.5 text-sm text-zinc-400">
+                Product analytics and session recording. Connect your PostHog project to track usage events.
+              </p>
+            </div>
+          </div>
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-zinc-700 bg-zinc-900 px-2.5 py-1 text-xs text-zinc-500">
+            Not connected
+          </span>
+        </div>
+        <div className="mt-4">
+          <button
+            disabled
+            className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white opacity-40 cursor-not-allowed"
+          >
+            Connect PostHog
+          </button>
+          <p className="mt-2 text-xs text-zinc-600">PostHog integration coming soon.</p>
+        </div>
+      </section>
+
+      {/* Stripe — placeholder */}
+      <section className="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900">
+              <CreditCard className="h-5 w-5 text-violet-400" />
+            </div>
+            <div>
+              <p className="font-medium text-zinc-100">Stripe</p>
+              <p className="mt-0.5 text-sm text-zinc-400">
+                Payment processing and billing. Link a Stripe account to manage subscriptions and invoices.
+              </p>
+            </div>
+          </div>
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-zinc-700 bg-zinc-900 px-2.5 py-1 text-xs text-zinc-500">
+            Not connected
+          </span>
+        </div>
+        <div className="mt-4">
+          <button
+            disabled
+            className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white opacity-40 cursor-not-allowed"
+          >
+            Connect Stripe
+          </button>
+          <p className="mt-2 text-xs text-zinc-600">Stripe integration coming soon.</p>
+        </div>
+      </section>
+
+      {/* Vercel — placeholder */}
+      <section className="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900">
+              <Rocket className="h-5 w-5 text-zinc-200" />
+            </div>
+            <div>
+              <p className="font-medium text-zinc-100">Vercel</p>
+              <p className="mt-0.5 text-sm text-zinc-400">
+                Deploy and manage frontend projects. Connect a Vercel account to trigger deployments from the control plane.
+              </p>
+            </div>
+          </div>
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-zinc-700 bg-zinc-900 px-2.5 py-1 text-xs text-zinc-500">
+            Not connected
+          </span>
+        </div>
+        <div className="mt-4">
+          <button
+            disabled
+            className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white opacity-40 cursor-not-allowed"
+          >
+            Connect Vercel
+          </button>
+          <p className="mt-2 text-xs text-zinc-600">Vercel integration coming soon.</p>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+
 function SecurityTab() {
   return (
     <div className="space-y-4">
       <section className="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
-        <h2 className="mb-4 text-sm font-semibold text-zinc-200">API Keys</h2>
+        <h2 className="mb-4 text-sm font-semibold text-zinc-200">Secrets</h2>
         <p className="text-sm text-zinc-400">
-          Personal API keys grant programmatic access to the platform API. Prefer using project-scoped secrets for service-to-service calls.
+          Project-scoped secrets for service-to-service calls.
         </p>
         <div className="mt-4 flex gap-2">
-          <a
-            href="/api-keys"
-            className="inline-flex items-center gap-2 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-200 hover:bg-zinc-800 transition-colors"
-          >
-            <Key className="h-4 w-4" />
-            Manage API keys
-          </a>
           <a
             href="/secrets"
             className="inline-flex items-center gap-2 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-200 hover:bg-zinc-800 transition-colors"
