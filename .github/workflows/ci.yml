@@ -65,28 +65,33 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Resolve affected platform verify targets
+        id: platform_verify_scope
+        shell: bash
+        run: |
+          echo "projects=$(npx --yes nx@22.5.4 show projects --affected --withTarget=verify --projects=platform,sdk,mcp,omnichannel-api,omnichannel-worker --base="$NX_BASE" --head="$NX_HEAD" --sep=,)" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve affected platform test targets
+        id: platform_test_scope
+        shell: bash
+        run: |
+          echo "projects=$(npx --yes nx@22.5.4 show projects --affected --withTarget=test --projects=agent-control-api --base="$NX_BASE" --head="$NX_HEAD" --sep=,)" >> "$GITHUB_OUTPUT"
+
       - name: Install dependencies
+        if: steps.platform_verify_scope.outputs.projects != '' || steps.platform_test_scope.outputs.projects != ''
         run: npm ci
 
+      - name: No affected platform targets
+        if: steps.platform_verify_scope.outputs.projects == '' && steps.platform_test_scope.outputs.projects == ''
+        run: echo "No affected platform targets."
+
       - name: Run affected platform verify targets
-        shell: bash
-        run: |
-          projects="$(npx nx show projects --affected --withTarget=verify --projects=platform,sdk,mcp,omnichannel-api,omnichannel-worker --base="$NX_BASE" --head="$NX_HEAD" --sep=,)"
-          if [[ -z "$projects" ]]; then
-            echo "No affected platform verify targets."
-            exit 0
-          fi
-          npx nx run-many -t verify --projects="$projects" --outputStyle=static
+        if: steps.platform_verify_scope.outputs.projects != ''
+        run: npx nx run-many -t verify --projects="${{ steps.platform_verify_scope.outputs.projects }}" --outputStyle=static
 
       - name: Run affected platform test targets
-        shell: bash
-        run: |
-          projects="$(npx nx show projects --affected --withTarget=test --projects=agent-control-api --base="$NX_BASE" --head="$NX_HEAD" --sep=,)"
-          if [[ -z "$projects" ]]; then
-            echo "No affected platform test targets."
-            exit 0
-          fi
-          npx nx run-many -t test --projects="$projects" --outputStyle=static
+        if: steps.platform_test_scope.outputs.projects != ''
+        run: npx nx run-many -t test --projects="${{ steps.platform_test_scope.outputs.projects }}" --outputStyle=static
 
   apps:
     name: Affected Apps
@@ -107,28 +112,33 @@ jobs:
           cache: "npm"
           cache-dependency-path: package-lock.json
 
+      - name: Resolve affected app verify targets
+        id: app_verify_scope
+        shell: bash
+        run: |
+          echo "projects=$(npx --yes nx@22.5.4 show projects --affected --withTarget=verify --projects=cloud-console --base="$NX_BASE" --head="$NX_HEAD" --sep=,)" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve affected app build targets
+        id: app_build_scope
+        shell: bash
+        run: |
+          echo "projects=$(npx --yes nx@22.5.4 show projects --affected --withTarget=build --projects=omnichannel-frontend,agent-runner,agent-tools --base="$NX_BASE" --head="$NX_HEAD" --sep=,)" >> "$GITHUB_OUTPUT"
+
       - name: Install dependencies
+        if: steps.app_verify_scope.outputs.projects != '' || steps.app_build_scope.outputs.projects != ''
         run: npm ci
 
+      - name: No affected app targets
+        if: steps.app_verify_scope.outputs.projects == '' && steps.app_build_scope.outputs.projects == ''
+        run: echo "No affected app targets."
+
       - name: Run affected app verify targets
-        shell: bash
-        run: |
-          projects="$(npx nx show projects --affected --withTarget=verify --projects=cloud-console --base="$NX_BASE" --head="$NX_HEAD" --sep=,)"
-          if [[ -z "$projects" ]]; then
-            echo "No affected app verify targets."
-            exit 0
-          fi
-          npx nx run-many -t verify --projects="$projects" --outputStyle=static
+        if: steps.app_verify_scope.outputs.projects != ''
+        run: npx nx run-many -t verify --projects="${{ steps.app_verify_scope.outputs.projects }}" --outputStyle=static
 
       - name: Run affected app build targets
-        shell: bash
-        run: |
-          projects="$(npx nx show projects --affected --withTarget=build --projects=omnichannel-frontend,agent-runner,agent-tools --base="$NX_BASE" --head="$NX_HEAD" --sep=,)"
-          if [[ -z "$projects" ]]; then
-            echo "No affected app build targets."
-            exit 0
-          fi
-          npx nx run-many -t build --projects="$projects" --outputStyle=static
+        if: steps.app_build_scope.outputs.projects != ''
+        run: npx nx run-many -t build --projects="${{ steps.app_build_scope.outputs.projects }}" --outputStyle=static
 
   docs:
     name: Affected Docs
@@ -149,18 +159,19 @@ jobs:
           cache: "npm"
           cache-dependency-path: package-lock.json
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run affected docs verify targets
+      - name: Resolve affected docs verify targets
+        id: docs_scope
         shell: bash
         run: |
-          projects="$(npx nx show projects --affected --withTarget=verify --projects=docs --base="$NX_BASE" --head="$NX_HEAD" --sep=,)"
-          if [[ -z "$projects" ]]; then
-            echo "No affected docs verify targets."
-            exit 0
-          fi
-          npx nx run-many -t verify --projects="$projects" --outputStyle=static
+          echo "projects=$(npx --yes nx@22.5.4 show projects --affected --withTarget=verify --projects=docs --base="$NX_BASE" --head="$NX_HEAD" --sep=,)" >> "$GITHUB_OUTPUT"
+
+      - name: No affected docs verify targets
+        if: steps.docs_scope.outputs.projects == ''
+        run: echo "No affected docs verify targets."
+
+      - name: Run affected docs verify targets
+        if: steps.docs_scope.outputs.projects != ''
+        run: npx --yes nx@22.5.4 run-many -t verify --projects="${{ steps.docs_scope.outputs.projects }}" --outputStyle=static
 
   agents:
     name: Affected Agents
@@ -181,15 +192,16 @@ jobs:
           cache: "npm"
           cache-dependency-path: package-lock.json
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run affected agent verify targets
+      - name: Resolve affected agent verify targets
+        id: agents_scope
         shell: bash
         run: |
-          projects="$(npx nx show projects --affected --withTarget=verify --projects=agents --base="$NX_BASE" --head="$NX_HEAD" --sep=,)"
-          if [[ -z "$projects" ]]; then
-            echo "No affected agent verify targets."
-            exit 0
-          fi
-          npx nx run-many -t verify --projects="$projects" --outputStyle=static
+          echo "projects=$(npx --yes nx@22.5.4 show projects --affected --withTarget=verify --projects=agents --base="$NX_BASE" --head="$NX_HEAD" --sep=,)" >> "$GITHUB_OUTPUT"
+
+      - name: No affected agent verify targets
+        if: steps.agents_scope.outputs.projects == ''
+        run: echo "No affected agent verify targets."
+
+      - name: Run affected agent verify targets
+        if: steps.agents_scope.outputs.projects != ''
+        run: npx --yes nx@22.5.4 run-many -t verify --projects="${{ steps.agents_scope.outputs.projects }}" --outputStyle=static
