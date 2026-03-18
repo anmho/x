@@ -20,6 +20,13 @@ This file is the permanent mistake memory for repository agents.
 - Verification:
 ```
 
+## 2026-03-18T08:02:00Z - Ran `git add` and `git commit` in parallel
+- What happened: I used the parallel tool to launch `git add` and `git commit` at the same time while trying to record the final ExecPlan update, and `git commit` failed on `.git/index.lock`.
+- Root cause: I treated dependent git write operations as parallel-safe even though both mutate the repository index.
+- How to avoid it: Never parallelize git commands that write repository state; only parallelize independent read-only inspection commands.
+- What to do instead: Run `git add`, wait for it to finish, then run `git commit` sequentially.
+- Verification: After this entry, I re-ran the plan-only commit flow sequentially instead of through the parallel wrapper.
+
 ## Entries
 
 ## 2026-03-18T06:24:00Z - Docs verifier missed tabbed Mintlify navigation structure
