@@ -8,9 +8,43 @@ on:
   pull_request:
 
 jobs:
+  shas:
+    name: Resolve Nx SHAs
+    runs-on: ubuntu-latest
+    outputs:
+      nx_base: ${{ steps.resolve.outputs.nx_base }}
+      nx_head: ${{ steps.resolve.outputs.nx_head }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve base and head SHAs
+        id: resolve
+        shell: bash
+        run: |
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            echo "nx_base=${{ github.event.pull_request.base.sha }}" >> "$GITHUB_OUTPUT"
+            echo "nx_head=${{ github.event.pull_request.head.sha }}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [[ -n "${{ github.event.before }}" && "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ]]; then
+            echo "nx_base=${{ github.event.before }}" >> "$GITHUB_OUTPUT"
+            echo "nx_head=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "nx_base=$(git rev-parse HEAD~1)" >> "$GITHUB_OUTPUT"
+          echo "nx_head=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+
   platform:
     name: Affected Platform
+    needs: shas
     runs-on: ubuntu-latest
+    env:
+      NX_BASE: ${{ needs.shas.outputs.nx_base }}
+      NX_HEAD: ${{ needs.shas.outputs.nx_head }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -27,19 +61,7 @@ jobs:
         id: platform_changes
         shell: bash
         run: |
-          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
-            BASE_SHA="${{ github.event.pull_request.base.sha }}"
-            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
-          else
-            BASE_SHA="${{ github.event.before }}"
-            HEAD_SHA="${{ github.sha }}"
-          fi
-
-          if [[ -z "${BASE_SHA}" || "${BASE_SHA}" == "0000000000000000000000000000000000000000" ]]; then
-            BASE_SHA="$(git rev-parse HEAD^)"
-          fi
-
-          if git diff --name-only "$BASE_SHA" "$HEAD_SHA" | grep -Eq '^(\.github/workflows/ci\.yml|\.nvmrc|package\.json|package-lock\.json|scripts/|packages/)'; then
+          if git diff --name-only "$NX_BASE" "$NX_HEAD" | grep -Eq '^(\.github/workflows/ci\.yml|\.nvmrc|package\.json|package-lock\.json|scripts/|packages/|nx\.json$)'; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
           else
             echo "changed=false" >> "$GITHUB_OUTPUT"
@@ -55,7 +77,11 @@ jobs:
 
   apps:
     name: Affected Apps
+    needs: shas
     runs-on: ubuntu-latest
+    env:
+      NX_BASE: ${{ needs.shas.outputs.nx_base }}
+      NX_HEAD: ${{ needs.shas.outputs.nx_head }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -72,35 +98,38 @@ jobs:
         id: app_changes
         shell: bash
         run: |
-          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
-            BASE_SHA="${{ github.event.pull_request.base.sha }}"
-            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
-          else
-            BASE_SHA="${{ github.event.before }}"
-            HEAD_SHA="${{ github.sha }}"
-          fi
-
-          if [[ -z "${BASE_SHA}" || "${BASE_SHA}" == "0000000000000000000000000000000000000000" ]]; then
-            BASE_SHA="$(git rev-parse HEAD^)"
-          fi
-
-          if git diff --name-only "$BASE_SHA" "$HEAD_SHA" | grep -Eq '^(apps/cloud-console/|packages/|package\.json$|package-lock\.json$)'; then
+          if git diff --name-only "$NX_BASE" "$NX_HEAD" | grep -Eq '^(apps/cloud-console/|packages/|package\.json$|package-lock\.json$|nx\.json$)'; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
           else
             echo "changed=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Run app verification
+      - name: Install dependencies
         if: steps.app_changes.outputs.changed == 'true'
-        run: ./scripts/verify apps
+        run: npm ci
 
-      - name: No affected app changes
-        if: steps.app_changes.outputs.changed != 'true'
-        run: echo "No affected app changes."
+      - name: Resolve affected app build targets
+        id: app_build_scope
+        if: steps.app_changes.outputs.changed == 'true'
+        shell: bash
+        run: |
+          echo "projects=$(npx nx show projects --affected --withTarget=build --projects=cloud-console --base="$NX_BASE" --head="$NX_HEAD" --sep=,)" >> "$GITHUB_OUTPUT"
+
+      - name: No affected app targets
+        if: steps.app_changes.outputs.changed != 'true' || steps.app_build_scope.outputs.projects == ''
+        run: echo "No affected app targets."
+
+      - name: Run affected app build targets
+        if: steps.app_build_scope.outputs.projects != ''
+        run: npx nx run-many -t build --projects="${{ steps.app_build_scope.outputs.projects }}" --outputStyle=static
 
   docs:
     name: Affected Docs
+    needs: shas
     runs-on: ubuntu-latest
+    env:
+      NX_BASE: ${{ needs.shas.outputs.nx_base }}
+      NX_HEAD: ${{ needs.shas.outputs.nx_head }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -117,35 +146,38 @@ jobs:
         id: docs_changes
         shell: bash
         run: |
-          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
-            BASE_SHA="${{ github.event.pull_request.base.sha }}"
-            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
-          else
-            BASE_SHA="${{ github.event.before }}"
-            HEAD_SHA="${{ github.sha }}"
-          fi
-
-          if [[ -z "${BASE_SHA}" || "${BASE_SHA}" == "0000000000000000000000000000000000000000" ]]; then
-            BASE_SHA="$(git rev-parse HEAD^)"
-          fi
-
-          if git diff --name-only "$BASE_SHA" "$HEAD_SHA" | grep -Eq '^(docs/mintlify/|scripts/ci/verify_docs_config\.mjs$)'; then
+          if git diff --name-only "$NX_BASE" "$NX_HEAD" | grep -Eq '^(docs/mintlify/|scripts/ci/verify_docs_config\.mjs$|nx\.json$)'; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
           else
             echo "changed=false" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Install dependencies
+        if: steps.docs_changes.outputs.changed == 'true'
+        run: npm ci
+
+      - name: Resolve affected docs verify targets
+        id: docs_verify_scope
+        if: steps.docs_changes.outputs.changed == 'true'
+        shell: bash
+        run: |
+          echo "projects=$(npx nx show projects --affected --withTarget=verify --projects=docs --base="$NX_BASE" --head="$NX_HEAD" --sep=,)" >> "$GITHUB_OUTPUT"
+
       - name: No affected docs verify targets
-        if: steps.docs_changes.outputs.changed != 'true'
+        if: steps.docs_changes.outputs.changed != 'true' || steps.docs_verify_scope.outputs.projects == ''
         run: echo "No affected docs verify targets."
 
       - name: Run affected docs verify targets
-        if: steps.docs_changes.outputs.changed == 'true'
-        run: node scripts/ci/verify_docs_config.mjs
+        if: steps.docs_verify_scope.outputs.projects != ''
+        run: npx nx run-many -t verify --projects="${{ steps.docs_verify_scope.outputs.projects }}" --outputStyle=static
 
   agents:
     name: Affected Agents
+    needs: shas
     runs-on: ubuntu-latest
+    env:
+      NX_BASE: ${{ needs.shas.outputs.nx_base }}
+      NX_HEAD: ${{ needs.shas.outputs.nx_head }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -162,19 +194,7 @@ jobs:
         id: agents_changes
         shell: bash
         run: |
-          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
-            BASE_SHA="${{ github.event.pull_request.base.sha }}"
-            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
-          else
-            BASE_SHA="${{ github.event.before }}"
-            HEAD_SHA="${{ github.sha }}"
-          fi
-
-          if [[ -z "${BASE_SHA}" || "${BASE_SHA}" == "0000000000000000000000000000000000000000" ]]; then
-            BASE_SHA="$(git rev-parse HEAD^)"
-          fi
-
-          if git diff --name-only "$BASE_SHA" "$HEAD_SHA" | grep -Eq '^agents/'; then
+          if git diff --name-only "$NX_BASE" "$NX_HEAD" | grep -Eq '^agents/'; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
           else
             echo "changed=false" >> "$GITHUB_OUTPUT"

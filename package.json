@@ -24,6 +24,10 @@
     "verify:agents": "./scripts/verify agents",
     "preflight": "./scripts/deploy-preflight platform",
     "preflight:cloud-console": "./scripts/deploy-preflight cloud-console",
+    "docs:dev": "cd docs/mintlify && npx --yes mint@4.2.420 dev",
     "docs:check": "node scripts/ci/verify_docs_config.mjs"
+  },
+  "devDependencies": {
+    "nx": "^22.5.4"
   }
 }
