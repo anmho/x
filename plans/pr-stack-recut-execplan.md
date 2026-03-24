@@ -2,7 +2,7 @@
 
 This ExecPlan is a living document. The sections `Progress`, `Surprises & Discoveries`, `Decision Log`, and `Outcomes & Retrospective` must be kept up to date as work proceeds.
 
-Linear ticket linkage for this plan: `ANM-197` ([issue link](https://linear.app/anmho/issue/ANM-197/major-split-overstuffed-pr-branches-into-logical-mergeable-prs-in-x)).
+Linear ticket linkage for this plan: `ANM-197` ([issue link](https://linear.app/anmho/issue/ANM-197/major-split-overstuffed-pr-branches-into-logical-mergeable-prs-in-x)), follow-up correction `ANM-202` ([issue link](https://linear.app/anmho/issue/ANM-202/medium-remove-generated-omnichannel-sdk-artifacts-from-stack)).
 
 ## Purpose / Big Picture
 
@@ -17,6 +17,8 @@ Replace the overloaded open PR branches with a smaller, topologically ordered st
 - [x] (2026-03-24 08:22Z) Created `stack/1-ci-foundation` from `origin/main` and recut branch 1 as a pre-Nx foundation layer.
 - [x] (2026-03-24 08:30Z) Replaced the copied Nx-based CI workflow with stable `Affected Platform`, `Affected Apps`, `Affected Docs`, and `Affected Agents` checks that only validate files present in this branch.
 - [x] (2026-03-24 08:34Z) Validated branch 1 locally with `./scripts/verify platform`, `./scripts/verify apps`, `./scripts/verify docs`, and `./scripts/verify agents`.
+- [x] (2026-03-24 08:37Z) Created `ANM-202` after confirming branch 1 still incorrectly carried generated omnichannel SDK artifacts and a local workspace dependency only added to support them.
+- [ ] Strip `packages/sdk-omnichannel` and the related local workspace dependency out of branch 1, then restack branch 2 on top of the cleaned branch.
 - [ ] Create the second stack branch on top of branch 1 for Nx-aware required-check rollout.
 - [ ] Recut MCP work onto a later stack branch and address the open Greptile/Cursor security findings there.
 - [ ] Decide which legacy PRs should be replaced or closed after the new stack exists.
@@ -35,6 +37,9 @@ Replace the overloaded open PR branches with a smaller, topologically ordered st
 - Observation: Greptile/Cursor comments were useful boundary markers for the split.
   Evidence: PR `#6` comments target the settings/Auth tab work and misleading `project:registry` change, while PR `#7` comments target MCP auth, repo-root detection, exit-code propagation, and secret leakage. None of those changes belong in branch 1.
 
+- Observation: branch 1 still incorrectly included `packages/sdk-omnichannel` and generated Temporal client artifacts, even though the repo's proto policy says client SDKs should be published from BSR and consumed as versioned dependencies.
+  Evidence: `services/omnichannel/backend/proto/README.md` explicitly says "SDKs are published from BSR and consumed as versioned dependencies" and "Do not manually version checked-in generated client SDKs in this repo," while PR `#8` contains `packages/sdk-omnichannel/*`.
+
 ## Decision Log
 
 - Decision: recut the work as a topological stack instead of trying to keep the existing PR numbers alive.
@@ -49,6 +54,10 @@ Replace the overloaded open PR branches with a smaller, topologically ordered st
   Rationale: those areas are the source of the live Greptile/Cursor review findings and are logically later stack layers.
   Date/Author: 2026-03-24 / Codex
 
+- Decision: remove `packages/sdk-omnichannel` from the foundation stack layers.
+  Rationale: generated omnichannel client artifacts are not CI/bootstrap infrastructure and conflict with the repository's publish-first SDK policy.
+  Date/Author: 2026-03-24 / Codex
+
 ## Outcomes & Retrospective
 
 Completed outcomes:
@@ -58,8 +67,8 @@ Completed outcomes:
 
 Remaining gaps:
 
-- Branch 1 has not been pushed or opened as a replacement PR yet.
-- Branch 2 still needs to layer in `nx.json`, project metadata, and the true `nx affected` required-check rollout.
+- Branch 1 still needs its mistakenly included generated SDK artifacts removed.
+- Branch 2 still needs restacking after branch 1 is corrected.
 - Branch 3 still needs to absorb MCP wiring while fixing constant-time key comparison, fail-closed auth, repo-root detection, exit-code propagation, and secret logging.
 
 ## Context And Orientation

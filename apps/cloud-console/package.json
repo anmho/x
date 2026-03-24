@@ -9,7 +9,6 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@x/sdk-omnichannel": "*",
     "@radix-ui/react-select": "^2.2.6",
     "@tanstack/react-query": "^5.90.11",
     "axios": "^1.13.2",
