@@ -21,6 +21,18 @@ This file is the permanent mistake memory for repository agents.
 
 ## Entries
 
+## 2026-03-24T08:38:00Z - Pulled generated SDK artifacts into the CI foundation branch
+- What happened: I included `packages/sdk-omnichannel` and generated Temporal client files in `stack/1-ci-foundation`, even though the branch was supposed to contain only CI/base-level artifacts.
+- Root cause: I optimized for getting the next stacked layer buildable and carried a local workspace dependency forward instead of respecting the repository's publish-first SDK boundary.
+- Preventive rule/check added: When recutting stack layers, reject any generated SDK or domain-specific service artifacts from a foundation/CI branch unless the branch purpose explicitly includes SDK publication or API migration.
+- Verification: Created `ANM-202`, removed `packages/sdk-omnichannel` from branch 1, and updated the recut plan to restack branch 2 after the cleanup.
+
+## 2026-03-24T08:41:00Z - Ran branch-1 verify commands in parallel against the same workspace
+- What happened: I launched `./scripts/verify platform` and `./scripts/verify apps` at the same time in `/tmp/x-stack-1-ci-foundation`, which caused both commands to mutate the same `node_modules` tree concurrently and produced noisy install warnings.
+- Root cause: I over-applied parallel tool use to commands that share the same mutable workspace state.
+- Preventive rule/check added: Never run two install/build verification commands in parallel against the same worktree when both can touch `node_modules`, build output, or lock-managed state.
+- Verification: Re-ran the cleaned branch verification sequentially after logging this entry.
+
 ## 2026-03-08T22:38:06Z - Used project-style ticket prefix instead of team-key issue identifiers
 - What happened: I initially tracked execution items as `XPLAT-*` in the ExecPlan and did not publish corresponding Linear issues before execution.
 - Root cause: I treated the project label as the issue identifier prefix and deferred external ticket creation.

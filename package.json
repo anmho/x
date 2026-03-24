@@ -6,8 +6,6 @@
   "packageManager": "npm@10.9.4",
   "workspaces": [
     "apps/cloud-console",
-    "services/omnichannel/frontend",
-    "mcp",
     "packages/*"
   ],
   "engines": {
@@ -23,22 +21,9 @@
     "verify:platform": "./scripts/verify platform",
     "verify:apps": "./scripts/verify apps",
     "verify:docs": "./scripts/verify docs",
-    "verify:agents": "./agents/blueprints/verify",
+    "verify:agents": "./scripts/verify agents",
     "preflight": "./scripts/deploy-preflight platform",
     "preflight:cloud-console": "./scripts/deploy-preflight cloud-console",
-    "preflight:omnichannel": "./scripts/deploy-preflight omnichannel",
-    "preflight:access-api": "./scripts/deploy-preflight access-api",
-    "config:materialize": "python3 scripts/ci/materialize_platform_configs.py",
-    "config:check": "python3 scripts/ci/materialize_platform_configs.py --check",
-    "project:registry": "node scripts/ci/generate-project-registry.mjs",
-    "mcp:check": "npm --prefix mcp run check",
-    "stack:start": "./scripts/dev-stack start",
-    "stack:status": "./scripts/dev-stack status",
-    "stack:stop": "./scripts/dev-stack stop",
-    "linear:create-issues": "node scripts/linear/create-issues.mjs",
-    "agents:pm": "node agents/pm-agent/run.mjs",
-    "agents:code": "node agents/code-agents/run.mjs",
-    "docs:dev": "cd docs/mintlify && npx mint dev",
-    "build:web": "npm --prefix services/omnichannel/frontend run build"
+    "docs:check": "node scripts/ci/verify_docs_config.mjs"
   }
 }

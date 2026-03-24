@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+TARGET="${1:-platform}"
+
+usage() {
+  cat <<'EOF'
+Usage:
+  scripts/deploy-preflight [platform|cloud-console]
+
+Targets:
+  platform      Foundation workspace verification
+  cloud-console Foundation app workspace verification
+EOF
+}
+
+case "$TARGET" in
+  platform)
+    "$ROOT_DIR/scripts/doctor"
+    "$ROOT_DIR/scripts/verify" platform
+    ;;
+  cloud-console)
+    "$ROOT_DIR/scripts/verify" apps
+    ;;
+  *)
+    usage
+    exit 1
+    ;;
+esac
+
+echo "deploy-preflight: $TARGET passed"

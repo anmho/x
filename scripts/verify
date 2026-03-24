@@ -1,0 +1,111 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+MODE="${1:-all}"
+REQUIRED_NODE="20.19.0"
+
+run() {
+  echo "==> $*"
+  "$@"
+}
+
+cmp_version_ge() {
+  local current="$1"
+  local required="$2"
+  local first
+  first="$(printf "%s\n%s\n" "$required" "$current" | sort -V | head -n1)"
+  [[ "$first" == "$required" ]]
+}
+
+require_node_version() {
+  local current
+  current="$(node -v | sed 's/^v//')"
+  if ! cmp_version_ge "$current" "$REQUIRED_NODE"; then
+    echo "node version too old: v$current (required >= v$REQUIRED_NODE)"
+    echo "hint: run 'nvm install && nvm use' from repo root"
+    exit 1
+  fi
+}
+
+install_node_deps() {
+  if [[ -d node_modules ]]; then
+    run npm install
+  else
+    run npm ci
+  fi
+}
+
+install_node_deps_from_root() {
+  (
+    cd "$ROOT_DIR"
+    install_node_deps
+  )
+}
+
+usage() {
+  cat <<'EOF'
+Usage:
+  scripts/verify [all|platform|apps|docs|agents]
+
+Modes:
+  all      Run platform, apps, docs, and agent checks
+  platform Run Go/Rust service checks
+  apps     Run web app checks
+  docs     Run Mintlify docs checks
+  agents   Run agent blueprint checks
+EOF
+}
+
+verify_platform() {
+  require_node_version
+  install_node_deps_from_root
+}
+
+verify_apps() {
+  require_node_version
+  install_node_deps_from_root
+}
+
+verify_docs() {
+  run node "$ROOT_DIR/scripts/ci/verify_docs_config.mjs"
+}
+
+verify_agents() {
+  if [[ -x "$ROOT_DIR/agents/blueprints/verify" ]]; then
+    (
+      cd "$ROOT_DIR"
+      run ./agents/blueprints/verify
+    )
+    return
+  fi
+
+  echo "No agent verifier present."
+}
+
+case "$MODE" in
+  all)
+    verify_platform
+    verify_apps
+    verify_docs
+    verify_agents
+    ;;
+  platform)
+    verify_platform
+    ;;
+  apps)
+    verify_apps
+    ;;
+  docs)
+    verify_docs
+    ;;
+  agents)
+    verify_agents
+    ;;
+  *)
+    usage
+    exit 1
+    ;;
+esac
+
+echo "verify: $MODE checks passed"

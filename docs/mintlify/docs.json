@@ -1,0 +1,25 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "name": "Project X Docs",
+  "theme": "mint",
+  "colors": {
+    "primary": "#0D9373"
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Docs",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": ["index", "workflow-status", "agent-control"]
+          },
+          {
+            "group": "Workflows",
+            "pages": ["workflows-public", "workflows-internal"]
+          }
+        ]
+      }
+    ]
+  }
+}
