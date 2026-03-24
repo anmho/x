@@ -133,6 +133,24 @@ This file is the permanent mistake memory for repository agents.
 - Preventive rule/check added: For scoped affected CI, first compute the project list with `nx show projects --affected --withTarget=... --projects=...`, then call `nx run-many` on the resulting list. Do not rely on `nx affected --projects=...` for run-commands targets.
 - Verification: Replaced the workflow logic to use `nx show projects ... --sep=,` plus `nx run-many`, and local spot checks succeeded for docs and mcp scopes without forwarding stray CLI flags into underlying commands.
 
+## 2026-03-24T07:45:04Z - Introduced a publish-under-lock deadlock while adding mailbox subscriptions
+- What happened: My first watcher-store patch left `PostMessage` and `RouteMessage` holding the store mutex while calling the new live publish path, which would have deadlocked on the first delivered event.
+- Root cause: I added a subscriber bus to an existing mutex-guarded store without re-checking the lock boundaries of the write paths.
+- Preventive rule/check added: When adding callbacks or publish steps to mutex-protected code, explicitly review whether the callee also touches the same mutex before running validation.
+- Verification: Refactored both write paths to unlock before `publish`, then passed `go test ./...`, `npx nx run mcp:test`, and the live `/mailbox/events` smoke test.
+
+## 2026-03-24T07:45:04Z - Tried to live-run the Go module from the repo root
+- What happened: I attempted the watcher smoke test with `go run ./services/mcp/cmd/server` from the repo root, and Go resolved imports in GOPATH mode instead of the `services/mcp` module, so startup failed before the endpoint could be tested.
+- Root cause: I used a repo-root `go run` path out of habit instead of either changing into the module directory or using the already-built Nx output binary.
+- Preventive rule/check added: For `services/mcp` runtime smoke tests, prefer `./bin/mcp-server`; if using `go run`, execute it from `services/mcp` with `go run ./cmd/server`.
+- Verification: Re-ran the smoke test with `./bin/mcp-server` and successfully streamed replay plus live mailbox events from `/mailbox/events`.
+
+## 2026-03-24T07:45:04Z - Misread the MCP key store shape in an ad-hoc validation script
+- What happened: I initially parsed `keys.json` as a top-level array, but the store format is `{ "keys": [...] }`, which caused the first live watcher smoke script to send no API key.
+- Root cause: I wrote the script from assumption instead of checking `services/mcp/internal/keys/store.go` before extracting the generated key.
+- Preventive rule/check added: Before scripting against a repo-owned JSON file, inspect the owning package/type definition instead of assuming the wire format.
+- Verification: Corrected the parser to `["keys"][0]["key"]` and the live smoke test authenticated successfully.
+
 ## 2026-03-10T06:06:30Z - Used wrong frontend root path while inspecting domains implementation
 - What happened: I attempted to inspect and patch `services/omnichannel/frontend/...` for domains files, but this workspace keeps the active frontend under `apps/omnichannel/frontend/...`.
 - Root cause: I reused an older repository layout assumption from prior tasks without confirming current paths first.

@@ -3,6 +3,7 @@ package tools
 import (
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 func TestCollabStoreChannelLifecycle(t *testing.T) {
@@ -99,4 +100,83 @@ func TestGetChannelForAgent(t *testing.T) {
 	if channel.Key != "agent:agent-mail" {
 		t.Fatalf("unexpected key: %s", channel.Key)
 	}
+}
+
+func TestCollabStoreReadAllMessagesOrdered(t *testing.T) {
+	store := NewCollabStore(filepath.Join(t.TempDir(), "collab.json"))
+
+	alpha, err := store.GetOrCreateChannel("task:alpha", "Alpha", []string{"agent-a"}, nil)
+	if err != nil {
+		t.Fatalf("GetOrCreateChannel(alpha): %v", err)
+	}
+	beta, err := store.GetOrCreateChannel("task:beta", "Beta", []string{"agent-b"}, nil)
+	if err != nil {
+		t.Fatalf("GetOrCreateChannel(beta): %v", err)
+	}
+
+	first, err := store.PostMessage(alpha.ID, "agent-a", "message", "first", nil)
+	if err != nil {
+		t.Fatalf("PostMessage(first): %v", err)
+	}
+	second, err := store.PostMessage(beta.ID, "agent-b", "message", "second", nil)
+	if err != nil {
+		t.Fatalf("PostMessage(second): %v", err)
+	}
+	third, err := store.PostMessage(alpha.ID, "agent-c", "message", "third", nil)
+	if err != nil {
+		t.Fatalf("PostMessage(third): %v", err)
+	}
+
+	all, err := store.ReadAllMessages(0, 10)
+	if err != nil {
+		t.Fatalf("ReadAllMessages: %v", err)
+	}
+	if len(all) != 3 {
+		t.Fatalf("expected 3 messages, got %d", len(all))
+	}
+	if all[0].Sequence != first.Sequence || all[1].Sequence != second.Sequence || all[2].Sequence != third.Sequence {
+		t.Fatalf("unexpected sequence order: %#v", all)
+	}
+
+	replay, err := store.ReadAllMessages(first.Sequence, 10)
+	if err != nil {
+		t.Fatalf("ReadAllMessages replay: %v", err)
+	}
+	if len(replay) != 2 || replay[0].Sequence != second.Sequence || replay[1].Sequence != third.Sequence {
+		t.Fatalf("unexpected replay messages: %#v", replay)
+	}
+}
+
+func TestCollabStoreSubscribeFanout(t *testing.T) {
+	store := NewCollabStore(filepath.Join(t.TempDir(), "collab.json"))
+
+	channel, err := store.GetOrCreateChannel("task:stream", "Stream", []string{"agent-a"}, nil)
+	if err != nil {
+		t.Fatalf("GetOrCreateChannel: %v", err)
+	}
+
+	subOne, cancelOne := store.Subscribe(channel.ID)
+	defer cancelOne()
+	subTwo, cancelTwo := store.Subscribe(channel.ID)
+	defer cancelTwo()
+
+	expected, err := store.PostMessage(channel.ID, "agent-a", "message", "watch me", nil)
+	if err != nil {
+		t.Fatalf("PostMessage: %v", err)
+	}
+
+	assertMessage := func(name string, ch <-chan *CollabMessage) {
+		t.Helper()
+		select {
+		case message := <-ch:
+			if message.Sequence != expected.Sequence || message.Body != expected.Body {
+				t.Fatalf("%s got unexpected message: %#v", name, message)
+			}
+		case <-time.After(2 * time.Second):
+			t.Fatalf("%s did not receive message", name)
+		}
+	}
+
+	assertMessage("subscriber one", subOne)
+	assertMessage("subscriber two", subTwo)
 }

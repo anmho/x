@@ -13,8 +13,9 @@ import (
 	"github.com/anmhela/x/mcp/internal/handler"
 	"github.com/anmhela/x/mcp/internal/jsonrpc"
 	"github.com/anmhela/x/mcp/internal/keys"
-	"github.com/anmhela/x/mcp/internal/tools"
 	mcpv1connect "github.com/anmhela/x/mcp/internal/rpc/gen/mcp/v1/mcpv1connect"
+	"github.com/anmhela/x/mcp/internal/tools"
+	"github.com/anmhela/x/mcp/internal/watch"
 )
 
 func main() {
@@ -59,6 +60,7 @@ func main() {
 	// MCP JSON-RPC passthrough (for Claude Code)
 	jrpcHandler := jsonrpc.NewHandler(reg)
 	mux.Handle("/mcp", authMiddleware(storePath, jrpcHandler))
+	mux.Handle("/mailbox/events", authMiddleware(storePath, watch.NewMailboxEventsHandler(reg.CollabStore())))
 	mux.Handle("/health", http.HandlerFunc(healthHandler))
 
 	addr := ":" + port
@@ -66,6 +68,7 @@ func main() {
 	fmt.Printf("[mcp] ConnectRPC: POST /mcp.v1.McpService/{ListTools,CallTool}\n")
 	fmt.Printf("[mcp] ConnectRPC: POST /mcp.v1.McpAdminService/{GenerateKey,ListKeys,RevokeKey}\n")
 	fmt.Printf("[mcp] JSON-RPC:   POST /mcp\n")
+	fmt.Printf("[mcp] Mailbox:    GET  /mailbox/events\n")
 	fmt.Printf("[mcp] Health:     GET  /health\n")
 	if err := http.ListenAndServe(addr, mux); err != nil {
 		fmt.Fprintf(os.Stderr, "[mcp] fatal: %v\n", err)

@@ -27,6 +27,10 @@ func NewRegistry(root string) *Registry {
 	return &Registry{root: root, collab: NewCollabStore("")}
 }
 
+func (r *Registry) CollabStore() *CollabStore {
+	return r.collab
+}
+
 // controlPlane mirrors the structure of platform.controlplane.json.
 type controlPlane struct {
 	Projects []struct {

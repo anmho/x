@@ -71,6 +71,29 @@ Example flow:
   tools call mail_read channel_id=<channel-id> after_sequence=0 limit=20
 ```
 
+## Mailbox watcher endpoint
+
+The MCP service now exposes an authenticated watcher endpoint for replay plus live tail:
+
+```text
+GET /mailbox/events?channel_id=<channel-id>&after_sequence=<sequence>&replay_limit=<n>
+```
+
+- Use `Authorization: Bearer <api-key>` or `X-Api-Key: <api-key>`.
+- `channel_id` is optional. Omit it to watch the ordered mailbox feed across all channels.
+- `after_sequence` resumes from the last sequence you have already processed.
+- `Last-Event-ID` is also accepted as the replay cursor when reconnecting SSE clients.
+
+Example:
+
+```bash
+curl -N \
+  -H "Authorization: Bearer <api-key>" \
+  "http://localhost:8765/mailbox/events?channel_id=<channel-id>&after_sequence=0"
+```
+
+The stream emits a `ready` event first, then ordered `message` events with SSE `id` values set to the mailbox sequence. Slow listeners may be disconnected if they stop draining their stream; reconnect with `after_sequence` or `Last-Event-ID` to replay what you missed.
+
 ## Docker
 
 Build from the repo root:

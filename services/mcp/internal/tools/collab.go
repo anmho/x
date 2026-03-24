@@ -16,8 +16,10 @@ import (
 )
 
 type CollabStore struct {
-	path string
-	mu   sync.Mutex
+	path       string
+	mu         sync.Mutex
+	nextSubID  int
+	subscribed map[int]collabSubscription
 }
 
 type collabData struct {
@@ -59,11 +61,19 @@ type CollabMessage struct {
 	CreatedAt time.Time         `json:"created_at"`
 }
 
+type collabSubscription struct {
+	channelID string
+	ch        chan *CollabMessage
+}
+
 func NewCollabStore(path string) *CollabStore {
 	if path == "" {
 		path = defaultCollabStorePath()
 	}
-	return &CollabStore{path: path}
+	return &CollabStore{
+		path:       path,
+		subscribed: map[int]collabSubscription{},
+	}
 }
 
 func defaultCollabStorePath() string {
@@ -173,6 +183,22 @@ func (s *CollabStore) ListChannels(participant, query string, limit int) ([]*Col
 	return out, nil
 }
 
+func (s *CollabStore) Subscribe(channelID string) (<-chan *CollabMessage, func()) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.nextSubID++
+	id := s.nextSubID
+	ch := make(chan *CollabMessage, 64)
+	s.subscribed[id] = collabSubscription{
+		channelID: strings.TrimSpace(channelID),
+		ch:        ch,
+	}
+	return ch, func() {
+		s.unsubscribe(id)
+	}
+}
+
 func (s *CollabStore) PostMessage(channelID, sender, kind, body string, metadata map[string]string) (*CollabMessage, error) {
 	if channelID == "" {
 		return nil, errors.New("channel_id is required")
@@ -188,14 +214,15 @@ func (s *CollabStore) PostMessage(channelID, sender, kind, body string, metadata
 	}
 
 	s.mu.Lock()
-	defer s.mu.Unlock()
 
 	data, err := s.loadLocked()
 	if err != nil {
+		s.mu.Unlock()
 		return nil, err
 	}
 	channel := findChannelByID(data.Channels, channelID)
 	if channel == nil {
+		s.mu.Unlock()
 		return nil, fmt.Errorf("channel %q not found", channelID)
 	}
 
@@ -216,9 +243,13 @@ func (s *CollabStore) PostMessage(channelID, sender, kind, body string, metadata
 		channel.Participants = normalizeStrings(append(channel.Participants, sender))
 	}
 	if err := s.saveLocked(data); err != nil {
+		s.mu.Unlock()
 		return nil, err
 	}
-	return cloneMessage(message), nil
+	out := cloneMessage(message)
+	s.mu.Unlock()
+	s.publish(out)
+	return out, nil
 }
 
 func (s *CollabStore) ReadMessages(channelID string, afterSequence int64, limit int) ([]*CollabMessage, error) {
@@ -249,6 +280,35 @@ func (s *CollabStore) ReadMessages(channelID string, afterSequence int64, limit 
 		if len(out) == limit {
 			break
 		}
+	}
+	return out, nil
+}
+
+func (s *CollabStore) ReadAllMessages(afterSequence int64, limit int) ([]*CollabMessage, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	data, err := s.loadLocked()
+	if err != nil {
+		return nil, err
+	}
+	if limit <= 0 || limit > 200 {
+		limit = 50
+	}
+	out := make([]*CollabMessage, 0, limit)
+	for _, channel := range data.Channels {
+		for _, message := range channel.Messages {
+			if message.Sequence <= afterSequence {
+				continue
+			}
+			out = append(out, cloneMessage(message))
+		}
+	}
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].Sequence < out[j].Sequence
+	})
+	if len(out) > limit {
+		out = out[:limit]
 	}
 	return out, nil
 }
@@ -303,6 +363,48 @@ func (s *CollabStore) saveLocked(data *collabData) error {
 		return err
 	}
 	return os.Rename(tmp, s.path)
+}
+
+func (s *CollabStore) unsubscribe(id int) {
+	s.mu.Lock()
+	sub, ok := s.subscribed[id]
+	if ok {
+		delete(s.subscribed, id)
+	}
+	s.mu.Unlock()
+	if ok {
+		close(sub.ch)
+	}
+}
+
+func (s *CollabStore) publish(messages ...*CollabMessage) {
+	if len(messages) == 0 {
+		return
+	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	closeSet := map[int]collabSubscription{}
+	for _, message := range messages {
+		if message == nil {
+			continue
+		}
+		for id, sub := range s.subscribed {
+			if sub.channelID != "" && sub.channelID != message.ChannelID {
+				continue
+			}
+			select {
+			case sub.ch <- cloneMessage(message):
+			default:
+				closeSet[id] = sub
+			}
+		}
+	}
+	for id, sub := range closeSet {
+		delete(s.subscribed, id)
+		close(sub.ch)
+	}
 }
 
 func summarizeChannel(channel *CollabChannel) *CollabChannelSummary {
