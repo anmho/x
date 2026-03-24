@@ -21,6 +21,7 @@ Replace the overloaded open PR branches with a smaller, topologically ordered st
 - [x] (2026-03-24 08:16Z) Created `stack/2-nx-affected` on top of branch 1 and added `nx.json`, app/docs project metadata, and cloud-console TypeScript config.
 - [x] (2026-03-24 08:19Z) Validated branch 2 locally with `./scripts/verify platform`, `./scripts/verify apps`, `./scripts/verify docs`, and `./scripts/verify agents`.
 - [x] (2026-03-24 08:41Z) Patched branch 1 to remove `packages/sdk-omnichannel`, pushed the fix to PR `#8`, and started restacking branch 2 on top of the cleaned foundation.
+- [x] (2026-03-24 08:47Z) Completed the branch-2 rebase onto the cleaned foundation, rebuilt the lockfile from scratch, and revalidated the Nx-based app/docs checks.
 - [ ] Recut MCP work onto a later stack branch and address the open Greptile/Cursor security findings there.
 - [ ] Decide which legacy PRs should be replaced or closed after the new stack exists.
 
@@ -74,7 +75,6 @@ Completed outcomes:
 
 Remaining gaps:
 
-- Branch 2 still needs its rebase onto the cleaned branch 1 to be completed and revalidated.
 - Branch 3 still needs to absorb MCP wiring while fixing constant-time key comparison, fail-closed auth, repo-root detection, exit-code propagation, and secret logging.
 - Nx may still need a small follow-up cleanup around inferred outputs or graph metadata after the SDK artifact removal settles.
 

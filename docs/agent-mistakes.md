@@ -33,6 +33,12 @@ This file is the permanent mistake memory for repository agents.
 - Preventive rule/check added: Never run two install/build verification commands in parallel against the same worktree when both can touch `node_modules`, build output, or lock-managed state.
 - Verification: Re-ran the cleaned branch verification sequentially after logging this entry.
 
+## 2026-03-24T08:45:00Z - Repeated parallel verification in the restacked branch-2 worktree
+- What happened: During the `stack/2-nx-affected` revalidation, I again launched two verify commands that both run `npm install` in the same worktree, creating avoidable install cleanup noise.
+- Root cause: I repeated the same concurrency mistake immediately after documenting the prevention rule.
+- Preventive rule/check added: For the remainder of this stack cleanup, run branch validation strictly sequentially per worktree, even when some checks are mostly read-only.
+- Verification: Branch-2 verification was continued sequentially after this entry was added.
+
 ## 2026-03-08T22:38:06Z - Used project-style ticket prefix instead of team-key issue identifiers
 - What happened: I initially tracked execution items as `XPLAT-*` in the ExecPlan and did not publish corresponding Linear issues before execution.
 - Root cause: I treated the project label as the issue identifier prefix and deferred external ticket creation.
