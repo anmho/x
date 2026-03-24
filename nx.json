@@ -1,0 +1,28 @@
+{
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "targetDefaults": {
+    "generate-go": {
+      "cache": true,
+      "inputs": ["{projectRoot}/backend/proto/**/*", "{projectRoot}/backend/proto/buf*.yaml"],
+      "outputs": ["{workspaceRoot}/services/omnichannel/backend/internal/rpc/gen"]
+    },
+    "generate-es": {
+      "cache": true,
+      "inputs": ["{projectRoot}/backend/proto/**/*", "{projectRoot}/backend/proto/buf*.yaml"],
+      "outputs": ["{workspaceRoot}/packages/sdk-omnichannel/src/gen/**/*"]
+    },
+    "lint": {
+      "cache": true,
+      "inputs": ["{projectRoot}/backend/proto/**/*", "{projectRoot}/backend/proto/buf*.yaml"]
+    },
+    "build": {
+      "dependsOn": ["^build"],
+      "cache": true,
+      "outputs": ["{projectRoot}/.next", "{projectRoot}/dist"]
+    }
+  },
+  "namedInputs": {
+    "default": ["{projectRoot}", "!{projectRoot}/.next", "!{projectRoot}/node_modules"],
+    "proto": ["{projectRoot}/backend/proto/**/*", "{projectRoot}/backend/proto/buf*.yaml"]
+  }
+}

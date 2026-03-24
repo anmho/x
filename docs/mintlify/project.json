@@ -1,0 +1,38 @@
+{
+  "name": "docs",
+  "tags": ["app"],
+  "targets": {
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": { "command": "npx --yes mint@4.2.420 dev", "cwd": "docs/mintlify" }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node scripts/ci/verify_docs_config.mjs",
+        "cwd": "."
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node scripts/ci/verify_docs_config.mjs",
+        "cwd": "."
+      }
+    },
+    "verify": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node scripts/ci/verify_docs_config.mjs",
+        "cwd": "."
+      }
+    },
+    "preflight": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node scripts/ci/verify_docs_config.mjs",
+        "cwd": "."
+      }
+    }
+  }
+}

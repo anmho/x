@@ -18,8 +18,9 @@ Replace the overloaded open PR branches with a smaller, topologically ordered st
 - [x] (2026-03-24 08:30Z) Replaced the copied Nx-based CI workflow with stable `Affected Platform`, `Affected Apps`, `Affected Docs`, and `Affected Agents` checks that only validate files present in this branch.
 - [x] (2026-03-24 08:34Z) Validated branch 1 locally with `./scripts/verify platform`, `./scripts/verify apps`, `./scripts/verify docs`, and `./scripts/verify agents`.
 - [x] (2026-03-24 08:37Z) Created `ANM-202` after confirming branch 1 still incorrectly carried generated omnichannel SDK artifacts and a local workspace dependency only added to support them.
-- [ ] Strip `packages/sdk-omnichannel` and the related local workspace dependency out of branch 1, then restack branch 2 on top of the cleaned branch.
-- [ ] Create the second stack branch on top of branch 1 for Nx-aware required-check rollout.
+- [x] (2026-03-24 08:16Z) Created `stack/2-nx-affected` on top of branch 1 and added `nx.json`, app/docs project metadata, and cloud-console TypeScript config.
+- [x] (2026-03-24 08:19Z) Validated branch 2 locally with `./scripts/verify platform`, `./scripts/verify apps`, `./scripts/verify docs`, and `./scripts/verify agents`.
+- [x] (2026-03-24 08:41Z) Patched branch 1 to remove `packages/sdk-omnichannel`, pushed the fix to PR `#8`, and started restacking branch 2 on top of the cleaned foundation.
 - [ ] Recut MCP work onto a later stack branch and address the open Greptile/Cursor security findings there.
 - [ ] Decide which legacy PRs should be replaced or closed after the new stack exists.
 
@@ -40,6 +41,9 @@ Replace the overloaded open PR branches with a smaller, topologically ordered st
 - Observation: branch 1 still incorrectly included `packages/sdk-omnichannel` and generated Temporal client artifacts, even though the repo's proto policy says client SDKs should be published from BSR and consumed as versioned dependencies.
   Evidence: `services/omnichannel/backend/proto/README.md` explicitly says "SDKs are published from BSR and consumed as versioned dependencies" and "Do not manually version checked-in generated client SDKs in this repo," while PR `#8` contains `packages/sdk-omnichannel/*`.
 
+- Observation: cloud-console can build successfully on top of branch 1 once Nx metadata and the app `tsconfig.json` are added, without importing the settings/Auth tab work from PR `#6`.
+  Evidence: `./scripts/verify apps` passes on `stack/2-nx-affected` and builds the existing routes from `origin/main`.
+
 ## Decision Log
 
 - Decision: recut the work as a topological stack instead of trying to keep the existing PR numbers alive.
@@ -56,6 +60,9 @@ Replace the overloaded open PR branches with a smaller, topologically ordered st
 
 - Decision: remove `packages/sdk-omnichannel` from the foundation stack layers.
   Rationale: generated omnichannel client artifacts are not CI/bootstrap infrastructure and conflict with the repository's publish-first SDK policy.
+
+- Decision: make branch 2 app/docs-focused Nx rollout instead of importing the omnichannel SDK-generation slice now.
+  Rationale: the proto/service inputs for that slice are still absent on top of branch 1, but app/docs `affected` checks can already be made real with much smaller scope.
   Date/Author: 2026-03-24 / Codex
 
 ## Outcomes & Retrospective
@@ -67,9 +74,9 @@ Completed outcomes:
 
 Remaining gaps:
 
-- Branch 1 still needs its mistakenly included generated SDK artifacts removed.
-- Branch 2 still needs restacking after branch 1 is corrected.
+- Branch 2 still needs its rebase onto the cleaned branch 1 to be completed and revalidated.
 - Branch 3 still needs to absorb MCP wiring while fixing constant-time key comparison, fail-closed auth, repo-root detection, exit-code propagation, and secret logging.
+- Nx may still need a small follow-up cleanup around inferred outputs or graph metadata after the SDK artifact removal settles.
 
 ## Context And Orientation
 

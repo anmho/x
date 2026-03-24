@@ -60,15 +60,28 @@ EOF
 verify_platform() {
   require_node_version
   install_node_deps_from_root
+  (
+    cd "$ROOT_DIR"
+    run npx nx show projects --json
+  )
 }
 
 verify_apps() {
   require_node_version
   install_node_deps_from_root
+  (
+    cd "$ROOT_DIR"
+    run npx nx run-many -t build --projects=cloud-console --outputStyle=static
+  )
 }
 
 verify_docs() {
-  run node "$ROOT_DIR/scripts/ci/verify_docs_config.mjs"
+  require_node_version
+  install_node_deps_from_root
+  (
+    cd "$ROOT_DIR"
+    run npx nx run docs:verify --outputStyle=static
+  )
 }
 
 verify_agents() {
