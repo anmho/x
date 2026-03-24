@@ -75,6 +75,10 @@ jobs:
             echo "changed=false" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Install dependencies
+        if: steps.platform_changes.outputs.changed == 'true'
+        run: npm ci
+
       - name: Resolve affected platform test targets
         id: platform_test_scope
         if: steps.platform_changes.outputs.changed == 'true'
@@ -88,10 +92,6 @@ jobs:
         shell: bash
         run: |
           echo "projects=$(npx nx show projects --affected --withTarget=verify --projects=platform,sdk,mcp,omnichannel-api,omnichannel-worker --base="$NX_BASE" --head="$NX_HEAD" --sep=,)" >> "$GITHUB_OUTPUT"
-
-      - name: Install dependencies
-        if: steps.platform_changes.outputs.changed == 'true'
-        run: npm ci
 
       - name: No affected platform targets
         if: steps.platform_changes.outputs.changed != 'true' || (steps.platform_verify_scope.outputs.projects == '' && steps.platform_test_scope.outputs.projects == '')
@@ -134,6 +134,10 @@ jobs:
             echo "changed=false" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Install dependencies
+        if: steps.app_changes.outputs.changed == 'true'
+        run: npm ci
+
       - name: Resolve affected app build targets
         id: app_build_scope
         if: steps.app_changes.outputs.changed == 'true'
@@ -147,10 +151,6 @@ jobs:
         shell: bash
         run: |
           echo "projects=$(npx nx show projects --affected --withTarget=verify --projects=cloud-console --base="$NX_BASE" --head="$NX_HEAD" --sep=,)" >> "$GITHUB_OUTPUT"
-
-      - name: Install dependencies
-        if: steps.app_changes.outputs.changed == 'true'
-        run: npm ci
 
       - name: No affected app targets
         if: steps.app_changes.outputs.changed != 'true' || (steps.app_verify_scope.outputs.projects == '' && steps.app_build_scope.outputs.projects == '')
