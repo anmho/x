@@ -1,0 +1,189 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - "stack/**"
+  pull_request:
+
+jobs:
+  platform:
+    name: Affected Platform
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: "npm"
+          cache-dependency-path: package-lock.json
+
+      - name: Detect foundation changes
+        id: platform_changes
+        shell: bash
+        run: |
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          else
+            BASE_SHA="${{ github.event.before }}"
+            HEAD_SHA="${{ github.sha }}"
+          fi
+
+          if [[ -z "${BASE_SHA}" || "${BASE_SHA}" == "0000000000000000000000000000000000000000" ]]; then
+            BASE_SHA="$(git rev-parse HEAD^)"
+          fi
+
+          if git diff --name-only "$BASE_SHA" "$HEAD_SHA" | grep -Eq '^(\.github/workflows/ci\.yml|\.nvmrc|package\.json|package-lock\.json|scripts/|packages/)'; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run platform verification
+        if: steps.platform_changes.outputs.changed == 'true'
+        run: ./scripts/verify platform
+
+      - name: No affected platform changes
+        if: steps.platform_changes.outputs.changed != 'true'
+        run: echo "No affected platform changes."
+
+  apps:
+    name: Affected Apps
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: "npm"
+          cache-dependency-path: package-lock.json
+
+      - name: Detect app-related changes
+        id: app_changes
+        shell: bash
+        run: |
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          else
+            BASE_SHA="${{ github.event.before }}"
+            HEAD_SHA="${{ github.sha }}"
+          fi
+
+          if [[ -z "${BASE_SHA}" || "${BASE_SHA}" == "0000000000000000000000000000000000000000" ]]; then
+            BASE_SHA="$(git rev-parse HEAD^)"
+          fi
+
+          if git diff --name-only "$BASE_SHA" "$HEAD_SHA" | grep -Eq '^(apps/cloud-console/|packages/|package\.json$|package-lock\.json$)'; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run app verification
+        if: steps.app_changes.outputs.changed == 'true'
+        run: ./scripts/verify apps
+
+      - name: No affected app changes
+        if: steps.app_changes.outputs.changed != 'true'
+        run: echo "No affected app changes."
+
+  docs:
+    name: Affected Docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: "npm"
+          cache-dependency-path: package-lock.json
+
+      - name: Detect docs-related changes
+        id: docs_changes
+        shell: bash
+        run: |
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          else
+            BASE_SHA="${{ github.event.before }}"
+            HEAD_SHA="${{ github.sha }}"
+          fi
+
+          if [[ -z "${BASE_SHA}" || "${BASE_SHA}" == "0000000000000000000000000000000000000000" ]]; then
+            BASE_SHA="$(git rev-parse HEAD^)"
+          fi
+
+          if git diff --name-only "$BASE_SHA" "$HEAD_SHA" | grep -Eq '^(docs/mintlify/|scripts/ci/verify_docs_config\.mjs$)'; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: No affected docs verify targets
+        if: steps.docs_changes.outputs.changed != 'true'
+        run: echo "No affected docs verify targets."
+
+      - name: Run affected docs verify targets
+        if: steps.docs_changes.outputs.changed == 'true'
+        run: node scripts/ci/verify_docs_config.mjs
+
+  agents:
+    name: Affected Agents
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: "npm"
+          cache-dependency-path: package-lock.json
+
+      - name: Detect agent-related changes
+        id: agents_changes
+        shell: bash
+        run: |
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          else
+            BASE_SHA="${{ github.event.before }}"
+            HEAD_SHA="${{ github.sha }}"
+          fi
+
+          if [[ -z "${BASE_SHA}" || "${BASE_SHA}" == "0000000000000000000000000000000000000000" ]]; then
+            BASE_SHA="$(git rev-parse HEAD^)"
+          fi
+
+          if git diff --name-only "$BASE_SHA" "$HEAD_SHA" | grep -Eq '^agents/'; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: No affected agent verify targets
+        if: steps.agents_changes.outputs.changed != 'true'
+        run: echo "No affected agent verify targets."
+
+      - name: Run affected agent verify targets
+        if: steps.agents_changes.outputs.changed == 'true'
+        run: ./scripts/verify agents

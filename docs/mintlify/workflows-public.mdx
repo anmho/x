@@ -1,0 +1,72 @@
+---
+title: Public Workflows
+description: Local workflows that do not require private cloud or registry credentials.
+---
+
+# Public Workflows
+
+These commands are suitable for local development without private deploy/publish credentials.
+
+## Environment Setup
+
+```bash
+nvm install
+nvm use
+npm install
+```
+
+## Build and Verify
+
+```bash
+npm run verify:apps
+npm run verify:docs
+```
+
+## SDK and Proto Iteration
+
+```bash
+./scripts/sdk.sh lint
+./scripts/sdk.sh generate-es
+./scripts/sdk.sh generate-go
+```
+
+Direct Buf generation from proto source:
+
+```bash
+cd services/omnichannel/backend/proto
+../../../../node_modules/.bin/buf generate --template buf.gen.client.yaml
+../../../../node_modules/.bin/buf generate --template buf.gen.server.yaml
+```
+
+Agent control has its own local generation path when you are iterating on unpublished contract changes:
+
+```bash
+cd services/agent-control-api/proto
+buf generate --template buf.gen.server.yaml
+buf generate --template buf.gen.client.yaml
+```
+
+## Agent Control Local Flow
+
+Run the control plane locally:
+
+```bash
+cd services/agent-control-api
+DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/agent_control?sslmode=disable PORT=8090 go run ./cmd/api
+```
+
+Point the console at the local instance:
+
+```bash
+NEXT_PUBLIC_AGENT_CONTROL_URL=http://localhost:8090
+```
+
+Use the published remote SDKs by default. When iterating on unpublished protobuf changes, use a local-only alias/override to a generated SDK path instead of checking generated client code into the repo.
+
+## Local Docs Demo
+
+```bash
+npm run docs:dev
+```
+
+This command is long-running and intended for interactive browser preview.

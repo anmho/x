@@ -1,0 +1,59 @@
+---
+title: Agent Control
+description: How to use agent control for creating, listing, and watching agent runs in local development and normal client integrations.
+---
+
+# Agent Control
+
+Agent Control is the run API for starting agents, checking their state, and streaming output as work progresses.
+
+## What You Use It For
+
+- Start a new agent run
+- List recent runs
+- Inspect run status
+- Watch live output until the run completes
+
+The client-facing surface is a ConnectRPC service with unary methods for create/get/list and a server-streaming method for live run updates.
+
+## Common Usage Pattern
+
+Typical client flow:
+
+1. Call `CreateRun`
+2. Render the returned run metadata immediately
+3. Start `WatchRun` for that run id
+4. Update the UI from streamed snapshot/output/completed events
+5. Refresh list/detail views once the run completes
+
+## Local Development
+
+When running the console locally, point it at the local agent-control instance:
+
+```bash
+NEXT_PUBLIC_AGENT_CONTROL_URL=http://localhost:8090
+```
+
+That setting is runtime configuration for the client. Keep it separate from SDK/source selection.
+
+## SDK Consumption
+
+Use the published SDKs by default.
+
+For local schema iteration, use a local-only override instead of treating generated client output as committed source of truth.
+
+The intended split is:
+
+- Published remote SDKs for normal development and CI
+- Local alias/override only when testing unpublished contract changes
+- No long-term reliance on checked-in generated client code
+
+## Runtime Selection
+
+Each run can select a runtime provider such as `claude` or `codex`, plus guardrail settings such as sandbox mode and approval policy.
+
+Consumers should think about this in terms of run behavior, not infrastructure details:
+
+- choose the runtime appropriate for the task
+- keep sandbox/approval settings explicit
+- keep endpoint selection via environment config
