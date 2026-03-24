@@ -22,6 +22,27 @@ This file is the permanent mistake memory for repository agents.
 
 ## Entries
 
+## 2026-03-24T08:46:25Z - Assumed the source proto matched the live generated agent-control contract
+- What happened: While setting up the live smoke test, I first built the `CreateRun` call around a `prompt` field because the source `.proto` and earlier context suggested that shape, but the checked-in generated Go contract still exposed `message`.
+- Root cause: I trusted the source proto and plan context instead of checking the generated client types that the running server and local clients actually compile against.
+- How to avoid it: Before any live API smoke run, inspect `internal/rpc/gen/**` and treat the generated contract as the executable truth unless codegen is regenerated in the same slice.
+- What to do instead: Verify the request field names and JSON shape from the generated package first, then build the smoke request against that contract.
+- Verification: Confirmed `services/agent-control-api/internal/rpc/gen/agentcontrol/v1/agent_control.pb.go` defines `CreateRunRequest.Message`, adjusted the live request shape, and proceeded to the runtime validation findings.
+
+## 2026-03-24T08:27:00Z - Over-modeled the agent create contract before proving the need
+- What happened: I initially evolved `services/agent-control-api` from `prompt` to a nested bootstrap object and kept generic `metadata` and `env` maps in the public create request, which made the contract more abstract and leaky than the user wanted for the first slice.
+- Root cause: I optimized for future flexibility too early instead of holding the API to the simplest message-first shape that already satisfied the current requirement.
+- How to avoid it: For new control-plane create APIs, start from the canonical user action (`message`) and add only explicitly justified typed fields; do not introduce generic metadata/env bags or nested envelopes unless a concrete requirement cannot be met otherwise.
+- What to do instead: Use a message-centric request with typed `resources` and `runtime`, and keep runtime/process env as an internal adapter concern rather than a public API field.
+- Verification: Refactored the active slice to `message + resources + runtime`, removed public `env` and top-level `metadata` from `agent_control.proto`, regenerated the SDKs, and reran `cd services/agent-control-api && GOCACHE=/tmp/go-cache go test ./...` plus `cd apps/agent-runner && bun test`.
+
+## 2026-03-24T08:14:44Z - Wrote a dispatcher test against a nonexistent file helper
+- What happened: I added `dispatcher_test.go` using a placeholder `writeFile` helper that does not exist in the package, which would have broken the first test compile.
+- Root cause: I drafted the temp-file helper from memory instead of using the standard library write path already available in the test.
+- How to avoid it: In new tests, use `os.WriteFile` directly unless a shared helper already exists in the same package.
+- What to do instead: Create the parent directory with `os.MkdirAll` and write fixtures with `os.WriteFile` in the test helper.
+- Verification: Replaced the nonexistent helper with `os.MkdirAll` plus `os.WriteFile`, then ran `cd services/agent-control-api && GOCACHE=/tmp/go-cache go test ./...` successfully.
+
 ## 2026-03-18T07:48:00Z - Sent a string instead of a boolean to `gh api`
 - What happened: I retried the branch-protection update with correctly quoted array flags but used `-f strict=false`, and GitHub rejected the request because `strict` arrived as the string `"false"` instead of a boolean.
 - Root cause: I used the generic form field flag without checking whether this endpoint required typed boolean serialization.

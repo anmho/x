@@ -1,0 +1,9 @@
+version: v2
+plugins:
+  - local: protoc-gen-es
+    out: ../../../packages/sdk-agent-control/src/gen
+    include_imports: true
+    opt: target=ts
+  - local: protoc-gen-connect-es
+    out: ../../../packages/sdk-agent-control/src/gen
+    opt: target=ts

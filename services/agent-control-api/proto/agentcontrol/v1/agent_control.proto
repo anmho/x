@@ -1,0 +1,165 @@
+syntax = "proto3";
+
+package agentcontrol.v1;
+
+option go_package = "github.com/anmho/agent-control-api/internal/rpc/gen/agentcontrol/v1;agentcontrolv1";
+
+service AgentControlService {
+  rpc CreateRun(CreateRunRequest) returns (CreateRunResponse);
+  rpc CancelRun(CancelRunRequest) returns (CancelRunResponse);
+  rpc GetRun(GetRunRequest) returns (GetRunResponse);
+  rpc ListRuns(ListRunsRequest) returns (ListRunsResponse);
+  rpc WatchRun(WatchRunRequest) returns (stream WatchRunResponse);
+  rpc PushRunEvent(PushRunEventRequest) returns (PushRunEventResponse);
+}
+
+message AgentRun {
+  string id = 1;
+  string message = 2;
+  RuntimeConfig runtime = 3;
+  RunStatus status = 4;
+  optional string job_name = 5;
+  optional string output = 6;
+  optional string started_at = 7;
+  optional string completed_at = 8;
+  string created_at = 9;
+  repeated Resource resources = 10;
+}
+
+enum RunStatus {
+  RUN_STATUS_UNSPECIFIED = 0;
+  RUN_STATUS_PENDING = 1;
+  RUN_STATUS_RUNNING = 2;
+  RUN_STATUS_SUCCEEDED = 3;
+  RUN_STATUS_FAILED = 4;
+  RUN_STATUS_CANCELED = 5;
+}
+
+enum RuntimeProvider {
+  RUNTIME_PROVIDER_UNSPECIFIED = 0;
+  RUNTIME_PROVIDER_CLAUDE = 1;
+  RUNTIME_PROVIDER_CODEX = 2;
+}
+
+enum SandboxMode {
+  SANDBOX_MODE_UNSPECIFIED = 0;
+  SANDBOX_MODE_READ_ONLY = 1;
+  SANDBOX_MODE_WORKSPACE_WRITE = 2;
+  SANDBOX_MODE_DANGER_FULL_ACCESS = 3;
+}
+
+enum ApprovalPolicy {
+  APPROVAL_POLICY_UNSPECIFIED = 0;
+  APPROVAL_POLICY_NEVER = 1;
+  APPROVAL_POLICY_ON_REQUEST = 2;
+}
+
+message RuntimeConfig {
+  RuntimeProvider provider = 1;
+  SandboxMode sandbox_mode = 2;
+  ApprovalPolicy approval_policy = 3;
+  repeated string allowed_tools = 4;
+  repeated string add_dirs = 5;
+}
+
+message Resource {
+  string uri = 1;
+  optional string title = 2;
+  optional string mime_type = 3;
+  optional string text = 4;
+}
+
+message CreateRunRequest {
+  string message = 1;
+  RuntimeConfig runtime = 2;
+  reserved 3;
+  repeated Resource resources = 4;
+  reserved 5;
+}
+
+message CreateRunResponse {
+  AgentRun run = 1;
+}
+
+message CancelRunRequest {
+  string id = 1;
+}
+
+message CancelRunResponse {
+  AgentRun run = 1;
+}
+
+message GetRunRequest {
+  string id = 1;
+}
+
+message GetRunResponse {
+  AgentRun run = 1;
+}
+
+message ListRunsRequest {
+  uint32 page_size = 1;
+}
+
+message ListRunsResponse {
+  repeated AgentRun runs = 1;
+}
+
+message WatchRunRequest {
+  string id = 1;
+  bool replay_output = 2;
+  bool replay_events = 3;
+}
+
+message WatchRunResponse {
+  oneof event {
+    AgentRunSnapshot snapshot = 1;
+    OutputChunk output = 2;
+    RunCompleted completed = 3;
+    RunControlEvent control = 4;
+  }
+}
+
+message AgentRunSnapshot {
+  AgentRun run = 1;
+}
+
+message OutputChunk {
+  string chunk = 1;
+}
+
+message RunCompleted {
+  RunStatus status = 1;
+}
+
+enum PushDeliveryMode {
+  PUSH_DELIVERY_MODE_UNSPECIFIED = 0;
+  PUSH_DELIVERY_MODE_APPEND_CONTEXT = 1;
+  PUSH_DELIVERY_MODE_INTERRUPT_AND_REPLAN = 2;
+}
+
+message PushRunEventRequest {
+  repeated string target_run_ids = 1;
+  string query = 2;
+  uint32 limit = 3;
+  string message = 4;
+  string reason = 5;
+  string sender = 6;
+  PushDeliveryMode delivery_mode = 7;
+  map<string, string> metadata = 8;
+}
+
+message PushRunEventResponse {
+  repeated string delivered_run_ids = 1;
+}
+
+message RunControlEvent {
+  string id = 1;
+  string run_id = 2;
+  PushDeliveryMode delivery_mode = 3;
+  string message = 4;
+  string reason = 5;
+  optional string sender = 6;
+  map<string, string> metadata = 7;
+  string created_at = 8;
+}

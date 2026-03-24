@@ -1,0 +1,13 @@
+{
+  "services": [
+    {
+      "name": "agent-control-api",
+      "cwd": "services/agent-control-api",
+      "run": "go run ./cmd/api",
+      "db": "agent_control",
+      "env": {
+        "PORT": "8090"
+      }
+    }
+  ]
+}
