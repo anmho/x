@@ -8,6 +8,7 @@ Current scope:
 - ConnectRPC client to `services/agent-control-api`
 - Claude-first runtime adapter shape
 - message-plus-resources materialization so any upstream source can provide a canonical agent message and attachments
+- MCP-only workspace/repo tooling; native Claude workspace tools are intentionally disabled
 
 Current invocation modes:
 
@@ -20,6 +21,7 @@ Environment:
 - `AGENT_RUN_ID` optional control-plane run id
 - `AGENT_MESSAGE` optional direct message for local-only execution
 - `AGENT_CWD` optional working directory, defaults to current directory
-- `AGENT_MCP_CONFIG_PATH` optional path to an MCP config JSON file
+- `AGENT_MCP_CONFIG_PATH` optional path to an MCP config JSON file; defaults to `apps/agent-runner/mcp-config.json`
+- `MCP_API_KEY` should be set when using the default MCP config so the worker can authenticate to `services/mcp`
 
 This is the worker foundation for the later leased/session-based data plane. It is not yet the full worker-assignment protocol.

@@ -3,16 +3,29 @@ import { query } from "@anthropic-ai/claude-agent-sdk";
 export interface ClaudeRunInput {
   prompt: string;
   cwd: string;
-  mcpConfigPath?: string;
+  mcpConfigPath: string;
 }
 
 export interface ClaudeRunResult {
   text: string;
 }
 
+export const MCP_ALLOWED_TOOLS = [
+  "mcp__tools__workspace_read_file",
+  "mcp__tools__workspace_list_files",
+  "mcp__tools__workspace_search",
+  "mcp__tools__workspace_apply_patch",
+  "mcp__tools__git_status",
+  "mcp__tools__git_diff",
+  "mcp__tools__git_checkout",
+] as const;
+
 export async function runWithClaude(input: ClaudeRunInput): Promise<ClaudeRunResult> {
 	const parts: string[] = [];
 	const mcpServers = await loadMcpServers(input.mcpConfigPath);
+	if (Object.keys(mcpServers).length === 0) {
+		throw new Error("Project X MCP server configuration is required; native Claude workspace tools are disabled.");
+	}
 
 	for await (const message of query({
 		prompt: input.prompt,
@@ -20,7 +33,7 @@ export async function runWithClaude(input: ClaudeRunInput): Promise<ClaudeRunRes
 			cwd: input.cwd,
 			permissionMode: "dontAsk",
 			settingSources: [],
-			allowedTools: ["Read", "Write", "Edit", "Bash", "Glob", "Grep"],
+			allowedTools: [...MCP_ALLOWED_TOOLS],
 			mcpServers,
 		},
 	})) {
@@ -35,13 +48,25 @@ export async function runWithClaude(input: ClaudeRunInput): Promise<ClaudeRunRes
 	return { text: parts.join("\n").trim() };
 }
 
-async function loadMcpServers(configPath?: string): Promise<Record<string, unknown>> {
-	if (!configPath) {
-		return {};
-	}
+async function loadMcpServers(configPath: string): Promise<Record<string, unknown>> {
 	const raw = await Bun.file(configPath).text();
 	const parsed = JSON.parse(raw) as { mcpServers?: Record<string, unknown> };
-	return parsed.mcpServers ?? {};
+	return expandEnvStrings(parsed.mcpServers ?? {}) as Record<string, unknown>;
+}
+
+function expandEnvStrings(value: unknown): unknown {
+	if (typeof value === "string") {
+		return value.replace(/\$\{([A-Z0-9_]+)\}/g, (_, key: string) => process.env[key] ?? "");
+	}
+	if (Array.isArray(value)) {
+		return value.map((item) => expandEnvStrings(item));
+	}
+	if (value && typeof value === "object") {
+		return Object.fromEntries(
+			Object.entries(value as Record<string, unknown>).map(([key, entry]) => [key, expandEnvStrings(entry)]),
+		);
+	}
+	return value;
 }
 
 function extractText(message: unknown): string {
