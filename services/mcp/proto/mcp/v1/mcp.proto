@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+package mcp.v1;
+
+option go_package = "github.com/anmhela/x/mcp/internal/rpc/gen/mcp/v1;mcpv1";
+
+// McpService exposes MCP tools over ConnectRPC.
+service McpService {
+  rpc ListTools(ListToolsRequest) returns (ListToolsResponse);
+  rpc CallTool(CallToolRequest) returns (CallToolResponse);
+}
+
+// McpAdminService manages API keys for the MCP gateway.
+service McpAdminService {
+  rpc GenerateKey(GenerateKeyRequest) returns (GenerateKeyResponse);
+  rpc ListKeys(ListKeysRequest) returns (ListKeysResponse);
+  rpc RevokeKey(RevokeKeyRequest) returns (RevokeKeyResponse);
+}
+
+message ToolDefinition {
+  string name = 1;
+  string description = 2;
+  string input_schema_json = 3;
+}
+
+message ListToolsRequest {}
+
+message ListToolsResponse {
+  repeated ToolDefinition tools = 1;
+}
+
+message CallToolRequest {
+  string name = 1;
+  string arguments_json = 2;
+}
+
+message CallToolResponse {
+  string result = 1;
+  bool is_error = 2;
+}
+
+message ApiKey {
+  string id = 1;
+  string name = 2;
+  string created_at = 3;
+}
+
+message GenerateKeyRequest {
+  string name = 1;
+}
+
+message GenerateKeyResponse {
+  string key = 1;
+  ApiKey metadata = 2;
+}
+
+message ListKeysRequest {}
+
+message ListKeysResponse {
+  repeated ApiKey keys = 1;
+}
+
+message RevokeKeyRequest {
+  string id = 1;
+}
+
+message RevokeKeyResponse {
+  bool success = 1;
+}

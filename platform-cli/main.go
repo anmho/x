@@ -4,7 +4,15 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 )
+
+func getEnv(key, defaultVal string) string {
+	if v := strings.TrimSpace(os.Getenv(key)); v != "" {
+		return v
+	}
+	return defaultVal
+}
 
 func main() {
 	if err := run(os.Args[1:]); err != nil {
@@ -55,6 +63,8 @@ func run(args []string) error {
 		return runPreflight(args[1:])
 	case "new", "scaffold":
 		return runScaffold(args[1:])
+	case "mcp":
+		return runMcp(args[1:])
 	case "doctor":
 		return runDoctor()
 	case "help", "-h", "--help":
@@ -72,6 +82,7 @@ Usage:
   platform start|status|stop
   platform logs <service>
   platform stack temporal-ui
+  platform mcp <tools|keys> ...
   platform create <target> <name?>
   platform create integration <add|list|remove>
   platform notifications <send|list|status>
@@ -82,7 +93,7 @@ Usage:
   platform tokens <mint|list|rotate|revoke|check|audit|helpers>
   platform config <init|show>
   platform verify [all|platform|apps|docs]
-  platform preflight [platform|cloud-console|omnichannel|access-api]
+  platform preflight [platform|cloud-console|omnichannel|mcp]
 
 Examples:
   platform start
@@ -92,6 +103,7 @@ Examples:
   platform control-plane serve --addr :8091
   platform notifications list
   platform docs
+  platform mcp tools list --server http://localhost:8765 --key <api-key>
   platform create service billing-api
   platform create integration add vercel --project cloud-console
   platform project keys mint --project cloud-console --owner andrew --env dev`)
