@@ -22,6 +22,20 @@ This file is the permanent mistake memory for repository agents.
 
 ## Entries
 
+## 2026-03-26T07:06:57Z - Assumed local listener-based tests would work in the sandbox
+- What happened: I wrote the first provider proxy test with `httptest.NewServer`, and the sandbox rejected the bind with `operation not permitted`.
+- Root cause: I assumed loopback listeners were available in this execution environment instead of using the package’s existing transport-stubbing pattern.
+- How to avoid it: In this repo’s sandboxed Go tests, prefer fake `http.RoundTripper` clients for outbound HTTP behavior unless a real listener is explicitly required and already known to work.
+- What to do instead: Stub the upstream proxy with a custom transport that captures the request and returns a synthetic JSON-RPC response.
+- Verification: Replaced the listener-based test with `proxyRoundTripFunc`, then `cd services/mcp && GOCACHE=/tmp/go-cache go test ./...` passed.
+
+## 2026-03-26T07:06:58Z - Started documenting nested proxy CLI args despite the known structured-args gap
+- What happened: I initially drafted README examples that used `platform mcp tools call ... arguments.foo=bar` for passthrough tools even though `ANM-204` already tracks that the CLI does not cleanly support nested argument objects yet.
+- Root cause: I optimized for a concise example and forgot to re-check the current CLI capability before freezing the docs.
+- How to avoid it: Before adding docs for MCP tools that accept nested objects, verify whether the current CLI can express that shape; if not, document raw JSON-RPC or curl instead.
+- What to do instead: Use direct `/mcp` JSON-RPC examples for nested `arguments` payloads until `ANM-204` lands.
+- Verification: Replaced the nested CLI passthrough examples in `services/mcp/README.md` with raw JSON-RPC `curl` examples and kept the flat `google_search_query` CLI example only.
+
 ## 2026-03-24T08:46:25Z - Assumed the source proto matched the live generated agent-control contract
 - What happened: While setting up the live smoke test, I first built the `CreateRun` call around a `prompt` field because the source `.proto` and earlier context suggested that shape, but the checked-in generated Go contract still exposed `message`.
 - Root cause: I trusted the source proto and plan context instead of checking the generated client types that the running server and local clients actually compile against.
@@ -252,3 +266,9 @@ This file is the permanent mistake memory for repository agents.
 - Root cause: I failed to apply the existing single-quote rule for literal Markdown text containing backticks.
 - Preventive rule/check added: Before running any `rg` command, if the pattern contains backticks, require single-quoted pattern syntax and avoid shell interpolation.
 - Verification: Re-ran validations using single-quoted patterns and obtained expected matches without shell command-substitution errors.
+
+## 2026-03-26T07:11:00Z - Trimmed unified diff body before applying patch
+- What happened: The new `workspace_apply_patch` MCP tool failed valid test patches with `git apply ... corrupt patch` because I stripped whitespace from the patch string before passing it to git.
+- Root cause: I used `strings.TrimSpace()` on a structured patch payload, which removed the terminal newline that unified diff parsing expects.
+- Preventive rule/check added: For structured text payloads like unified diffs, only validate emptiness with trimming; never mutate the original payload before handing it to the downstream parser/tool.
+- Verification: Removed the destructive trim, reran `cd services/mcp && GOCACHE=/tmp/go-cache go test ./...`, and the workspace/git tool tests passed.

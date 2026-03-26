@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { emptyToUndefined, loadConfig } from "./config.ts";
+import { defaultMcpConfigPath, emptyToUndefined, loadConfig } from "./config.ts";
 
 describe("config", () => {
   test("emptyToUndefined trims empty strings", () => {
@@ -12,6 +12,7 @@ describe("config", () => {
   test("loadConfig applies defaults", () => {
     const config = loadConfig({});
     expect(config.controlPlaneBaseUrl).toBe("http://localhost:8090");
+    expect(config.mcpConfigPath).toBe(defaultMcpConfigPath());
     expect(config.provider).toBe("claude");
   });
 });

@@ -1,7 +1,10 @@
 {
   "mcpServers": {
     "tools": {
-      "url": "http://localhost:3000/mcp"
+      "url": "http://localhost:8765/mcp",
+      "headers": {
+        "Authorization": "Bearer ${MCP_API_KEY}"
+      }
     }
   }
 }
