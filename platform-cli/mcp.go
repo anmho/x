@@ -17,7 +17,14 @@ func runMcp(args []string) error {
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	if err := cmd.Run(); err != nil {
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) {
+			os.Exit(exitErr.ExitCode())
+		}
+		return err
+	}
+	return nil
 }
 
 func findMcpBin() (string, error) {
@@ -25,7 +32,14 @@ func findMcpBin() (string, error) {
 	if p, err := exec.LookPath("mcp"); err == nil {
 		return p, nil
 	}
-	// 2. Check bin/mcp relative to executable
+	// 2. Check repo-local bin/mcp from the current repo root.
+	if root, err := findRepoRoot(); err == nil {
+		candidate := filepath.Join(root, "bin", "mcp")
+		if _, err := os.Stat(candidate); err == nil {
+			return candidate, nil
+		}
+	}
+	// 3. Check bin/mcp relative to executable.
 	exe, err := os.Executable()
 	if err == nil {
 		candidate := filepath.Join(filepath.Dir(exe), "mcp")

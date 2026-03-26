@@ -17,11 +17,12 @@ npx nx run mcp:build-cli
 Run the server:
 
 ```bash
+./bin/mcp keys generate --local
 cd services/mcp
 GOCACHE=/tmp/go-cache go run ./cmd/server
 ```
 
-On first startup the server generates a key in `~/.x-mcp/keys.json` and prints it once. Use that key with the standalone CLI:
+The server now fails fast if no API keys are configured. Bootstrap a local key into `~/.x-mcp/keys.json` first, or set `MCP_API_KEYS` explicitly for ephemeral environments. Use the generated key with the standalone CLI:
 
 ```bash
 ./bin/mcp --server http://localhost:8765 --key <api-key> tools list
@@ -46,11 +47,11 @@ Run locally with the key store persisted:
 
 ```bash
 docker run --rm -p 8765:8765 \
-  -v "$HOME/.x-mcp:/root/.x-mcp" \
+  -v "$HOME/.x-mcp:/var/lib/x-mcp" \
   x-mcp
 ```
 
-The image now includes `platform.controlplane.json` and sets `MCP_ROOT=/app`, so config-backed tools work without an extra bind mount. Tools that shell out to `gcloud` or `vercel` still require those CLIs and their auth to be available in the runtime environment.
+The image now includes `platform.controlplane.json`, runs as a non-root user, and stores keys under `/var/lib/x-mcp` with `MCP_ROOT=/app`. Tools that shell out to `gcloud` or `vercel` still require those CLIs and their auth to be available in the runtime environment.
 
 ## Deployment model
 

@@ -21,6 +21,10 @@ Verify that the new `services/mcp` ConnectRPC gateway and CLI actually work end 
 - [x] (2026-03-18 07:06Z) Reconciled the existing broader platform CLI source-drift blocker with `ANM-153` instead of opening a duplicate ticket.
 - [x] (2026-03-18 07:21Z) Revalidated the clean PR branch directly from `services/mcp` with `buf generate`, `go test ./...`, `go build -o ../../bin/mcp-server ./cmd/server`, `go build -o ../../bin/mcp ./cmd/mcp`, `make build-mcp`, `GET /health`, authenticated `./bin/mcp ... tools list`, authenticated `./platform mcp ... tools list`, and authenticated JSON-RPC `POST /mcp`.
 - [x] (2026-03-18 07:21Z) Confirmed the clean branch still inherits two pre-existing base-branch gaps: `./scripts/deploy-preflight mcp` is absent and is reconciled to existing deploy-workflow ticket `ANM-158`, while `./platform control-plane plan --project mcp` / `./platform deploy --project mcp --dry-run` fail under the broader `platform-cli` compile drift already tracked in `ANM-153`.
+- [x] (2026-03-24 09:55Z) Rebased the surviving MCP branch onto current `main` after the CI stack merged and folded in the outstanding PR review blockers.
+- [x] (2026-03-24 09:58Z) Replaced secret-printing bootstrap with explicit local key generation, constant-time key comparison, fail-closed auth, repo-root marker fixes, and subprocess exit-code propagation.
+- [x] (2026-03-25 00:22Z) Removed the vestigial TypeScript MCP workspace and server stubs after the audit showed they imported non-existent files and were not part of the real Go service path.
+- [x] (2026-03-25 00:29Z) Revalidated the hardened Go path with `go test ./...`, `./platform mcp keys generate --local`, and a no-keys startup failure check for `cmd/server`.
 
 ## Surprises & Discoveries
 
@@ -45,6 +49,9 @@ Verify that the new `services/mcp` ConnectRPC gateway and CLI actually work end 
 - Observation: the clean branch cut from `origin/main` does not currently provide `scripts/deploy-preflight`, and the root `./platform` build path still hits the separately tracked `platform-cli` compile drift.
   Evidence: `./scripts/deploy-preflight mcp` returned `no such file or directory`, while both `./platform control-plane plan --project mcp` and `./platform deploy --project mcp --dry-run` failed with `undefined: runStack` and related symbol errors already reconciled to `ANM-153`.
 
+- Observation: the branch still carried a vestigial TypeScript MCP workspace and Bun server path that imported `../../mcp/common/*`, but those files do not exist anywhere in the repository.
+  Evidence: `services/mcp/tools.ts` imported `../../mcp/common/platform-projects.ts` and `../../mcp/common/shell.ts`, while the root `mcp/` directory only contained a broken `package.json`.
+
 ## Decision Log
 
 - Decision: start by validating and repairing the existing declarative platform path instead of introducing ArgoCD immediately.
@@ -59,11 +66,26 @@ Verify that the new `services/mcp` ConnectRPC gateway and CLI actually work end 
   Rationale: the broader `platform-cli` source tree is already broken and tracked in `ANM-153`; the wrapper route restores the MCP user path without broadening this task into a repo-wide CLI reconstruction.
   Date/Author: 2026-03-18 / Codex
 
+- Decision: replace implicit server-side key generation with explicit bootstrap via `MCP_API_KEYS` or `./bin/mcp keys generate --local`.
+  Rationale: the PR must not leak admin credentials into logs, and the CLI can provide a reviewable bootstrap path without relying on a live unauthenticated server.
+  Date/Author: 2026-03-24 / Codex
+
+- Decision: remove the vestigial TypeScript MCP workspace and server helpers from this PR instead of trying to rehabilitate them alongside the Go control-plane path.
+  Rationale: the actual productized path in this branch is the Go service plus Go CLI. Keeping an unreferenced Bun/TypeScript implementation that already imports missing modules would make the branch look broader than it really is and leave dead, broken code in the tree.
+  Date/Author: 2026-03-25 / Codex
+
 ## Outcomes & Retrospective
 
 Completed outcomes:
 
 - `services/mcp/project.json` now writes `mcp` and `mcp-server` into repo-root `bin/`, matching the rest of the repo tooling.
+- The rebased PR branch now requires explicit auth bootstrap, supports env-backed or file-backed key validation, and preserves constant-time key comparison in the live Go auth path.
+- `./bin/mcp keys generate --local` now provides a local bootstrap path without emitting credentials into service logs.
+- The rebased PR no longer carries the dead TypeScript MCP workspace; the branch now reflects a single real implementation path through the Go server, Go CLI, and platform wiring.
+- Additional hardening validation passed for:
+  - `cd services/mcp && GOCACHE=/tmp/go-cache go test ./...`
+  - `./platform mcp keys generate --local --store /tmp/x-pr7-rebase-mcp-keys.json`
+  - `cd services/mcp && MCP_KEYS_FILE=/tmp/x-pr7-rebase-no-keys.json GOCACHE=/tmp/go-cache go run ./cmd/server` (expected fail-fast with no configured keys)
 - Local smoke tests passed for:
   - `GET /health`
   - authenticated ConnectRPC via `./bin/mcp ... tools list`
@@ -86,6 +108,7 @@ Completed outcomes:
 Remaining gaps:
 
 - The current MCP auth model is still file-local and auto-generated, which is not yet a deployment-safe Cloud Run operator story; tracked in `ANM-167`.
+- The immediate PR review blockers around timing-safe auth, repo-root detection, and exit-code propagation are addressed on the rebased branch, but broader Cloud Run operator secret management is still tracked in `ANM-167`.
 - The clean PR branch cut from `origin/main` still lacks `scripts/deploy-preflight`, so repo-standard preflight validation cannot run there until that base-branch tooling is restored.
 - The full `platform-cli` Go source tree still does not compile cleanly; that broader source-drift issue is already tracked separately in `ANM-153`.
 - Docker build/run was not validated because the local Docker daemon is unavailable in this environment.
@@ -125,8 +148,9 @@ From repo root (`/Users/andrewho/repos/projects/x`):
    - `npx nx run mcp:build-cli`
    - `scripts/deploy-preflight mcp`
 2. Smoke-test the server and CLI from the module root:
+   - `./bin/mcp keys generate --local`
    - `cd services/mcp && GOCACHE=/tmp/go-cache go run ./cmd/server`
-   - read the generated key from `~/.x-mcp/keys.json`
+   - read the configured key from `~/.x-mcp/keys.json` (or set `MCP_API_KEYS`)
    - `../../bin/mcp --server http://127.0.0.1:18765 --key <generated-key> tools list`
    - `curl -H "Authorization: Bearer <generated-key>" -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' http://127.0.0.1:18765/mcp`
 3. Inspect the deployment path:

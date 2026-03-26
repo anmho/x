@@ -2,11 +2,13 @@ package keys
 
 import (
 	"crypto/rand"
+	"crypto/subtle"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -97,14 +99,36 @@ func Generate(path, name string) (KeyRecord, error) {
 	return rec, nil
 }
 
+// Configured returns all API keys available via env or the local store.
+func Configured(path string) ([]string, error) {
+	keys := configuredFromEnv()
+
+	records, err := Load(path)
+	if err != nil {
+		return nil, err
+	}
+	for _, record := range records {
+		if value := strings.TrimSpace(record.Key); value != "" {
+			keys = append(keys, value)
+		}
+	}
+
+	return keys, nil
+}
+
 // Validate returns true if the given key exists in the store.
 func Validate(path, key string) bool {
-	records, err := Load(path)
+	key = strings.TrimSpace(key)
+	if key == "" {
+		return false
+	}
+
+	configured, err := Configured(path)
 	if err != nil {
 		return false
 	}
-	for _, r := range records {
-		if r.Key == key {
+	for _, candidate := range configured {
+		if secureEqual(candidate, key) {
 			return true
 		}
 	}
@@ -132,4 +156,27 @@ func Revoke(path, id string) (bool, error) {
 		}
 	}
 	return found, nil
+}
+
+func configuredFromEnv() []string {
+	raw := strings.TrimSpace(os.Getenv("MCP_API_KEYS"))
+	if raw == "" {
+		return nil
+	}
+
+	parts := strings.Split(raw, ",")
+	keys := make([]string, 0, len(parts))
+	for _, part := range parts {
+		if value := strings.TrimSpace(part); value != "" {
+			keys = append(keys, value)
+		}
+	}
+	return keys
+}
+
+func secureEqual(left, right string) bool {
+	if len(left) != len(right) {
+		return false
+	}
+	return subtle.ConstantTimeCompare([]byte(left), []byte(right)) == 1
 }

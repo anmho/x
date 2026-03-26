@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/anmhela/x/mcp/internal/keys"
 	mcpv1 "github.com/anmhela/x/mcp/internal/rpc/gen/mcp/v1"
 	"github.com/anmhela/x/mcp/internal/rpc/gen/mcp/v1/mcpv1connect"
 )
@@ -91,7 +92,7 @@ func printUsage() {
 Usage:
   mcp tools list
   mcp tools call <name> [key=value ...]
-  mcp keys generate [--name <label>]
+  mcp keys generate [--name <label>] [--local] [--store <path>]
   mcp keys list
   mcp keys revoke <id>
 
@@ -223,6 +224,8 @@ func runKeys(args []string, server, key string) error {
 
 func runKeysGenerate(args []string, server, key string) error {
 	name := "default"
+	local := false
+	storePath := keys.DefaultStorePath()
 	for i := 0; i < len(args); i++ {
 		switch args[i] {
 		case "--name":
@@ -230,11 +233,32 @@ func runKeysGenerate(args []string, server, key string) error {
 				name = args[i+1]
 				i++
 			}
+		case "--local":
+			local = true
+		case "--store":
+			if i+1 < len(args) {
+				storePath = args[i+1]
+				i++
+			}
 		default:
 			if strings.HasPrefix(args[i], "--name=") {
 				name = strings.TrimPrefix(args[i], "--name=")
+			} else if strings.HasPrefix(args[i], "--store=") {
+				storePath = strings.TrimPrefix(args[i], "--store=")
 			}
 		}
+	}
+
+	if local {
+		rec, err := keys.Generate(storePath, name)
+		if err != nil {
+			return fmt.Errorf("generate local key: %w", err)
+		}
+		fmt.Printf("Key:   %s\n", rec.Key)
+		fmt.Printf("ID:    %s\n", rec.ID)
+		fmt.Printf("Name:  %s\n", rec.Name)
+		fmt.Printf("Store: %s\n", storePath)
+		return nil
 	}
 
 	client := newMcpAdminClient(server, key)

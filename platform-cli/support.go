@@ -51,7 +51,7 @@ func findRepoRoot() (string, error) {
 func findRepoRootFrom(start string) string {
 	dir := start
 	for {
-		for _, marker := range []string{"nx.json", "package.json", projectConfigFileName, controlPlaneConfigFileName} {
+		for _, marker := range []string{"nx.json", projectConfigFileName, controlPlaneConfigFileName} {
 			if _, err := os.Stat(filepath.Join(dir, marker)); err == nil {
 				return dir
 			}

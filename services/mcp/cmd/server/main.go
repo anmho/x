@@ -13,8 +13,8 @@ import (
 	"github.com/anmhela/x/mcp/internal/handler"
 	"github.com/anmhela/x/mcp/internal/jsonrpc"
 	"github.com/anmhela/x/mcp/internal/keys"
-	"github.com/anmhela/x/mcp/internal/tools"
 	mcpv1connect "github.com/anmhela/x/mcp/internal/rpc/gen/mcp/v1/mcpv1connect"
+	"github.com/anmhela/x/mcp/internal/tools"
 )
 
 func main() {
@@ -27,14 +27,14 @@ func main() {
 	// Find repo root (walk up from executable or use MCP_ROOT env)
 	root := getEnv("MCP_ROOT", repoRoot())
 
-	// Auto-generate default key if store is empty
-	existing, _ := keys.Load(storePath)
-	if len(existing) == 0 {
-		rec, err := keys.Generate(storePath, "default")
-		if err == nil {
-			fmt.Printf("[mcp] Generated API key: %s\n", rec.Key)
-			fmt.Printf("[mcp] Saved to: %s\n", storePath)
-		}
+	configuredKeys, err := keys.Configured(storePath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "[mcp] fatal: load configured keys: %v\n", err)
+		os.Exit(1)
+	}
+	if len(configuredKeys) == 0 {
+		fmt.Fprintf(os.Stderr, "[mcp] fatal: no API keys configured; set MCP_API_KEYS or run ./bin/mcp keys generate --local to seed %s\n", storePath)
+		os.Exit(1)
 	}
 
 	// Build tool registry and handlers
@@ -81,7 +81,7 @@ func getEnv(key, def string) string {
 }
 
 // repoRoot walks up from the current executable location looking for
-// nx.json, package.json, or go.mod to identify the repo root.
+// repo-unique markers to identify the actual repo root.
 func repoRoot() string {
 	// First try working directory
 	if wd, err := os.Getwd(); err == nil {
@@ -102,7 +102,7 @@ func repoRoot() string {
 }
 
 func findRepoRoot(start string) string {
-	markers := []string{"nx.json", "package.json"}
+	markers := []string{"nx.json", "platform.controlplane.json", "platform.projects.json"}
 	dir := start
 	for {
 		for _, m := range markers {

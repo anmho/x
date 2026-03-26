@@ -1,12 +1,14 @@
 package tools
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 // Tool represents a tool definition.
@@ -59,12 +61,19 @@ func (r *Registry) loadControlPlane() (*controlPlane, error) {
 }
 
 func runCmd(name string, args ...string) (string, error) {
-	out, err := exec.Command(name, args...).Output()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	out, err := exec.CommandContext(ctx, name, args...).CombinedOutput()
 	if err != nil {
-		if exitErr, ok := err.(*exec.ExitError); ok {
-			return "", fmt.Errorf("%s %v: %s", name, args, string(exitErr.Stderr))
+		if ctx.Err() == context.DeadlineExceeded {
+			return "", fmt.Errorf("%s %v: timed out after 30s", name, args)
 		}
-		return "", err
+		msg := strings.TrimSpace(string(out))
+		if msg == "" {
+			return "", err
+		}
+		return "", fmt.Errorf("%s %v: %s", name, args, msg)
 	}
 	return strings.TrimSpace(string(out)), nil
 }
