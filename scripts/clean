@@ -15,7 +15,6 @@ Removes generated local artifacts:
   - bin/platform
   - cli/target/
   - services/x_stream_bot/target/
-  - services/access-api/api
   - services/omnichannel/backend/api
   - services/omnichannel/backend/worker
   - agents/code-agents/out/
@@ -72,7 +71,6 @@ paths=(
   "bin/platform"
   "cli/target"
   "services/x_stream_bot/target"
-  "services/access-api/api"
   "services/omnichannel/backend/api"
   "services/omnichannel/backend/worker"
   "agents/code-agents/out"

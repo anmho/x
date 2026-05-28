@@ -1,0 +1,22 @@
+{
+  "generatedAt": "2026-03-10",
+  "source": "From Nx/setup/toolchain session: toolchain manifest, Nx declaration, setup script improvements.",
+  "teamKey": "ANM",
+  "tickets": [
+    {
+      "title": "[X Platform][medium] Add single toolchain manifest",
+      "priority": 2,
+      "description": "## Problem\nToolchain versions are scattered: Node in .nvmrc, package.json engines, scripts/verify, scripts/deploy-preflight (20.19 vs 24.14); buf in package.json; Go/Rust in CI only; Python not declared. No single source of truth.\n\n## Scope\n- Create toolchain.json (or .toolchain) with node, buf, go, rust, python, nx versions.\n- Update scripts/setup.sh, scripts/verify, scripts/deploy-preflight to read from manifest.\n- Update .github/workflows to use manifest where applicable.\n\n## Affected files\n- New: toolchain.json\n- scripts/setup.sh\n- scripts/verify\n- scripts/deploy-preflight\n- .github/workflows/*.yml\n\n## Validation\n- Single file defines all tool versions; setup and verify use it.\n\n## Category\nmedium"
+    },
+    {
+      "title": "[X Platform][medium] Declare Nx in toolchain and setup",
+      "priority": 2,
+      "description": "## Problem\nNx is used (project.json, sdk.sh) but not in package.json devDependencies. setup.sh does not verify Nx. Lockfile has nx transitively but it's not explicitly declared.\n\n## Scope\n- Add nx to package.json devDependencies with pinned version (e.g. ^22.5.4).\n- Add verify_nx step to scripts/setup.sh (check node_modules/.bin/nx or PATH).\n- Include nx in toolchain manifest if created.\n\n## Affected files\n- package.json\n- scripts/setup.sh\n- toolchain.json (if created)\n\n## Validation\n- npm install yields nx in node_modules; setup.sh verifies nx.\n\n## Category\nmedium"
+    },
+    {
+      "title": "[X Platform][minor] Align Node version across scripts",
+      "priority": 3,
+      "description": "## Problem\nscripts/deploy-preflight has REQUIRED_NODE=20.19.0; .nvmrc and scripts/verify use 24.14.0. Inconsistent.\n\n## Scope\n- Align all scripts to use .nvmrc or a single REQUIRED_NODE constant.\n- Update deploy-preflight to match .nvmrc (24.14.0) or document why it differs.\n\n## Affected files\n- scripts/deploy-preflight\n- scripts/verify\n- scripts/setup.sh\n\n## Validation\n- All scripts reference same Node version.\n\n## Category\nminor"
+    }
+  ]
+}

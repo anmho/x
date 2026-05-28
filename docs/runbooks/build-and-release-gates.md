@@ -10,26 +10,35 @@ From repo root:
 nvm install
 nvm use
 npm install
-npm run doctor
-npm run verify
+npm run lint
+npm run build
+npm run test
 ```
 
 See `docs/runbooks/node-dependencies.md` for the Node dependency strategy.
 
-Expected outcome: all checks pass for platform services, app builds, and docs tooling.
+Expected outcome:
+
+- `lint`, `build`, and `test` should pass in a healthy local setup.
+- If `test:platform` fails, use the status matrix to identify the current platform blockers.
 
 ## Target Deploy Preflight
 
 Run one of:
 
 ```bash
-npm run preflight
-npm run preflight:cloud-console
-npm run preflight:omnichannel
-npm run preflight:access-api
+./scripts/deploy-preflight platform
+./scripts/deploy-preflight cloud-console
+./scripts/deploy-preflight omnichannel
 ```
 
 These checks validate each deploy target can build/test with current code.
+
+Observed state (March 10, 2026):
+
+- `cloud-console`: currently blocked by active frontend lint errors
+- `platform`: broken when platform test targets fail
+- `omnichannel`: broken when omnichannel Go checks fail
 
 ## CI Gate
 
@@ -37,10 +46,16 @@ The repository enforces:
 
 - `.github/workflows/ci.yml`
 - `.github/workflows/deploy-preflight.yml`
+- `.github/workflows/publish-connectrpc-sdks.yml` (manual publish gate for BSR SDK versions)
 
 `CI` should pass before merge. `Deploy Preflight` should be executed before production release windows.
 
-## Current Known Risks
+## Current Known Risks / Blockers
 
-- Mintlify and some web dependencies require Node `>=20.19.0`; older local runtimes will fail docs checks.
-- Tests are still sparse in several services; passing checks currently prove build integrity more than behavior coverage.
+- `test:platform` fails in omnichannel Go checks due missing module/dependency wiring and undefined symbols.
+- `test:agents` depends on `agents/blueprints/verify`, which is still a compatibility path.
+- `scripts/deploy-preflight omnichannel` fails in omnichannel Go checks (module/dependency/symbol issues).
+- SDK publish commands require a valid `BUF_TOKEN` (`buf registry login`).
+- Deploy dry-run requires provider credentials (for example `CLOUDFLARE_API_TOKEN`).
+
+For the complete audited command list, use [workflow-status-matrix.md](./workflow-status-matrix.md).

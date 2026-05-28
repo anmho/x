@@ -19,20 +19,6 @@
         "command": "node scripts/ci/verify_docs_config.mjs",
         "cwd": "."
       }
-    },
-    "verify": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "node scripts/ci/verify_docs_config.mjs",
-        "cwd": "."
-      }
-    },
-    "preflight": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "node scripts/ci/verify_docs_config.mjs",
-        "cwd": "."
-      }
     }
   }
 }

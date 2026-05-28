@@ -1,0 +1,47 @@
+{
+  "name": "stack",
+  "projectType": "application",
+  "root": ".",
+  "targets": {
+    "postgres": {
+      "executor": "nx:run-commands",
+      "options": { "command": "./scripts/dev-stack start postgres", "cwd": "." }
+    },
+    "supabase": {
+      "executor": "nx:run-commands",
+      "options": { "command": "./scripts/dev-stack start supabase", "cwd": "." }
+    },
+    "temporal": {
+      "executor": "nx:run-commands",
+      "options": { "command": "./scripts/dev-stack start temporal", "cwd": "." }
+    },
+    "service": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "./scripts/dev-stack start",
+        "cwd": ".",
+        "forwardAllArgs": true
+      }
+    },
+    "start": {
+      "executor": "nx:run-commands",
+      "options": { "command": "./scripts/dev-stack start", "cwd": "." }
+    },
+    "status": {
+      "executor": "nx:run-commands",
+      "options": { "command": "./scripts/dev-stack status", "cwd": "." }
+    },
+    "stop": {
+      "executor": "nx:run-commands",
+      "options": { "command": "./scripts/dev-stack stop", "cwd": "." }
+    },
+    "logs": {
+      "executor": "nx:run-commands",
+      "options": { "command": "./scripts/dev-stack logs", "cwd": ".", "forwardAllArgs": true }
+    },
+    "temporal-ui": {
+      "executor": "nx:run-commands",
+      "options": { "command": "./scripts/dev-stack temporal-ui", "cwd": "." }
+    }
+  }
+}

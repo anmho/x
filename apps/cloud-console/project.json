@@ -1,8 +1,23 @@
 {
   "name": "cloud-console",
+  "tags": ["app"],
   "targets": {
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": { "command": "npm run dev -- --port 3000", "cwd": "apps/cloud-console" }
+    },
     "build": {
+      "executor": "nx:run-commands",
+      "options": { "command": "npm run build", "cwd": "apps/cloud-console" },
       "dependsOn": ["sdk:generate-es"]
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": { "command": "npm run lint", "cwd": "apps/cloud-console" }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": { "command": "npm run test", "cwd": "apps/cloud-console" }
     }
   }
 }

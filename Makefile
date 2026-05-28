@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := help
 
-.PHONY: help setup clean clean-full test verify build build-cli build-web \
-	build-access-api build-omnichannel-backend build-x-stream-bot \
+.PHONY: help setup clean clean-full lint test build build-cli build-mcp build-web \
+	build-omnichannel-backend build-x-stream-bot \
 	stack-up stack-down stack-status stack-logs watch-up watch-status \
 	platform-install deploy preflight materialize-configs project-registry
 
@@ -23,14 +23,13 @@ help:
 	@echo "  make clean-full             # remove common + large frontend artifacts"
 	@echo ""
 	@echo "Quality:"
-	@echo "  make test                   # run full verify suite"
-	@echo "  make verify                 # alias of test"
+	@echo "  make lint                   # run repo lint targets"
+	@echo "  make test                   # run repo test targets"
 	@echo ""
 	@echo "Build:"
 	@echo "  make build                  # build all active targets"
 	@echo "  make build-cli              # build bin/platform"
 	@echo "  make build-web              # build cloud console frontend"
-	@echo "  make build-access-api       # build services/access-api"
 	@echo "  make build-omnichannel-backend # build omnichannel api + worker"
 	@echo "  make build-x-stream-bot     # build rust stream bot (if cargo is installed)"
 	@echo ""
@@ -52,7 +51,7 @@ help:
 	@echo ""
 	@echo "Config + Registry:"
 	@echo "  make materialize-configs    # materialize declarative Python config into JSON files"
-	@echo "  make project-registry       # generate project + MCP registry artifacts"
+	@echo "  make project-registry       # materialize canonical platform project/config artifacts"
 
 setup:
 	./scripts/doctor
@@ -64,20 +63,22 @@ clean-full:
 	./scripts/clean --full
 
 test:
-	./scripts/verify all
+	npm run test
 
-verify: test
+lint:
+	npm run lint
 
-build: build-cli build-web build-access-api build-omnichannel-backend build-x-stream-bot
+build: build-cli build-mcp build-web build-omnichannel-backend build-x-stream-bot
 
 build-cli:
 	./platform build
 
+build-mcp:
+	cd services/mcp && GOCACHE="$(GOCACHE_DIR)" go build -o ../../bin/mcp ./cmd/mcp
+	cd services/mcp && GOCACHE="$(GOCACHE_DIR)" go build -o ../../bin/mcp-server ./cmd/server
+
 build-web:
 	npm --prefix apps/cloud-console run build
-
-build-access-api:
-	cd services/access-api && GOCACHE="$(GOCACHE_DIR)" go build ./cmd/api
 
 build-omnichannel-backend:
 	cd services/omnichannel/backend && GOCACHE="$(GOCACHE_DIR)" go build ./cmd/api
@@ -135,4 +136,3 @@ materialize-configs:
 
 project-registry:
 	python3 scripts/ci/materialize_platform_configs.py
-	node scripts/ci/generate-project-registry.mjs

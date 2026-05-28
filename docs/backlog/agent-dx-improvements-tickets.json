@@ -1,0 +1,72 @@
+{
+  "generatedAt": "2026-03-09",
+  "source": "Consolidated from agent bottlenecks, DX/build, pre-commit, and gitignore reports. Deduplicated against x-platform-repo-hygiene-tickets.json and devex-completed-tickets.json.",
+  "teamKey": "ANM",
+  "tickets": [
+    {
+      "title": "[X Platform] Agent & DX improvements backlog",
+      "priority": 2,
+      "description": "## Summary\nParent ticket for agent-friendliness, multi-agent workflow, DevEx, build system, pre-commit, and gitignore improvements identified in repo audits.\n\n## Source reports\n- Agent & multi-agent bottlenecks\n- DevEx & build system\n- Pre-commit & local gates\n- .gitignore review\n\n## Run\nUse Linear MCP with this payload."
+    },
+    {
+      "title": "[X Platform][major] Fix CI path bugs in .github/workflows",
+      "parentRef": "parent",
+      "priority": 1,
+      "description": "## Problem\nCI workflows use wrong paths for omnichannel, causing npm cache and Go setup to fail or use wrong files.\n\n## Evidence\n- `omnichannel/frontend/package-lock.json` → should be `services/omnichannel/frontend/package-lock.json`\n- `omnichannel/backend/go.mod` → should be `services/omnichannel/backend/go.mod`\n\n## Affected files\n- .github/workflows/ci.yml\n- .github/workflows/deploy-preflight.yml\n\n## Validation\n- Run workflows and verify cache paths resolve correctly.\n\n## Category\nmajor (blocks CI reliability)"
+    },
+    {
+      "title": "[X Platform][major] Add omnichannel frontend to verify_apps",
+      "parentRef": "parent",
+      "priority": 2,
+      "description": "## Problem\n`scripts/verify apps` only runs `apps/cloud-console` build. Omnichannel frontend can regress without CI catching it.\n\n## Scope\n- Add `services/omnichannel/frontend` build to `verify_apps` in scripts/verify.\n- Ensure both web apps are validated in `verify all`.\n\n## Affected files\n- scripts/verify\n\n## Validation\n- `./scripts/verify apps` runs both cloud-console and omnichannel frontend builds.\n\n## Category\nmajor"
+    },
+    {
+      "title": "[X Platform][major] Add pre-commit hooks",
+      "parentRef": "parent",
+      "priority": 2,
+      "description": "## Problem\nNo pre-commit hooks exist. Agents and humans can commit generated artifacts, non-Conventional Commits, and from wrong repo root (nested omnichannel/frontend).\n\n## Scope\n- Add pre-commit framework (pre-commit, Husky, or lefthook).\n- Block staged paths matching generated artifacts (node_modules, .next, target, bin/, api, worker).\n- Enforce Conventional Commits on commit-msg.\n- Add nested-repo guard: fail if `git rev-parse --show-toplevel` is `services/omnichannel/frontend`.\n\n## Affected files\n- New: .pre-commit-config.yaml or .husky/ or lefthook.yml\n- package.json (optional prepare script)\n\n## Validation\n- Attempt to commit generated file → blocked.\n- Attempt commit with invalid message → blocked.\n- Commit from omnichannel/frontend root → blocked.\n\n## Category\nmajor"
+    },
+    {
+      "title": "[X Platform][medium] Make Linear MCP optional when team unavailable",
+      "parentRef": "parent",
+      "priority": 3,
+      "description": "## Problem\nAGENTS.md requires Linear ticket before every change. When Linear MCP team is unavailable, agents must stop. Blocks all autonomous work.\n\n## Scope\n- Update AGENTS.md: when Linear MCP returns \"Entity not found: Team\", proceed with documented workaround (skip ticket creation, document in plan).\n- Add \"Linear unavailable\" workflow.\n\n## Affected files\n- AGENTS.md\n\n## Validation\n- Agent can make progress when Linear MCP returns \"Entity not found: Team\".\n\n## Category\nmedium"
+    },
+    {
+      "title": "[X Platform][medium] Add machine-readable project manifest",
+      "parentRef": "parent",
+      "priority": 3,
+      "description": "## Problem\nNo single source of truth for projects, paths, and build commands. platform.projects.json, scripts/verify, Makefile, and package.json workspaces all hardcode paths. Adding a project requires editing multiple scripts.\n\n## Scope\n- Derive build/verify targets from platform.projects.json or a manifest.\n- Add `scope` / `affected_paths` to ExecPlans so agents can determine work overlap.\n\n## Affected files\n- scripts/verify, scripts/deploy-preflight, Makefile\n- PLANS.md (plan schema for scope)\n\n## Validation\n- New project added to manifest → verify picks it up automatically.\n\n## Category\nmedium"
+    },
+    {
+      "title": "[X Platform][medium] Single stack entry point and deprecate alternatives",
+      "parentRef": "parent",
+      "priority": 3,
+      "description": "## Problem\nThree stack entry points: `./platform`, `scripts/dev-stack`, `services/omnichannel/scripts/stack.sh`. Different semantics, unclear when to use which. Multi-agent workflows get inconsistent status.\n\n## Scope\n- Document `./platform` as the single default. Deprecate or clearly subordinate alternatives.\n- Add decision tree to docs/runbooks/platform-cli-workflow.md.\n\n## Affected files\n- docs/runbooks/platform-cli-workflow.md\n- AGENTS.md\n- scripts/README.md\n\n## Validation\n- New contributor can determine which command to use from docs.\n\n## Category\nmedium"
+    },
+    {
+      "title": "[X Platform][medium] Pin Mintlify CLI for docs",
+      "parentRef": "parent",
+      "priority": 3,
+      "description": "## Problem\n`npx mint` in verify_docs and docs:dev uses latest Mintlify. Docs builds can drift over time. docs/infra-dx-blindspots.md flags this as P1.\n\n## Scope\n- Add docs/mintlify/package.json with pinned Mintlify CLI version.\n- Update scripts to use `npm run` from docs/mintlify instead of `npx mint`.\n\n## Affected files\n- docs/mintlify/package.json (new or update)\n- scripts/verify\n- package.json docs:dev script\n\n## Validation\n- pinned docs verification command uses the targeted Mintlify version.\n\n## Category\nmedium"
+    },
+    {
+      "title": "[X Platform][minor] Add plan dependency graph (depends_on)",
+      "parentRef": "parent",
+      "priority": 4,
+      "description": "## Problem\nPlans don't declare dependencies. Agents can't infer safe parallelization or ordering. Overlap only discoverable by reading plans.\n\n## Scope\n- Add `depends_on: [plan-id]` to ExecPlan schema in PLANS.md.\n- Update plans with dependency declarations where applicable.\n\n## Affected files\n- PLANS.md\n- plans/*.md\n\n## Validation\n- Agent can determine which plans block others.\n\n## Category\nminor"
+    },
+    {
+      "title": "[X Platform][minor] Add .cursor/rules with shell and convention gotchas",
+      "parentRef": "parent",
+      "priority": 4,
+      "description": "## Problem\nShell gotchas (quoting, [domain] globbing, backticks) and conventions live only in docs/agent-mistakes.md. New agents don't get them unless they read the log. No file-level rules.\n\n## Scope\n- Add .cursor/rules or RULE.md with shell-safe patterns and convention rules.\n- Extract key gotchas from agent-mistakes.md into discoverable rules.\n\n## Affected files\n- .cursor/rules/*.mdc or RULE.md\n\n## Validation\n- Agent receives rules in context when editing.\n\n## Category\nminor"
+    },
+    {
+      "title": "[X Platform][minor] Resolve nested git repo in omnichannel/frontend",
+      "parentRef": "parent",
+      "priority": 4,
+      "description": "## Problem\n`services/omnichannel/frontend` is a separate git repo. Agents commit to wrong root. Multi-agent workflows diverge. Root .gitignore doesn't apply there.\n\n## Scope\n- Option A: Remove nested .git, make frontend part of monorepo.\n- Option B: Convert to git submodule with clear docs.\n- Document current state and add pre-commit guard (see separate ticket) as mitigation.\n\n## Affected files\n- services/omnichannel/frontend/.git (if removing)\n- docs/repo-structure.md\n- AGENTS.md\n\n## Validation\n- Single git root for monorepo, or clear submodule workflow.\n\n## Category\nminor"
+    }
+  ]
+}

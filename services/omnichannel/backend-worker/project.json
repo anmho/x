@@ -1,0 +1,22 @@
+{
+  "name": "omnichannel-worker",
+  "root": "services/omnichannel/backend-worker",
+  "tags": ["app"],
+  "targets": {
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "cd services/omnichannel/backend && DATABASE_URL=\"${DATABASE_URL:-postgresql://postgres:postgres@127.0.0.1:54322/omnichannel?sslmode=disable}\" TEMPORAL_HOST=\"${TEMPORAL_HOST:-localhost:7233}\" GOCACHE=/tmp/go-cache go run ./cmd/worker",
+        "cwd": "."
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "options": { "command": "cd services/omnichannel/backend && GOCACHE=/tmp/go-cache go build ./cmd/worker", "cwd": "." }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": { "command": "cd services/omnichannel/backend && GOCACHE=/tmp/go-cache go test ./...", "cwd": "." }
+    }
+  }
+}

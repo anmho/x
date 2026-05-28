@@ -23,6 +23,15 @@ From repo root:
 ./platform stop
 ```
 
+Portable MCP gateway setup:
+
+```bash
+./platform mcp setup
+docker build -f services/mcp/Dockerfile -t x-mcp .
+docker run --rm -p 8765:8765 --env-file "$HOME/.x-mcp/mcp.env" -v "$HOME/.x-mcp:/root/.x-mcp" x-mcp
+platform mcp --server http://127.0.0.1:8765 --key <api-key> tools list
+```
+
 Build a binary into `bin/platform`:
 
 ```bash
@@ -173,9 +182,11 @@ Scaffolding and diagnostics:
 ./platform docs dev --port 3002
 ./platform notifications list
 ./platform doctor
-./platform verify all
-./platform preflight platform
+./platform control-plane plan --project cloud-console
+./platform deploy --project cloud-console --dry-run
 ```
+
+Use root `npm run lint`, `npm run build`, and `npm run test` for repo validation. Use `./scripts/deploy-preflight <target>` for deploy-oriented checks.
 
 Environment variables:
 

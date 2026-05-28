@@ -80,7 +80,7 @@ Proto and SDK lifecycle now follows a publish-first flow:
 - SDKs are published from BSR and consumed as versioned dependencies
 - Client SDKs should not be generated and manually versioned inside app repos
 
-Commands:
+Commands (from repository root):
 
 ```bash
 # Validate proto changes
@@ -90,6 +90,8 @@ Commands:
 ./scripts/sdk.sh push
 
 # Publish ES + Go ConnectRPC SDK versions
+./scripts/sdk.sh publish-all
+# Optional semantic version pin when supported by buf CLI:
 SDK_VERSION=v1.0.0 ./scripts/sdk.sh publish-all
 
 # Local server-side stub generation (backend runtime only)

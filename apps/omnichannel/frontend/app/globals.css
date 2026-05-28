@@ -1,0 +1,121 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: light;
+  --app-shell: #f3f6fb;
+  --app-foreground: #0f172a;
+  --app-surface-1: #ffffff;
+  --app-surface-2: #f8fafc;
+  --app-border-1: #dce3ed;
+  --app-border-2: #c6d0dc;
+  --app-text-primary: #0f172a;
+  --app-text-secondary: #334155;
+  --app-text-muted: #64748b;
+  --app-text-faint: #94a3b8;
+  --background: var(--app-shell);
+  --foreground: var(--app-foreground);
+  --font-geist-sans: "Avenir Next", "Segoe UI", sans-serif;
+  --font-geist-mono: "SFMono-Regular", "Menlo", monospace;
+  --color-zinc-950: var(--app-surface-1);
+  --color-zinc-900: var(--app-surface-2);
+  --color-zinc-800: var(--app-border-1);
+  --color-zinc-700: var(--app-border-2);
+  --color-zinc-600: var(--app-text-faint);
+  --color-zinc-500: var(--app-text-muted);
+  --color-zinc-400: var(--app-text-muted);
+  --color-zinc-300: var(--app-text-secondary);
+  --color-zinc-200: var(--app-text-primary);
+  --color-zinc-100: var(--app-text-primary);
+}
+
+@theme inline {
+  --color-app-shell: var(--app-shell);
+  --color-app-foreground: var(--app-foreground);
+  --color-app-surface-1: var(--app-surface-1);
+  --color-app-surface-2: var(--app-surface-2);
+  --color-app-border-1: var(--app-border-1);
+  --color-app-border-2: var(--app-border-2);
+  --color-app-text-primary: var(--app-text-primary);
+  --color-app-text-secondary: var(--app-text-secondary);
+  --color-app-text-muted: var(--app-text-muted);
+  --color-app-text-faint: var(--app-text-faint);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* Explicit quick-settings override */
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --app-shell: #0a0a0a;
+  --app-foreground: #ededed;
+  --app-surface-1: #09090b;
+  --app-surface-2: #18181b;
+  --app-border-1: #27272a;
+  --app-border-2: #3f3f46;
+  --app-text-primary: #f4f4f5;
+  --app-text-secondary: #e4e4e7;
+  --app-text-muted: #a1a1aa;
+  --app-text-faint: #71717a;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]),
+  :root[data-theme='system'] {
+    color-scheme: dark;
+    --app-shell: #0a0a0a;
+    --app-foreground: #ededed;
+    --app-surface-1: #09090b;
+    --app-surface-2: #18181b;
+    --app-border-1: #27272a;
+    --app-border-2: #3f3f46;
+    --app-text-primary: #f4f4f5;
+    --app-text-secondary: #e4e4e7;
+    --app-text-muted: #a1a1aa;
+    --app-text-faint: #71717a;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), "Avenir Next", "Segoe UI", sans-serif;
+}
+
+.app-shell {
+  background-color: var(--app-shell);
+  color: var(--app-foreground);
+}
+
+.app-shell-bg {
+  background-color: var(--app-shell);
+}
+
+.app-shell-bg-95 {
+  background-color: color-mix(in oklab, var(--app-shell) 95%, transparent);
+}
+
+@keyframes modal-overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modal-content-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}

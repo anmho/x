@@ -8,23 +8,19 @@ import {
   Calendar,
   CheckCircle2,
   Clock3,
-  Copy,
   CreditCard,
   ExternalLink,
   FolderKanban,
-  KeyRound,
   Network,
   Plus,
   RefreshCw,
   Rocket,
   Send,
   Server,
-  Shield,
   Workflow,
   XCircle,
 } from 'lucide-react';
 import { Notification, NotificationChannel, notificationApi } from '@/lib/api';
-import { AccessKey, mintAccessKey, revokeAccessKey, listAccessKeys } from '@/lib/access-keys';
 import { AppNav } from '@/app/_components/app-nav';
 import { MetricCard } from '@/app/_components/blocks';
 import { HeadlessSelect } from '@/app/_components/headless-select';
@@ -47,21 +43,8 @@ type Deployment = {
   status: 'healthy' | 'degraded';
 };
 
-type ApiKeyRecord = {
-  id: string;
-  projectId: string;
-  deploymentId: string;
-  name: string;
-  prefix: string;
-  scopes: string[];
-  status: 'active' | 'rotated' | 'revoked';
-  createdAt: string;
-};
-
 const PROJECTS_STORAGE_KEY = 'notifications:projects';
 const DEPLOYMENTS_STORAGE_KEY = 'notifications:deployments';
-const API_KEYS_STORAGE_KEY = 'notifications:keys';
-
 const DEFAULT_PROJECTS: Project[] = CATALOG_PROJECTS.map((project) => ({
   id: project.id,
   name: project.name,
@@ -77,21 +60,6 @@ const DEFAULT_DEPLOYMENTS: Deployment[] = CATALOG_DEPLOYMENTS.map((deployment) =
   region: deployment.region,
   status: deployment.status,
 }));
-
-const DEFAULT_KEYS: ApiKeyRecord[] = [
-  {
-    id: 'key_local',
-    projectId: 'proj_notifications',
-    deploymentId: 'dep_notifications_api_prod',
-    name: 'local-dev-key',
-    prefix: 'test-api-key',
-    scopes: ['notifications:write'],
-    status: 'active',
-    createdAt: new Date().toISOString(),
-  },
-];
-
-const SCOPES = ['notifications:read', 'notifications:write', 'notifications:admin'];
 
 const CHANNEL_OPTIONS: { value: NotificationChannel; label: string }[] = [
   { value: 'email', label: 'email' },
@@ -121,42 +89,15 @@ function readStored<T>(key: string, fallback: T): T {
   }
 }
 
-function mapEnvironment(env: Deployment['env']): 'dev' | 'staging' | 'prod' {
-  if (env === 'production') return 'prod';
-  if (env === 'staging') return 'staging';
-  return 'dev';
-}
-
-function mapAccessKeyToRecord(key: AccessKey, projects: Project[], deployments: Deployment[]): ApiKeyRecord {
-  const matchedProject = projects.find((project) => project.name === key.application) ?? projects[0];
-  const matchedDeployment = deployments.find((deployment) => deployment.projectId === matchedProject.id) ?? deployments[0];
-  return {
-    id: key.id,
-    projectId: matchedProject?.id || 'proj_notifications',
-    deploymentId: matchedDeployment?.id || 'dep_notifications_api_prod',
-    name: key.owner,
-    prefix: key.key_prefix,
-    scopes: key.service_scopes.map((scope) => `${scope.service}:${scope.scope}`),
-    status: key.status,
-    createdAt: key.created_at,
-  };
-}
-
 export default function NotificationsServicePage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [projects, setProjects] = useState<Project[]>(DEFAULT_PROJECTS);
   const [deployments, setDeployments] = useState<Deployment[]>(DEFAULT_DEPLOYMENTS);
-  const [keys, setKeys] = useState<ApiKeyRecord[]>(DEFAULT_KEYS);
-
   const [selectedProjectId, setSelectedProjectId] = useState('proj_notifications');
-  const [newKeyName, setNewKeyName] = useState('');
-  const [newKeyDeploymentId, setNewKeyDeploymentId] = useState('dep_notifications_api_prod');
-  const [newScopes, setNewScopes] = useState<string[]>(['notifications:write']);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [createdKey, setCreatedKey] = useState<string | null>(null);
 
   const [testChannel, setTestChannel] = useState<NotificationChannel>('email');
   const [testRecipient, setTestRecipient] = useState('user@example.com');
@@ -168,20 +109,17 @@ export default function NotificationsServicePage() {
     if (typeof window !== 'undefined') {
       setProjects(readStored<Project[]>(PROJECTS_STORAGE_KEY, DEFAULT_PROJECTS));
       setDeployments(readStored<Deployment[]>(DEPLOYMENTS_STORAGE_KEY, DEFAULT_DEPLOYMENTS));
-      setKeys(readStored<ApiKeyRecord[]>(API_KEYS_STORAGE_KEY, DEFAULT_KEYS));
     }
 
     void refreshNotifications();
-    void refreshKeys();
   }, []);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       window.localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify(projects));
       window.localStorage.setItem(DEPLOYMENTS_STORAGE_KEY, JSON.stringify(deployments));
-      window.localStorage.setItem(API_KEYS_STORAGE_KEY, JSON.stringify(keys));
     }
-  }, [projects, deployments, keys]);
+  }, [projects, deployments]);
 
   const selectedProject = useMemo(
     () => projects.find((project) => project.id === selectedProjectId) ?? projects[0],
@@ -191,11 +129,6 @@ export default function NotificationsServicePage() {
   const projectDeployments = useMemo(
     () => deployments.filter((deployment) => deployment.projectId === selectedProjectId),
     [deployments, selectedProjectId],
-  );
-
-  const projectKeys = useMemo(
-    () => keys.filter((key) => key.projectId === selectedProjectId),
-    [keys, selectedProjectId],
   );
 
   const deploymentCountsByProject = useMemo(() => {
@@ -216,30 +149,10 @@ export default function NotificationsServicePage() {
     [projects, deploymentCountsByProject],
   );
 
-  const deploymentOptions = useMemo(
-    () =>
-      projectDeployments.map((deployment) => ({
-        value: deployment.id,
-        label: `Deployment: ${deployment.name}`,
-        description: `${deployment.env} • ${deployment.region}`,
-      })),
-    [projectDeployments],
-  );
-
   const selectedProjectCatalog = useMemo(
     () => CATALOG_PROJECTS.find((project) => project.id === selectedProjectId),
     [selectedProjectId],
   );
-
-  useEffect(() => {
-    if (projectDeployments.length === 0) {
-      setNewKeyDeploymentId('');
-      return;
-    }
-    if (!projectDeployments.some((deployment) => deployment.id === newKeyDeploymentId)) {
-      setNewKeyDeploymentId(projectDeployments[0].id);
-    }
-  }, [projectDeployments, newKeyDeploymentId]);
 
   async function refreshNotifications() {
     try {
@@ -255,19 +168,8 @@ export default function NotificationsServicePage() {
     }
   }
 
-  async function refreshKeys() {
-    try {
-      const data = await listAccessKeys();
-      setKeys(data.map((key) => mapAccessKeyToRecord(key, projects, deployments)));
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load keys';
-      setError(message);
-      setSuccess(null);
-    }
-  }
-
   const stats = useMemo(() => {
-    let received = notifications.length;
+    const received = notifications.length;
     let opened = 0;
     let dropped = 0;
     let failed = 0;
@@ -337,69 +239,6 @@ export default function NotificationsServicePage() {
     }
   }
 
-  function toggleScope(scope: string) {
-    setNewScopes((prev) => (prev.includes(scope) ? prev.filter((item) => item !== scope) : [...prev, scope]));
-  }
-
-  async function createKey(event: FormEvent) {
-    event.preventDefault();
-    if (!newKeyName.trim() || newScopes.length === 0 || !newKeyDeploymentId) return;
-
-    const deployment = deployments.find((item) => item.id === newKeyDeploymentId);
-    if (!deployment || !selectedProject) {
-      setError('Select a valid deployment');
-      return;
-    }
-
-    try {
-      const minted = await mintAccessKey({
-        application: selectedProject.name,
-        environment: mapEnvironment(deployment.env),
-        owner: newKeyName.trim(),
-        service_scopes: newScopes.map((entry) => {
-          const [service, scope] = entry.split(':');
-          return { service, scope };
-        }),
-      });
-      const mapped = mapAccessKeyToRecord(minted, projects, deployments);
-      setKeys((prev) => [mapped, ...prev]);
-      setNewKeyName('');
-      setNewScopes(['notifications:write']);
-      setCreatedKey(minted.key || null);
-      setSuccess(`Created API key ${mapped.name}`);
-      setError(null);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to mint key';
-      setError(message);
-      setSuccess(null);
-    }
-  }
-
-  async function revokeKey(id: string) {
-    try {
-      const revoked = await revokeAccessKey(id);
-      const mapped = mapAccessKeyToRecord(revoked, projects, deployments);
-      setKeys((prev) => prev.map((entry) => (entry.id === id ? mapped : entry)));
-      setSuccess('Key revoked');
-      setError(null);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to revoke key';
-      setError(message);
-      setSuccess(null);
-    }
-  }
-
-  async function copyText(value: string) {
-    try {
-      await navigator.clipboard.writeText(value);
-      setSuccess('Copied');
-      setError(null);
-    } catch {
-      setError('Clipboard write failed');
-      setSuccess(null);
-    }
-  }
-
   async function submitChannelTest(event: FormEvent) {
     event.preventDefault();
 
@@ -454,13 +293,6 @@ export default function NotificationsServicePage() {
             >
               <Send className="h-3.5 w-3.5" />
               Send
-            </Link>
-            <Link
-              href="/api-keys"
-              className="inline-flex items-center gap-1 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm text-zinc-200 hover:bg-zinc-800"
-            >
-              <KeyRound className="h-3.5 w-3.5" />
-              API Keys
             </Link>
             <Link
               href="/workflows"
@@ -612,106 +444,7 @@ export default function NotificationsServicePage() {
           </div>
         </section>
 
-        <section className="mb-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <article className="rounded-xl border border-zinc-800 bg-zinc-950">
-            <div className="border-b border-zinc-800 px-4 py-3">
-              <h2 className="inline-flex items-center gap-2 text-sm font-medium text-zinc-200">
-                <Shield className="h-4 w-4" /> Project API Keys
-              </h2>
-            </div>
-            <div className="space-y-3 p-4">
-              <form onSubmit={createKey} className="space-y-2">
-                <input
-                  value={newKeyName}
-                  onChange={(event) => setNewKeyName(event.target.value)}
-                  placeholder="key name"
-                  className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm"
-                />
-                <div className="rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs text-zinc-400">
-                  Project scope: <span className="text-zinc-200">{selectedProject?.name}</span>
-                </div>
-                <HeadlessSelect
-                  value={newKeyDeploymentId}
-                  onValueChange={setNewKeyDeploymentId}
-                  options={deploymentOptions}
-                  ariaLabel="Select deployment"
-                  placeholder="Select deployment"
-                  disabled={projectDeployments.length === 0}
-                />
-                <div className="flex flex-wrap gap-1.5">
-                  {SCOPES.map((scope) => (
-                    <label
-                      key={scope}
-                      className={`cursor-pointer rounded-full border px-2 py-1 text-xs ${
-                        newScopes.includes(scope)
-                          ? 'border-zinc-600 bg-zinc-800 text-zinc-100'
-                          : 'border-zinc-700 bg-zinc-900 text-zinc-400'
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        className="hidden"
-                        checked={newScopes.includes(scope)}
-                        onChange={() => toggleScope(scope)}
-                      />
-                      {scope}
-                    </label>
-                  ))}
-                </div>
-                <button
-                  type="submit"
-                  className="inline-flex items-center gap-1 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm hover:bg-zinc-800"
-                  disabled={!newKeyDeploymentId}
-                >
-                  <Plus className="h-3.5 w-3.5" /> Create key
-                </button>
-              </form>
-
-              {createdKey && (
-                <div className="rounded-md border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-300">
-                  <p>Copy this key now:</p>
-                  <code className="mt-1 block text-zinc-100">{createdKey}</code>
-                </div>
-              )}
-
-              <div className="space-y-2">
-                {projectKeys.map((entry) => (
-                  <article key={entry.id} className="rounded-md border border-zinc-800 bg-zinc-900/50 p-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="text-sm font-medium">{entry.name}</p>
-                        <p className="text-xs text-zinc-500">
-                          {deployments.find((deployment) => deployment.id === entry.deploymentId)?.name ?? entry.deploymentId}
-                        </p>
-                        <p className="mt-1 font-mono text-xs text-zinc-300">{entry.prefix}••••••••</p>
-                      </div>
-                      <span className={`rounded-full px-2 py-0.5 text-xs ${entry.status === 'active' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'}`}>
-                        {entry.status}
-                      </span>
-                    </div>
-                    <div className="mt-2 flex flex-wrap gap-1">
-                      {entry.scopes.map((scope) => (
-                        <span key={scope} className="rounded-full border border-zinc-700 bg-zinc-900 px-2 py-0.5 text-xs text-zinc-300">
-                          {scope}
-                        </span>
-                      ))}
-                    </div>
-                    <div className="mt-2 flex gap-3 text-xs">
-                      <button type="button" onClick={() => void copyText(`${entry.prefix}••••••••`)} className="inline-flex items-center gap-1 text-zinc-300 hover:text-zinc-100">
-                        <Copy className="h-3 w-3" /> Copy
-                      </button>
-                      {entry.status === 'active' && (
-                        <button type="button" onClick={() => revokeKey(entry.id)} className="inline-flex items-center gap-1 text-rose-300 hover:text-rose-200">
-                          <KeyRound className="h-3 w-3" /> Revoke
-                        </button>
-                      )}
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </div>
-          </article>
-
+        <section className="mb-4">
           <article className="rounded-xl border border-zinc-800 bg-zinc-950">
             <div className="border-b border-zinc-800 px-4 py-3">
               <h2 className="inline-flex items-center gap-2 text-sm font-medium text-zinc-200">

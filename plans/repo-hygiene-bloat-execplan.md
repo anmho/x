@@ -136,8 +136,7 @@ Commit list per fix:
 Linear execution notes:
 
 - Prepared payload: `docs/backlog/x-platform-repo-hygiene-tickets.json` (team key `ANM`, project context `X Platform`).
-- Dry-run command: `node scripts/linear/create-issues.mjs --input docs/backlog/x-platform-repo-hygiene-tickets.json --team-key ANM --dry-run`.
-- Publish attempt command: `node scripts/linear/create-issues.mjs --input docs/backlog/x-platform-repo-hygiene-tickets.json --team-key ANM`.
+- Use Linear MCP to create issues from `docs/backlog/x-platform-repo-hygiene-tickets.json`.
   Result: blocked with `LINEAR_API_KEY is required when not using --dry-run`.
 
 ## Interfaces And Dependencies

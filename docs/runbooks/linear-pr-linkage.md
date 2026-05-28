@@ -6,13 +6,7 @@ Per AGENTS.md: PRs must include a Linear backlink and be linked to the Linear is
 
 ## 1. Create Linear tickets (parent + subtickets)
 
-```bash
-LINEAR_API_KEY=lin_api_xxx node scripts/linear/create-issues.mjs \
-  --input docs/backlog/devex-completed-tickets.json \
-  --team-key ANM
-```
-
-The script creates the parent ticket first, then subtickets with `parentRef: "parent"` linked to it. Output includes the parent identifier (e.g. `ANM-123`).
+Use the **Linear MCP** tool to create issues. Payloads in `docs/backlog/*.json` define tickets; the first is the parent, others with `parentRef: "parent"` are children. Output includes the parent identifier (e.g. `ANM-123`).
 
 ## 2. Update PR with Linear backlink
 

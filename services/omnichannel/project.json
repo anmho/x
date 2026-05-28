@@ -7,34 +7,63 @@
     "generate-go": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "./scripts/sdk.sh generate-server",
-        "cwd": "services/omnichannel"
-      },
-      "configurations": {}
+        "command": "./scripts/sdk-core.sh generate-server",
+        "cwd": "."
+      }
     },
     "generate-es": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "cd backend/proto && buf generate --template buf.gen.client.yaml",
-        "cwd": "services/omnichannel"
-      },
-      "configurations": {}
+        "command": "./scripts/sdk-core.sh generate-es",
+        "cwd": "."
+      }
     },
     "lint": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "./scripts/sdk.sh lint",
-        "cwd": "services/omnichannel"
+        "command": "./scripts/sdk-core.sh lint",
+        "cwd": "."
+      }
+    },
+    "push": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "./scripts/sdk-core.sh push",
+        "cwd": "."
       },
-      "configurations": {}
+      "cache": false
+    },
+    "publish-es": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "./scripts/sdk-core.sh publish-es",
+        "cwd": "."
+      },
+      "cache": false
+    },
+    "publish-go": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "./scripts/sdk-core.sh publish-go",
+        "cwd": "."
+      },
+      "cache": false
     },
     "publish": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "./scripts/sdk.sh publish-all",
-        "cwd": "services/omnichannel"
+        "command": "./scripts/sdk-core.sh publish-all",
+        "cwd": "."
       },
-      "configurations": {}
+      "cache": false
+    },
+    "list": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "./scripts/sdk-core.sh list",
+        "cwd": "."
+      },
+      "cache": false
     }
   }
 }

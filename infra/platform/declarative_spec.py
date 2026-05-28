@@ -18,7 +18,6 @@ PROJECT_SPECS: list[dict[str, Any]] = [
         "description": "Web dashboard for service access and API key workflows",
         "path": "apps/cloud-console",
         "dependencies": [
-            {"name": "access-api", "type": "stack"},
             {"name": "omnichannel-api", "type": "stack"},
         ],
         "deploy": {
@@ -28,13 +27,6 @@ PROJECT_SPECS: list[dict[str, Any]] = [
         },
         "targets": {
             "endpoints": [
-                {
-                    "name": "access-policy-check",
-                    "url": "http://127.0.0.1:8090/v1/policy/check",
-                    "service": "notifications",
-                    "scope": "read",
-                    "key_env": "ACCESS_API_KEY",
-                },
                 {
                     "name": "omnichannel-health",
                     "url": "http://127.0.0.1:8080/api/v1/health",
@@ -119,75 +111,6 @@ PROJECT_SPECS: list[dict[str, Any]] = [
                     ],
                 },
             ],
-        },
-    },
-    {
-        "name": "access-api",
-        "description": "Key issuance and policy enforcement service",
-        "path": "services/access-api",
-        "dependencies": [{"name": "supabase", "type": "stack"}],
-        "deploy": {
-            "cwd": "services/access-api",
-            "command": "GOCACHE=/tmp/go-cache go test ./...",
-            "health_url": "http://127.0.0.1:8090/health",
-        },
-        "targets": {
-            "api_keys": [
-                {
-                    "name": "admin-key",
-                    "provider": "custom",
-                    "env_var": "ACCESS_API_ADMIN_KEY",
-                }
-            ]
-        },
-        "keys": {
-            "managed": [
-                {
-                    "name": "notifications-write",
-                    "service": "notifications",
-                    "scope": "write",
-                    "export_env": "OMNICHANNEL_API_KEY",
-                }
-            ]
-        },
-        "terraform": {
-            "root": "infra/terraform/projects/access-api",
-            "workspace": "dev",
-        },
-        "observability": {
-            "gcp": {
-                "project_id": DEFAULT_GCP_PROJECT_ID,
-                "log_filters": [
-                    'resource.type="cloud_run_revision"',
-                    'labels.service_name="access-api"',
-                ],
-                "metric_prefixes": [
-                    "run.googleapis.com",
-                    "custom.googleapis.com/projectx/access_api",
-                ],
-            }
-        },
-        "deployments": [
-            {
-                "name": "access-api",
-                "provider": "gcp-cloud-run",
-                "service": "access-api",
-                "region": DEFAULT_REGION,
-                "environment": "production",
-                "desired_state": "present",
-            }
-        ],
-        "control_plane": {
-            "desired_state": "present",
-            "gcp": {
-                "project_id": DEFAULT_GCP_PROJECT_ID,
-                "region": DEFAULT_REGION,
-                "services": [
-                    "run.googleapis.com",
-                    "secretmanager.googleapis.com",
-                    "sqladmin.googleapis.com",
-                ],
-            },
         },
     },
     {
@@ -293,53 +216,56 @@ PROJECT_SPECS: list[dict[str, Any]] = [
             },
         },
     },
+    {
+        "name": "mcp",
+        "description": "ConnectRPC MCP gateway — internal tools over HTTP with API key auth",
+        "path": "services/mcp",
+        "deploy": {
+            "cwd": "services/mcp",
+            "command": "GOCACHE=/tmp/go-cache go test ./...",
+            "health_url": "http://127.0.0.1:8765/health",
+        },
+        "observability": {
+            "gcp": {
+                "project_id": DEFAULT_GCP_PROJECT_ID,
+                "log_filters": [
+                    'resource.type="cloud_run_revision"',
+                    'labels.service_name="mcp"',
+                ],
+                "metric_prefixes": [
+                    "run.googleapis.com",
+                    "custom.googleapis.com/projectx/mcp",
+                ],
+            }
+        },
+        "deployments": [
+            {
+                "name": "mcp",
+                "provider": "gcp-cloud-run",
+                "service": "mcp",
+                "region": DEFAULT_REGION,
+                "environment": "production",
+                "desired_state": "present",
+            }
+        ],
+        "control_plane": {
+            "desired_state": "present",
+            "gcp": {
+                "project_id": DEFAULT_GCP_PROJECT_ID,
+                "region": DEFAULT_REGION,
+                "services": [
+                    "run.googleapis.com",
+                    "secretmanager.googleapis.com",
+                ],
+            },
+        },
+    },
 ]
 
 ACCOUNT_SPECS: list[dict[str, Any]] = [
     {
         "name": "default",
-        "secrets": [
-            {
-                "name": "access-api-admin-key",
-                "desired_state": "present",
-                "source_env": "ACCESS_API_ADMIN_KEY",
-                "shares": [
-                    {
-                        "platform": "gcp",
-                        "project_id": DEFAULT_GCP_PROJECT_ID,
-                        "name": "access-api-admin-key",
-                        "target_type": "project",
-                        "target_id": "access-api",
-                        "project": "access-api",
-                    },
-                    {
-                        "platform": "gcp",
-                        "project_id": DEFAULT_GCP_PROJECT_ID,
-                        "name": "console-access-api-key",
-                        "target_type": "project",
-                        "target_id": "cloud-console",
-                        "project": "cloud-console",
-                    },
-                    {
-                        "platform": "vercel",
-                        "project_id": "cloud-console",
-                        "name": "ACCESS_API_ADMIN_KEY",
-                        "target_type": "application",
-                        "target_id": "console-web",
-                        "project": "cloud-console",
-                        "environments": ["development", "preview", "production"],
-                    },
-                    {
-                        "platform": "gcp",
-                        "project_id": DEFAULT_GCP_PROJECT_ID,
-                        "name": "template-studio-access-api-key",
-                        "target_type": "deployment",
-                        "target_id": "template-studio",
-                        "project": "omnichannel-api",
-                    },
-                ],
-            }
-        ],
+        "secrets": [],
     }
 ]
 

@@ -10,16 +10,16 @@ These flows require project credentials and/or environment resources.
 ## Deploy and Preflight
 
 ```bash
-npm run preflight
-npm run preflight:cloud-console
-npm run preflight:omnichannel
+./scripts/deploy-preflight platform
+./scripts/deploy-preflight cloud-console
+./scripts/deploy-preflight omnichannel
 ./platform deploy --project cloud-console --dry-run
 ```
 
 Current blockers:
 
-- `preflight` fails because platform verify fails in omnichannel Go checks.
-- `preflight:omnichannel` fails in omnichannel Go checks (missing module/dependency wiring and undefined symbols).
+- `./scripts/deploy-preflight platform` fails because platform test targets still fail in omnichannel Go checks.
+- `./scripts/deploy-preflight omnichannel` fails in omnichannel Go checks (missing module/dependency wiring and undefined symbols).
 - `platform deploy ... --dry-run` requires provider secrets (for example `CLOUDFLARE_API_TOKEN`).
 
 ## SDK Publish to Buf Registry
@@ -56,3 +56,5 @@ When documenting or reviewing agent-control deploy changes:
 Current blocker:
 
 - `./platform start` currently collides on Postgres port `54322` when `supabase_db_omnichannel` is already bound to that port.
+
+Use local stack lifecycle commands as troubleshooting tools, not the default repo validation path.

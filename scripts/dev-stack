@@ -1,0 +1,143 @@
+#!/usr/bin/env bash
+# Local dev stack: postgres, temporal, services. Discovers services from stack.json.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+LOG="$ROOT/.logs/dev-stack"
+PID="$LOG/pids"
+mkdir -p "$LOG" "$PID"
+
+PG_CONTAINER="${POSTGRES_CONTAINER:-projectx-postgres}"
+PG_PORT=54322
+PG_URL="postgresql://postgres:postgres@127.0.0.1:${PG_PORT}"
+
+pid() { echo "$PID/$1.pid"; }
+log() { echo "$LOG/$1.log"; }
+running() { [[ -f "$(pid "$1")" ]] && kill -0 "$(cat "$(pid "$1")")" 2>/dev/null; }
+wait_port() {
+  local i
+  for i in $(seq 1 "${3:-30}"); do
+    nc -z "${1:-127.0.0.1}" "$2" 2>/dev/null && return 0
+    sleep 1
+  done
+  return 1
+}
+
+stop_one() {
+  local f
+  f="$(pid "$1")"
+  [[ -f "$f" ]] && kill "$(cat "$f")" 2>/dev/null; rm -f "$f"
+}
+
+# Discover services from stack.json
+discovered_services() {
+  export PG_URL TEMPORAL_HOST
+  export ACCESS_API_ADMIN_KEY="${ACCESS_API_ADMIN_KEY:-x-admin-dev-key}"
+  python3 "$ROOT/scripts/dev-stack-discover.py" list 2>/dev/null || true
+}
+
+discovered_databases() {
+  export PG_URL
+  python3 "$ROOT/scripts/dev-stack-discover.py" databases 2>/dev/null || true
+}
+
+run_discovered() {
+  local svc="$1"
+  export PG_URL TEMPORAL_HOST
+  export ACCESS_API_ADMIN_KEY="${ACCESS_API_ADMIN_KEY:-x-admin-dev-key}"
+  local script
+  script=$(python3 "$ROOT/scripts/dev-stack-discover.py" config-bash "$svc" 2>/dev/null) || return 1
+  (
+    eval "$script"
+    cd "$cwd"
+    nohup env GOCACHE=/tmp/go-cache bash -lc "$run" >> "$(log "$svc")" 2>&1 &
+    echo $! > "$(pid "$svc")"
+  )
+}
+
+case "${1:-}" in
+  start)
+    SVC="${2:-}"
+    if [[ -z "$SVC" ]]; then
+      "$0" start postgres
+      "$0" start temporal
+      while IFS= read -r s; do [[ -n "$s" ]] && "$0" start "$s" & done < <(discovered_services)
+      wait
+      echo "stack started. Run: $0 status"
+      exit 0
+    fi
+    case "$SVC" in
+      postgres)
+        docker ps -q -f "name=^${PG_CONTAINER}$" 2>/dev/null | grep -q . && { echo "postgres already up"; exit 0; }
+        docker start "$PG_CONTAINER" 2>/dev/null || docker run -d --name "$PG_CONTAINER" -p "${PG_PORT}:5432" -e POSTGRES_PASSWORD=postgres postgres:16-alpine
+        wait_port 127.0.0.1 "$PG_PORT" 45
+        export PG_URL
+        while IFS= read -r db; do
+          [[ -z "$db" ]] && continue
+          docker exec "$PG_CONTAINER" psql -U postgres -tc "SELECT 1 FROM pg_database WHERE datname='${db}'" | grep -q 1 || \
+            docker exec "$PG_CONTAINER" psql -U postgres -c "CREATE DATABASE ${db};"
+        done < <(discovered_databases)
+        echo "Postgres ready (one DB per service) at port ${PG_PORT}"
+        ;;
+      temporal)
+        running temporal && { echo "temporal already up"; exit 0; }
+        temporal server start-dev >> "$(log temporal)" 2>&1 &
+        echo $! > "$(pid temporal)"
+        wait_port 127.0.0.1 7233 30
+        ;;
+      supabase)
+        [[ -d "$ROOT/services/omnichannel/supabase" ]] || { echo "services/omnichannel/supabase not found"; exit 1; }
+        (cd "$ROOT/services/omnichannel" && supabase start >> "$(log supabase)" 2>&1)
+        echo "Supabase started. Run 'supabase status' in services/omnichannel for connection strings."
+        ;;
+      *)
+        if run_discovered "$SVC" 2>/dev/null; then
+          :
+        else
+          echo "unknown service: $SVC (add stack.json to register)"
+          exit 1
+        fi
+        ;;
+    esac
+    echo "$SVC started"
+    ;;
+  status)
+    echo "SERVICE              STATUS"
+    echo "-------              ------"
+    docker ps -q -f "name=^${PG_CONTAINER}$" 2>/dev/null | grep -q . && echo "  postgres            running" || echo "  postgres            not running"
+    if [[ -d "$ROOT/services/omnichannel/supabase" ]]; then
+      (cd "$ROOT/services/omnichannel" && supabase status >/dev/null 2>&1) && echo "  supabase            running" || echo "  supabase            not running"
+    fi
+    running temporal && echo "  temporal            running" || echo "  temporal            not running"
+    while IFS= read -r s; do
+      [[ -n "$s" ]] && (running "$s" && echo "  $s              running" || echo "  $s              not running")
+    done < <(discovered_services)
+    ;;
+  stop)
+    while IFS= read -r s; do [[ -n "$s" ]] && stop_one "$s"; done < <(discovered_services)
+    stop_one temporal
+    [[ -d "$ROOT/services/omnichannel/supabase" ]] && (cd "$ROOT/services/omnichannel" && supabase stop 2>/dev/null) || true
+    docker stop "$PG_CONTAINER" 2>/dev/null || true
+    echo "stack stopped"
+    ;;
+  logs)
+    [[ -z "${2:-}" ]] && { echo "usage: $0 logs <service>"; exit 1; }
+    tail -f "$(log "$2")"
+    ;;
+  temporal-ui)
+    open "${TEMPORAL_UI_URL:-http://localhost:8233}" 2>/dev/null || echo "Temporal UI: ${TEMPORAL_UI_URL:-http://localhost:8233}"
+    ;;
+  list)
+    echo "Infra: postgres temporal supabase"
+    echo "Discovered:"
+    discovered_services | sed 's/^/  /'
+    ;;
+  *)
+    echo "Usage: $0 start [postgres|supabase|temporal|<service>]"
+    echo "       $0 status | stop | logs <svc> | temporal-ui | list"
+    echo ""
+    echo "Services are discovered from stack.json in services/, apps/, docs/."
+    echo "Run '$0 list' to see available services."
+    exit 1
+    ;;
+esac

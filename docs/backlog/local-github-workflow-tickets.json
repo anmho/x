@@ -1,6 +1,6 @@
 {
   "generatedAt": "2026-03-09",
-  "source": "User request: local GitHub workflow running for faster feedback. Run: LINEAR_API_KEY=xxx node scripts/linear/create-issues.mjs --input docs/backlog/local-github-workflow-tickets.json --team-key ANM",
+  "source": "User request: local GitHub workflow running for faster feedback. Use Linear MCP with this payload.",
   "teamKey": "ANM",
   "tickets": [
     {

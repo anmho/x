@@ -1,6 +1,6 @@
 {
   "generatedAt": "2026-03-09",
-  "source": "CI/CD + Cloud Console UX work from PR #1. Run: LINEAR_API_KEY=xxx node scripts/linear/create-issues.mjs --input docs/backlog/ci-console-ux-tickets.json --team-key ANM",
+  "source": "CI/CD + Cloud Console UX work from PR #1. Use Linear MCP with this payload.",
   "teamKey": "ANM",
   "tickets": [
     {

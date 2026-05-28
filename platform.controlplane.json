@@ -2,53 +2,7 @@
   "version": "1",
   "accounts": [
     {
-      "name": "default",
-      "secrets": [
-        {
-          "name": "access-api-admin-key",
-          "desired_state": "present",
-          "source_env": "ACCESS_API_ADMIN_KEY",
-          "shares": [
-            {
-              "platform": "gcp",
-              "project_id": "my-gcp-project",
-              "name": "access-api-admin-key",
-              "target_type": "project",
-              "target_id": "access-api",
-              "project": "access-api"
-            },
-            {
-              "platform": "gcp",
-              "project_id": "my-gcp-project",
-              "name": "console-access-api-key",
-              "target_type": "project",
-              "target_id": "cloud-console",
-              "project": "cloud-console"
-            },
-            {
-              "platform": "vercel",
-              "project_id": "cloud-console",
-              "name": "ACCESS_API_ADMIN_KEY",
-              "target_type": "application",
-              "target_id": "console-web",
-              "project": "cloud-console",
-              "environments": [
-                "development",
-                "preview",
-                "production"
-              ]
-            },
-            {
-              "platform": "gcp",
-              "project_id": "my-gcp-project",
-              "name": "template-studio-access-api-key",
-              "target_type": "deployment",
-              "target_id": "template-studio",
-              "project": "omnichannel-api"
-            }
-          ]
-        }
-      ]
+      "name": "default"
     }
   ],
   "projects": [
@@ -119,29 +73,6 @@
       ]
     },
     {
-      "name": "access-api",
-      "desired_state": "present",
-      "gcp": {
-        "project_id": "my-gcp-project",
-        "region": "us-central1",
-        "services": [
-          "run.googleapis.com",
-          "secretmanager.googleapis.com",
-          "sqladmin.googleapis.com"
-        ]
-      },
-      "deployments": [
-        {
-          "name": "access-api",
-          "provider": "gcp-cloud-run",
-          "service": "access-api",
-          "region": "us-central1",
-          "environment": "production",
-          "desired_state": "present"
-        }
-      ]
-    },
-    {
       "name": "omnichannel-api",
       "desired_state": "present",
       "gcp": {
@@ -179,6 +110,28 @@
           "name": "omnichannel-worker",
           "provider": "gcp-cloud-run",
           "service": "omnichannel-worker",
+          "region": "us-central1",
+          "environment": "production",
+          "desired_state": "present"
+        }
+      ]
+    },
+    {
+      "name": "mcp",
+      "desired_state": "present",
+      "gcp": {
+        "project_id": "my-gcp-project",
+        "region": "us-central1",
+        "services": [
+          "run.googleapis.com",
+          "secretmanager.googleapis.com"
+        ]
+      },
+      "deployments": [
+        {
+          "name": "mcp",
+          "provider": "gcp-cloud-run",
+          "service": "mcp",
           "region": "us-central1",
           "environment": "production",
           "desired_state": "present"

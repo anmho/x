@@ -41,7 +41,6 @@ pnpm-debug.log*
 # Go
 **/tmp/
 **/*.out
-/services/access-api/api
 /services/omnichannel/backend/api
 /services/omnichannel/backend/worker
 

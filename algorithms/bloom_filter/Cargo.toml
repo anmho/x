@@ -1,0 +1,5 @@
+[package]
+name = "bloom_filter"
+version = "0.1.0"
+edition = "2021"
+description = "A space-efficient probabilistic data structure for membership queries"

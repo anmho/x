@@ -1,0 +1,5 @@
+[package]
+name = "consistent_hashing"
+version = "0.1.0"
+edition = "2021"
+description = "A consistent hashing ring implementation using virtual nodes"

@@ -1,0 +1,5 @@
+[package]
+name = "gossip"
+version = "0.1.0"
+edition = "2021"
+description = "A deterministic in-memory gossip protocol simulator"

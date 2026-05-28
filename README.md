@@ -374,9 +374,9 @@ Use these commands from repo root:
 nvm install
 nvm use
 npm install
-npm run verify
-npm run verify:docs
-npm run preflight
+npm run lint
+npm run build
+npm run test
 ```
 
 Node dependencies use a single root lockfile; see `docs/runbooks/node-dependencies.md`.
@@ -388,8 +388,10 @@ Audited working/broken status for every core workflow is tracked in:
 
 For target-specific checks:
 
-- `npm run preflight:cloud-console`
-- `npm run preflight:omnichannel`
+- `npx nx run cloud-console:test`
+- `npx nx run omnichannel-frontend:test`
+- `npx nx run omnichannel-api:test`
+- `npx nx run omnichannel-worker:test`
 
 CI workflows:
 
@@ -405,13 +407,16 @@ Completed in this repo (March 2026):
 - Canonical top-level structure and ownership guide: `docs/repo-structure.md`
 - Core operator/scaffolding surfaces:
   - `platform-cli` command modules (create/project/tokens/notifications/control-plane/deploy/docs)
-  - `scripts/verify` and `scripts/deploy-preflight` for validation gates
+  - Nx-backed root `lint` / `build` / `test` commands
+  - `scripts/deploy-preflight` for deploy-oriented checks
 - Active product/runtime modules:
   - `apps/cloud-console`
   - `services/omnichannel`
   - `packages/sdk-omnichannel`
 - Reliability and release gates:
-  - `scripts/verify`
+  - `npm run lint`
+  - `npm run build`
+  - `npm run test`
   - `scripts/deploy-preflight`
   - `.github/workflows/ci.yml`
   - `.github/workflows/deploy-preflight.yml`

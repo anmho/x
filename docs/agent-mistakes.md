@@ -22,6 +22,55 @@ This file is the permanent mistake memory for repository agents.
 
 ## Entries
 
+## 2026-03-26T08:13:34Z - Overrode pyenv with a zsh wrapper that used a readonly special variable
+- What happened: I tried to make `pyenv shell ...` print the selected version by wrapping the `pyenv` shell function in `~/.zshrc`, but the wrapper used `local status=$?` and immediately broke interactive usage with `pyenv: read-only variable: status`.
+- Root cause: I modified a shell-managed function without checking zsh's readonly special parameters and without first validating the wrapper in a fresh interactive shell.
+- How to avoid it: Do not override `pyenv` directly for UX tweaks. Prefer prompt-only visibility changes or helper aliases, and if a zsh wrapper is unavoidable, avoid reserved parameter names such as `status`.
+- What to do instead: Restore the original pyenv function and surface shell overrides through Powerlevel10k or another non-invasive prompt mechanism.
+- Verification: The wrapper was removed from `~/.zshrc`; validation will proceed with the original pyenv hook plus a prompt-only indicator for `PYENV_VERSION`.
+
+## 2026-03-26T08:03:38Z - Assumed the current platform-cli checkout was fully buildable before validating the new wizard
+- What happened: I initially treated `cd platform-cli && go test ./...` / `go build .` as the expected validation path for the new `platform mcp setup` work, then hit unresolved references like `runStack` and `runTokens` that are missing from this checkout.
+- Root cause: I did not reconcile the already-known platform-cli source gap before choosing the validation command.
+- How to avoid it: Before claiming full-package validation for `platform-cli`, check whether the current checkout is blocked by `ANM-153` or another known source-restoration issue.
+- What to do instead: Validate new wizard logic in isolated file-level tests and record the broader package build failure as blocked by the existing ticket.
+- Verification: Confirmed `ANM-153` already tracks the missing platform-cli source, then validated the new setup logic with `cd platform-cli && GOCACHE=/tmp/go-cache go test mcp.go mcp_setup_test.go`.
+
+## 2026-03-26T07:06:57Z - Assumed local listener-based tests would work in the sandbox
+- What happened: I wrote the first provider proxy test with `httptest.NewServer`, and the sandbox rejected the bind with `operation not permitted`.
+- Root cause: I assumed loopback listeners were available in this execution environment instead of using the package’s existing transport-stubbing pattern.
+- How to avoid it: In this repo’s sandboxed Go tests, prefer fake `http.RoundTripper` clients for outbound HTTP behavior unless a real listener is explicitly required and already known to work.
+- What to do instead: Stub the upstream proxy with a custom transport that captures the request and returns a synthetic JSON-RPC response.
+- Verification: Replaced the listener-based test with `proxyRoundTripFunc`, then `cd services/mcp && GOCACHE=/tmp/go-cache go test ./...` passed.
+
+## 2026-03-26T07:06:58Z - Started documenting nested proxy CLI args despite the known structured-args gap
+- What happened: I initially drafted README examples that used `platform mcp tools call ... arguments.foo=bar` for passthrough tools even though `ANM-204` already tracks that the CLI does not cleanly support nested argument objects yet.
+- Root cause: I optimized for a concise example and forgot to re-check the current CLI capability before freezing the docs.
+- How to avoid it: Before adding docs for MCP tools that accept nested objects, verify whether the current CLI can express that shape; if not, document raw JSON-RPC or curl instead.
+- What to do instead: Use direct `/mcp` JSON-RPC examples for nested `arguments` payloads until `ANM-204` lands.
+- Verification: Replaced the nested CLI passthrough examples in `services/mcp/README.md` with raw JSON-RPC `curl` examples and kept the flat `google_search_query` CLI example only.
+
+## 2026-03-24T08:46:25Z - Assumed the source proto matched the live generated agent-control contract
+- What happened: While setting up the live smoke test, I first built the `CreateRun` call around a `prompt` field because the source `.proto` and earlier context suggested that shape, but the checked-in generated Go contract still exposed `message`.
+- Root cause: I trusted the source proto and plan context instead of checking the generated client types that the running server and local clients actually compile against.
+- How to avoid it: Before any live API smoke run, inspect `internal/rpc/gen/**` and treat the generated contract as the executable truth unless codegen is regenerated in the same slice.
+- What to do instead: Verify the request field names and JSON shape from the generated package first, then build the smoke request against that contract.
+- Verification: Confirmed `services/agent-control-api/internal/rpc/gen/agentcontrol/v1/agent_control.pb.go` defines `CreateRunRequest.Message`, adjusted the live request shape, and proceeded to the runtime validation findings.
+
+## 2026-03-24T08:27:00Z - Over-modeled the agent create contract before proving the need
+- What happened: I initially evolved `services/agent-control-api` from `prompt` to a nested bootstrap object and kept generic `metadata` and `env` maps in the public create request, which made the contract more abstract and leaky than the user wanted for the first slice.
+- Root cause: I optimized for future flexibility too early instead of holding the API to the simplest message-first shape that already satisfied the current requirement.
+- How to avoid it: For new control-plane create APIs, start from the canonical user action (`message`) and add only explicitly justified typed fields; do not introduce generic metadata/env bags or nested envelopes unless a concrete requirement cannot be met otherwise.
+- What to do instead: Use a message-centric request with typed `resources` and `runtime`, and keep runtime/process env as an internal adapter concern rather than a public API field.
+- Verification: Refactored the active slice to `message + resources + runtime`, removed public `env` and top-level `metadata` from `agent_control.proto`, regenerated the SDKs, and reran `cd services/agent-control-api && GOCACHE=/tmp/go-cache go test ./...` plus `cd apps/agent-runner && bun test`.
+
+## 2026-03-24T08:14:44Z - Wrote a dispatcher test against a nonexistent file helper
+- What happened: I added `dispatcher_test.go` using a placeholder `writeFile` helper that does not exist in the package, which would have broken the first test compile.
+- Root cause: I drafted the temp-file helper from memory instead of using the standard library write path already available in the test.
+- How to avoid it: In new tests, use `os.WriteFile` directly unless a shared helper already exists in the same package.
+- What to do instead: Create the parent directory with `os.MkdirAll` and write fixtures with `os.WriteFile` in the test helper.
+- Verification: Replaced the nonexistent helper with `os.MkdirAll` plus `os.WriteFile`, then ran `cd services/agent-control-api && GOCACHE=/tmp/go-cache go test ./...` successfully.
+
 ## 2026-03-18T07:48:00Z - Sent a string instead of a boolean to `gh api`
 - What happened: I retried the branch-protection update with correctly quoted array flags but used `-f strict=false`, and GitHub rejected the request because `strict` arrived as the string `"false"` instead of a boolean.
 - Root cause: I used the generic form field flag without checking whether this endpoint required typed boolean serialization.
@@ -231,3 +280,21 @@ This file is the permanent mistake memory for repository agents.
 - Root cause: I failed to apply the existing single-quote rule for literal Markdown text containing backticks.
 - Preventive rule/check added: Before running any `rg` command, if the pattern contains backticks, require single-quoted pattern syntax and avoid shell interpolation.
 - Verification: Re-ran validations using single-quoted patterns and obtained expected matches without shell command-substitution errors.
+
+## 2026-03-26T07:11:00Z - Trimmed unified diff body before applying patch
+- What happened: The new `workspace_apply_patch` MCP tool failed valid test patches with `git apply ... corrupt patch` because I stripped whitespace from the patch string before passing it to git.
+- Root cause: I used `strings.TrimSpace()` on a structured patch payload, which removed the terminal newline that unified diff parsing expects.
+- Preventive rule/check added: For structured text payloads like unified diffs, only validate emptiness with trimming; never mutate the original payload before handing it to the downstream parser/tool.
+- Verification: Removed the destructive trim, reran `cd services/mcp && GOCACHE=/tmp/go-cache go test ./...`, and the workspace/git tool tests passed.
+
+## 2026-03-26T09:00:35Z - Left a stale Nx dependency after removing `verify`
+- What happened: While deleting redundant `verify` targets, I changed `platform-config/project.json` to use `test` but initially left its `dependsOn` pointing at `sdk:verify`, which no longer existed.
+- Root cause: I updated the target name in the project being edited but did not immediately re-scan reverse references to the removed target.
+- Preventive rule/check added: After removing or renaming any Nx target, run a targeted repository grep for `:<old-target>` and update all dependent references in the same change.
+- Verification: Updated `platform-config/project.json` to depend on `sdk:lint` and rechecked the affected target definitions.
+
+## 2026-03-26T09:00:35Z - Missed one app path in affected-app CI detection
+- What happened: My first CI rewrite switched app jobs from `verify` to `lint`/`build`/`test` but forgot to add `apps/linear-ticket-sidepanel/` to the changed-file regex, so sidepanel-only PRs would have been skipped.
+- Root cause: I updated the target resolution lists without re-auditing the path-based change detector that gates the whole job.
+- Preventive rule/check added: Whenever editing affected-project lists in GitHub Actions, audit both the `withTarget` project sets and the upstream `git diff` path regex in the same pass.
+- Verification: Added `apps/linear-ticket-sidepanel/` to the app change detector in `.github/workflows/ci.yml`.

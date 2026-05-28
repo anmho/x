@@ -1,6 +1,6 @@
 {
   "generatedAt": "2026-03-09",
-  "source": "Session work items — create tickets then split into stacked PRs. Run: LINEAR_API_KEY=xxx node scripts/linear/create-issues.mjs --input docs/backlog/session-tickets.json --team-key ANM",
+  "source": "Session work items — create tickets then split into stacked PRs. Use Linear MCP with this payload.",
   "teamKey": "ANM",
   "tickets": [
     {
@@ -16,7 +16,7 @@
     {
       "title": "[X Platform] Linear ticket creation with parent/child linking and PR linkage",
       "priority": 2,
-      "description": "## Summary\nExtend create-issues.mjs for parentRef, add link-pr-to-linear.sh, runbooks, ticket payloads.\n\n## Changes\n- scripts/linear/create-issues.mjs (parentRef support)\n- scripts/linear/link-pr-to-linear.sh\n- scripts/linear/README.md\n- docs/runbooks/linear-pr-linkage.md\n- docs/backlog/*.json payloads\n- scripts/create-prs-for-branches.sh (use PR template)\n\n## PR\nStack PR 2"
+      "description": "## Summary\nAdd link-pr-to-linear.sh, runbooks, ticket payloads. Use Linear MCP for creation.\n\n## Changes\n- scripts/linear/link-pr-to-linear.sh\n- scripts/linear/README.md\n- docs/runbooks/linear-pr-linkage.md\n- docs/backlog/*.json payloads\n- scripts/create-prs-for-branches.sh (use PR template)\n\n## PR\nStack PR 2"
     },
     {
       "title": "[X Platform] Concise PR template and tech debt removal",

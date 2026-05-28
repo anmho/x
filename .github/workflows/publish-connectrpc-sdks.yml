@@ -1,0 +1,40 @@
+name: Publish ConnectRPC SDKs
+
+on:
+  workflow_dispatch:
+    inputs:
+      sdk_version:
+        description: Optional SDK semantic version (used only when buf CLI supports explicit create)
+        required: false
+        type: string
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: "npm"
+          cache-dependency-path: package-lock.json
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Setup Buf
+        uses: bufbuild/buf-setup-action@v1
+
+      - name: Buf Registry Login
+        run: |
+          echo "${BUF_TOKEN}" | buf registry login --token-stdin
+        env:
+          BUF_TOKEN: ${{ secrets.BUF_TOKEN }}
+
+      - name: Lint Proto (Nx)
+        run: npm run sdk:lint
+
+      - name: Push + Publish SDKs (Nx)
+        run: SDK_VERSION=${{ github.event.inputs.sdk_version }} npm run sdk:publish

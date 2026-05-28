@@ -1,140 +1,92 @@
-# Scaffolding Commands
+# Scripts Reference
 
-Use `scripts/new` to scaffold common project types.
+This directory contains low-level operational scripts for local development, validation, and release checks.
 
-## Reliability Commands
-
-Use these to harden local development and release safety:
+Primary repo entrypoints live at the root:
 
 ```bash
-scripts/doctor
-python3 scripts/ci/materialize_platform_configs.py --check
-scripts/verify all
-scripts/deploy-preflight platform
-scripts/dev-stack start
+npm run lint
+npm run build
+npm run test
+make lint
+make test
+```
+
+Use the scripts in this directory when you specifically need a low-level helper or a deploy-oriented preflight target.
+
+## Core Commands
+
+```bash
+# Root validation
+npm run lint
+npm run build
+npm run test
+make lint
+make test
+
+# Deploy preflight
+./scripts/deploy-preflight platform
+./scripts/deploy-preflight cloud-console
+./scripts/deploy-preflight omnichannel
+
+# Cleanup
+scripts/clean
+scripts/clean --dry-run
+scripts/clean --full
 scripts/clean --dry-run --full
 ```
 
-## Examples
+## Platform CLI Scaffolding and Workflows
+
+Use platform-cli for scaffolding and service/resource workflows:
 
 ```bash
-scripts/new app cloud-console
-scripts/new service access-api
-scripts/new package sdk-notifications
-scripts/new proto notifications
-scripts/new agent support-triage
-scripts/new mobile-app storefront
-scripts/new smart-contract treasury
-scripts/new cloud-console
+platform create service billing-api
+platform create integration add vercel --project cloud-console
+platform config init
+platform project list
+platform project keys mint --project cloud-console --owner andrew --env dev
+platform tokens list --project cloud-console
+platform notifications list
+platform control-plane plan --project cloud-console
+platform deploy --project cloud-console --dry-run
+platform docs
 ```
 
-## Why This Exists
+See workflow pass/fail status in `docs/runbooks/workflow-status-matrix.md`.
 
-These commands provide a fast path for the roadmap generators listed in the root README:
+## ConnectRPC SDK Flow (Nx)
 
-- `new:app`
-- `new:cloud-console`
-- `new:service`
-- `new:agent`
-- `new:package`
-- `new:proto`
-- `new:mobile-app`
-- `new:smart-contract`
-
-## Run Everything Live
-
-Use `scripts/dev-stack` to run the local stack in one command:
+Use `scripts/sdk.sh` as the monorepo SDK entrypoint.
 
 ```bash
-scripts/dev-stack start
-scripts/dev-stack status
-scripts/dev-stack temporal-ui
-scripts/dev-stack logs access-api
-scripts/dev-stack stop
+scripts/sdk.sh lint
+scripts/sdk.sh generate-es
+scripts/sdk.sh generate-server
+scripts/sdk.sh push
+scripts/sdk.sh publish-all
+scripts/sdk.sh list
 ```
 
-This starts/stops:
+## PR and Linear Helpers
 
-- Supabase local stack
-- Temporal dev server
-- `services/access-api`
-- `services/omnichannel/backend` API + worker
-- `apps/cloud-console` (includes omnichannel routes at `/omnichannel`) on `:3000`
-
-For Go live reload, run with `wgo` enabled:
+Create PRs for pushed branches:
 
 ```bash
-WATCH_GO_SERVICES=1 scripts/dev-stack start
-# or
-WATCH_GO_SERVICES=1 ./platform stack start
+./scripts/create-prs-for-branches.sh --dry-run
+./scripts/create-prs-for-branches.sh
 ```
 
-If `wgo` is missing, the stack falls back to `go run`.
-
-Go wrapper CLI:
+For Linear linkage, use:
 
 ```bash
-./platform stack start
-./platform stack status
-./platform stack temporal-ui
-./platform stack stop
+./scripts/linear/link-pr-to-linear.sh ANM-123
 ```
 
-Token and scaffold helpers through Go CLI:
+Issue creation itself should use Linear MCP directly (see `scripts/linear/README.md`).
 
-```bash
-./platform tokens mint --application cloud-console --owner andrew --env dev --scope notifications:write
-./platform tokens list
-./platform new service billing-api
-```
+## Notes
 
-## Create PRs for Open Branches
-
-Create PRs for branches pushed to origin that don't yet have one. Requires `gh auth login`.
-
-```bash
-./scripts/create-prs-for-branches.sh --dry-run   # preview
-./scripts/create-prs-for-branches.sh             # create
-```
-
-## Linear Issue Creation
-
-Use `scripts/linear/create-issues.mjs` to create Linear tickets from JSON payloads.
-
-```bash
-node scripts/linear/create-issues.mjs --dry-run
-LINEAR_API_KEY=<your-api-key> LINEAR_TEAM_KEY=ENG node scripts/linear/create-issues.mjs
-```
-
-## Web Scraper
-
-Use `scripts/web-scraper/scrape.mjs` for quick metadata extraction from one or more URLs.
-
-```bash
-node scripts/web-scraper/scrape.mjs --url https://example.com
-node scripts/web-scraper/scrape.mjs --urls-file urls.txt --out scrape-output.json
-```
-
-## PM Agent
-
-Use `agents/pm-agent/run.mjs` to generate a daily PM report and optional SMS digest.
-
-```bash
-node agents/pm-agent/run.mjs --dry-run
-```
-
-Clawdbot webhook delivery is also supported via `config.clawdbot` (see `agents/pm-agent/README.md`).
-
-## Code Agents (Linear)
-
-Use `agents/code-agents/run.mjs` to pull Linear issues and route them to `code-feature-agent`, `code-bugfix-agent`, or `code-refactor-agent`.
-
-```bash
-node agents/code-agents/run.mjs --issues-json agents/code-agents/sample-issues.json --dry-run
-LINEAR_API_KEY=<your-api-key> LINEAR_TEAM_KEY=ENG node agents/code-agents/run.mjs --config agents/code-agents/config.example.json
-```
-
-Outputs are written to `agents/code-agents/out/`:
-
-- `queue.json` with selected issues and assigned agent profile
-- `briefs/<ISSUE-ID>.md` per-issue execution brief
+- `scripts/new` is not part of the current repository scripts.
+- `scripts/doctor` is a compatibility wrapper around `scripts/setup.sh`.
+- `scripts/verify` is a compatibility bridge that delegates to the root `npm run test:*` commands.

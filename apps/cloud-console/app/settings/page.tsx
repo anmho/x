@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { BarChart3, Check, CheckCircle2, Cloud, CreditCard, KeyRound, Link2, Rocket, Settings, Shield, Unlink } from 'lucide-react';
 import { AppNav } from '@/app/_components/app-nav';
 
@@ -15,20 +15,25 @@ const GCLOUD_SCOPES = [
   'https://www.googleapis.com/auth/run.admin',
 ];
 
+function getInitialTab(): Tab {
+  if (typeof window === 'undefined') {
+    return 'general';
+  }
+  const params = new URLSearchParams(window.location.search);
+  const tab = params.get('tab');
+  if (tab === 'integrations' || tab === 'security' || tab === 'general' || tab === 'auth') {
+    return tab;
+  }
+  return 'general';
+}
+
 
 export default function SettingsPage() {
-  const [tab, setTab] = useState<Tab>('general');
+  const [tab, setTab] = useState<Tab>(getInitialTab);
   const [gcloudStatus, setGcloudStatus] = useState<GCloudStatus>('disconnected');
   const [gcloudEmail, setGcloudEmail] = useState('');
   const [gcloudProject, setGcloudProject] = useState('');
   const [connectError, setConnectError] = useState<string | null>(null);
-
-  // Read tab from URL param
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const t = params.get('tab');
-    if (t === 'integrations' || t === 'security' || t === 'general' || t === 'auth') setTab(t);
-  }, []);
 
   function handleConnectGCloud() {
     setGcloudStatus('connecting');

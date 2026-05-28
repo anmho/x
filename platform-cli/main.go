@@ -82,6 +82,7 @@ Usage:
   platform start|status|stop
   platform logs <service>
   platform stack temporal-ui
+  platform mcp setup
   platform mcp <tools|keys> ...
   platform create <target> <name?>
   platform create integration <add|list|remove>
@@ -103,6 +104,7 @@ Examples:
   platform control-plane serve --addr :8091
   platform notifications list
   platform docs
+  platform mcp setup
   platform mcp tools list --server http://localhost:8765 --key <api-key>
   platform create service billing-api
   platform create integration add vercel --project cloud-console

@@ -86,20 +86,31 @@ jobs:
         run: |
           echo "projects=$(npx nx show projects --affected --withTarget=test --projects=agent-control-api --base="$NX_BASE" --head="$NX_HEAD" --sep=,)" >> "$GITHUB_OUTPUT"
 
-      - name: Resolve affected platform verify targets
-        id: platform_verify_scope
+      - name: Resolve affected platform lint targets
+        id: platform_lint_scope
         if: steps.platform_changes.outputs.changed == 'true'
         shell: bash
         run: |
-          echo "projects=$(npx nx show projects --affected --withTarget=verify --projects=platform,sdk,mcp,omnichannel-api,omnichannel-worker --base="$NX_BASE" --head="$NX_HEAD" --sep=,)" >> "$GITHUB_OUTPUT"
+          echo "projects=$(npx nx show projects --affected --withTarget=lint --projects=sdk --base="$NX_BASE" --head="$NX_HEAD" --sep=,)" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve affected platform build targets
+        id: platform_build_scope
+        if: steps.platform_changes.outputs.changed == 'true'
+        shell: bash
+        run: |
+          echo "projects=$(npx nx show projects --affected --withTarget=build --projects=mcp,omnichannel-api,omnichannel-worker,agent-control-api --base="$NX_BASE" --head="$NX_HEAD" --sep=,)" >> "$GITHUB_OUTPUT"
 
       - name: No affected platform targets
-        if: steps.platform_changes.outputs.changed != 'true' || (steps.platform_verify_scope.outputs.projects == '' && steps.platform_test_scope.outputs.projects == '')
+        if: steps.platform_changes.outputs.changed != 'true' || (steps.platform_lint_scope.outputs.projects == '' && steps.platform_build_scope.outputs.projects == '' && steps.platform_test_scope.outputs.projects == '')
         run: echo "No affected platform targets."
 
-      - name: Run affected platform verify targets
-        if: steps.platform_verify_scope.outputs.projects != ''
-        run: npx nx run-many -t verify --projects="${{ steps.platform_verify_scope.outputs.projects }}" --outputStyle=static
+      - name: Run affected platform lint targets
+        if: steps.platform_lint_scope.outputs.projects != ''
+        run: npx nx run-many -t lint --projects="${{ steps.platform_lint_scope.outputs.projects }}" --outputStyle=static
+
+      - name: Run affected platform build targets
+        if: steps.platform_build_scope.outputs.projects != ''
+        run: npx nx run-many -t build --projects="${{ steps.platform_build_scope.outputs.projects }}" --outputStyle=static
 
       - name: Run affected platform test targets
         if: steps.platform_test_scope.outputs.projects != ''
@@ -128,7 +139,7 @@ jobs:
         id: app_changes
         shell: bash
         run: |
-          if git diff --name-only "$NX_BASE" "$NX_HEAD" | grep -Eq '^(apps/cloud-console/|apps/omnichannel/frontend/|apps/agent-runner/|services/agent-tools/|packages/|services/omnichannel/|package\.json$|package-lock\.json$|nx\.json$)'; then
+          if git diff --name-only "$NX_BASE" "$NX_HEAD" | grep -Eq '^(apps/cloud-console/|apps/linear-ticket-sidepanel/|apps/omnichannel/frontend/|apps/agent-runner/|services/agent-tools/|packages/|services/omnichannel/|package\.json$|package-lock\.json$|nx\.json$)'; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
           else
             echo "changed=false" >> "$GITHUB_OUTPUT"
@@ -138,31 +149,42 @@ jobs:
         if: steps.app_changes.outputs.changed == 'true'
         run: npm ci
 
+      - name: Resolve affected app lint targets
+        id: app_lint_scope
+        if: steps.app_changes.outputs.changed == 'true'
+        shell: bash
+        run: |
+          echo "projects=$(npx nx show projects --affected --withTarget=lint --projects=cloud-console,linear-ticket-sidepanel,omnichannel-frontend --base="$NX_BASE" --head="$NX_HEAD" --sep=,)" >> "$GITHUB_OUTPUT"
+
       - name: Resolve affected app build targets
         id: app_build_scope
         if: steps.app_changes.outputs.changed == 'true'
         shell: bash
         run: |
-          echo "projects=$(npx nx show projects --affected --withTarget=build --projects=omnichannel-frontend,agent-runner,agent-tools --base="$NX_BASE" --head="$NX_HEAD" --sep=,)" >> "$GITHUB_OUTPUT"
+          echo "projects=$(npx nx show projects --affected --withTarget=build --projects=cloud-console,linear-ticket-sidepanel,omnichannel-frontend,agent-runner,agent-tools --base="$NX_BASE" --head="$NX_HEAD" --sep=,)" >> "$GITHUB_OUTPUT"
 
-      - name: Resolve affected app verify targets
-        id: app_verify_scope
+      - name: Resolve affected app test targets
+        id: app_test_scope
         if: steps.app_changes.outputs.changed == 'true'
         shell: bash
         run: |
-          echo "projects=$(npx nx show projects --affected --withTarget=verify --projects=cloud-console --base="$NX_BASE" --head="$NX_HEAD" --sep=,)" >> "$GITHUB_OUTPUT"
+          echo "projects=$(npx nx show projects --affected --withTarget=test --projects=cloud-console,linear-ticket-sidepanel,omnichannel-frontend,agent-runner --base="$NX_BASE" --head="$NX_HEAD" --sep=,)" >> "$GITHUB_OUTPUT"
 
       - name: No affected app targets
-        if: steps.app_changes.outputs.changed != 'true' || (steps.app_verify_scope.outputs.projects == '' && steps.app_build_scope.outputs.projects == '')
+        if: steps.app_changes.outputs.changed != 'true' || (steps.app_lint_scope.outputs.projects == '' && steps.app_build_scope.outputs.projects == '' && steps.app_test_scope.outputs.projects == '')
         run: echo "No affected app targets."
 
-      - name: Run affected app verify targets
-        if: steps.app_verify_scope.outputs.projects != ''
-        run: npx nx run-many -t verify --projects="${{ steps.app_verify_scope.outputs.projects }}" --outputStyle=static
+      - name: Run affected app lint targets
+        if: steps.app_lint_scope.outputs.projects != ''
+        run: npx nx run-many -t lint --projects="${{ steps.app_lint_scope.outputs.projects }}" --outputStyle=static
 
       - name: Run affected app build targets
         if: steps.app_build_scope.outputs.projects != ''
         run: npx nx run-many -t build --projects="${{ steps.app_build_scope.outputs.projects }}" --outputStyle=static
+
+      - name: Run affected app test targets
+        if: steps.app_test_scope.outputs.projects != ''
+        run: npx nx run-many -t test --projects="${{ steps.app_test_scope.outputs.projects }}" --outputStyle=static
 
   docs:
     name: Affected Docs
@@ -193,13 +215,13 @@ jobs:
             echo "changed=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: No affected docs verify targets
+      - name: No affected docs test targets
         if: steps.docs_changes.outputs.changed != 'true'
-        run: echo "No affected docs verify targets."
+        run: echo "No affected docs test targets."
 
-      - name: Run affected docs verify targets
+      - name: Run affected docs test targets
         if: steps.docs_changes.outputs.changed == 'true'
-        run: node scripts/ci/verify_docs_config.mjs
+        run: npx nx run docs:test --outputStyle=static
 
   agents:
     name: Affected Agents
@@ -230,10 +252,10 @@ jobs:
             echo "changed=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: No affected agent verify targets
+      - name: No affected agent test targets
         if: steps.agents_changes.outputs.changed != 'true'
-        run: echo "No affected agent verify targets."
+        run: echo "No affected agent test targets."
 
-      - name: Run affected agent verify targets
+      - name: Run affected agent test targets
         if: steps.agents_changes.outputs.changed == 'true'
-        run: test -f ./agents/blueprints/verify && ./agents/blueprints/verify || true
+        run: npx nx run agents:test --outputStyle=static

@@ -1,0 +1,5 @@
+{
+  "name": "cloud-console",
+  "cwd": "apps/cloud-console",
+  "run": "npm run dev -- --port 3000"
+}

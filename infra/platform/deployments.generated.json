@@ -1,0 +1,45 @@
+{
+  "version": "1",
+  "deployments": [
+    {
+      "name": "console-web",
+      "provider": "gcp-cloud-run",
+      "service": "console-web",
+      "region": "us-central1",
+      "environment": "production",
+      "desired_state": "present",
+      "project": "cloud-console",
+      "project_path": "apps/cloud-console"
+    },
+    {
+      "name": "omnichannel-api",
+      "provider": "gcp-cloud-run",
+      "service": "omnichannel-api",
+      "region": "us-central1",
+      "environment": "production",
+      "desired_state": "present",
+      "project": "omnichannel-api",
+      "project_path": "services/omnichannel/backend"
+    },
+    {
+      "name": "omnichannel-worker",
+      "provider": "gcp-cloud-run",
+      "service": "omnichannel-worker",
+      "region": "us-central1",
+      "environment": "production",
+      "desired_state": "present",
+      "project": "omnichannel-worker",
+      "project_path": "services/omnichannel/backend"
+    },
+    {
+      "name": "mcp",
+      "provider": "gcp-cloud-run",
+      "service": "mcp",
+      "region": "us-central1",
+      "environment": "production",
+      "desired_state": "present",
+      "project": "mcp",
+      "project_path": "services/mcp"
+    }
+  ]
+}

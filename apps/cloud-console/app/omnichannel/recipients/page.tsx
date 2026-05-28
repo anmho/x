@@ -11,8 +11,7 @@ import {
 } from '@/lib/omnichannel-store';
 
 export default function OmnichannelRecipientsPage() {
-  const [recipients, setRecipients] = useState<OmnichannelRecipient[]>([]);
-  const [hydrated, setHydrated] = useState(false);
+  const [recipients, setRecipients] = useState<OmnichannelRecipient[]>(() => loadRecipients());
   const [destination, setDestination] = useState('');
   const [channel, setChannel] = useState<NotificationChannel>('email');
   const [segment, setSegment] = useState('audience');
@@ -20,14 +19,8 @@ export default function OmnichannelRecipientsPage() {
   const [segmentFilter, setSegmentFilter] = useState('all');
 
   useEffect(() => {
-    setRecipients(loadRecipients());
-    setHydrated(true);
-  }, []);
-
-  useEffect(() => {
-    if (!hydrated) return;
     saveRecipients(recipients);
-  }, [recipients, hydrated]);
+  }, [recipients]);
 
   function addRecipient(event: FormEvent) {
     event.preventDefault();

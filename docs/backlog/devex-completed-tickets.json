@@ -1,6 +1,6 @@
 {
   "generatedAt": "2026-03-09",
-  "source": "DevEx ExecPlan completed items — create Linear tickets if not exist. Run: LINEAR_API_KEY=xxx node scripts/linear/create-issues.mjs --input docs/backlog/devex-completed-tickets.json --team-key ANM",
+  "source": "DevEx ExecPlan completed items — create Linear tickets if not exist. Use Linear MCP with this payload.",
   "teamKey": "ANM",
   "tickets": [
     {
@@ -24,7 +24,7 @@
       "title": "[X Platform] Fix docs and scaffolding drift",
       "parentRef": "parent",
       "priority": 4,
-      "description": "## Completed\nCorrected docs/top-three-priorities.md path to docs/mintlify/services/access-api.mdx; added docs lint in scripts/verify docs (broken path grep + mint.json nav check).\n\n## Validation\n- scripts/verify docs"
+      "description": "## Completed\nCorrected docs/top-three-priorities.md path to docs/mintlify/services/access-api.mdx; added docs lint in the docs verification path active at that time (broken path grep + mint.json nav check).\n\n## Validation\n- docs verification command active at that time"
     },
     {
       "title": "[X Platform] Complete Access API OpenAPI response schema",

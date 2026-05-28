@@ -4,3 +4,7 @@
 [mcp_servers.greptile]
 url = "https://api.greptile.com/mcp"
 bearer_token_env_var = "GREPTILE_API_KEY"
+
+[mcp_servers.x-mcp]
+url = "http://localhost:8765/mcp"
+bearer_token_env_var = "MCP_API_KEY"

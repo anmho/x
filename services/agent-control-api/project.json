@@ -1,0 +1,35 @@
+{
+  "name": "agent-control-api",
+  "root": "services/agent-control-api",
+  "tags": ["layer:service", "lang:go"],
+  "targets": {
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "go run ./cmd/api",
+        "cwd": "services/agent-control-api"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "go build -o dist/agent-control-api ./cmd/api",
+        "cwd": "services/agent-control-api"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "go test ./...",
+        "cwd": "services/agent-control-api"
+      }
+    },
+    "docker-build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "docker build -t agent-control-api services/agent-control-api",
+        "cwd": "."
+      }
+    }
+  }
+}

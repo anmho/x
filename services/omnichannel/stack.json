@@ -1,0 +1,22 @@
+{
+  "services": [
+    {
+      "name": "omnichannel-api",
+      "cwd": "services/omnichannel/backend",
+      "run": "go run ./cmd/api",
+      "db": "omnichannel",
+      "env": {
+        "TEMPORAL_HOST": "${TEMPORAL_HOST:-localhost:7233}"
+      }
+    },
+    {
+      "name": "omnichannel-worker",
+      "cwd": "services/omnichannel/backend",
+      "run": "go run ./cmd/worker",
+      "db": "omnichannel",
+      "env": {
+        "TEMPORAL_HOST": "${TEMPORAL_HOST:-localhost:7233}"
+      }
+    }
+  ]
+}

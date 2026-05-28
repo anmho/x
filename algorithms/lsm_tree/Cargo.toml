@@ -1,0 +1,5 @@
+[package]
+name = "lsm_tree"
+version = "0.1.0"
+edition = "2021"
+description = "A simplified in-memory Log-Structured Merge (LSM) tree"

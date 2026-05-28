@@ -38,20 +38,6 @@
         "cwd": "."
       }
     },
-    "verify": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "cd services/mcp && GOCACHE=/tmp/go-cache go build ./...",
-        "cwd": "."
-      }
-    },
-    "preflight": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "cd services/mcp && GOCACHE=/tmp/go-cache go test ./... && GOCACHE=/tmp/go-cache go build ./...",
-        "cwd": "."
-      }
-    },
     "docker-build": {
       "executor": "nx:run-commands",
       "options": {

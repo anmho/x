@@ -1,6 +1,6 @@
 {
   "generatedAt": "2026-03-09",
-  "source": "User request: folder-by-feature repo structure. Run: LINEAR_API_KEY=xxx node scripts/linear/create-issues.mjs --input docs/backlog/folder-by-feature-tickets.json --team-key ANM",
+  "source": "User request: folder-by-feature repo structure. Use Linear MCP with this payload.",
   "teamKey": "ANM",
   "tickets": [
     {

@@ -13,7 +13,7 @@ LINEAR_API_KEY=xxx ./scripts/linear/create-all-backlog-tickets.sh
 Or create individually:
 
 ```bash
-LINEAR_API_KEY=xxx node scripts/linear/create-issues.mjs --input docs/backlog/<file>.json --team-key ANM
+Use Linear MCP to create issues from docs/backlog/<file>.json
 ```
 
 Payloads (in priority order):
@@ -55,4 +55,4 @@ Get PR numbers: `gh pr list --json number,headRefName -q '.[] | "\(.number) \(.h
 
 ## 5. Without LINEAR_API_KEY
 
-The agent cannot create or update Linear tickets. Document manual steps in the active ExecPlan; run the create-issues commands when the key is available.
+The agent cannot create or update Linear tickets when Linear MCP is unavailable. Document manual steps in the active ExecPlan; use Linear MCP when available.

@@ -86,20 +86,9 @@ const OMNICHANNEL_TILES = [
 export default function OmnichannelPage() {
   const [notificationsCount, setNotificationsCount] = useState(0);
   const [templatesCount, setTemplatesCount] = useState(0);
-  const [recipientsCount, setRecipientsCount] = useState(0);
-  const [campaignsCount, setCampaignsCount] = useState(0);
-  const [cronJobsCount, setCronJobsCount] = useState(0);
-
-  useEffect(() => {
-    const recipients = loadRecipients();
-    const campaigns = loadCampaigns();
-    const jobs = loadCronJobs();
-    setRecipientsCount(recipients.length);
-    setCampaignsCount(campaigns.length);
-    setCronJobsCount(jobs.length);
-
-    void loadBackendStats();
-  }, []);
+  const [recipientsCount] = useState(() => loadRecipients().length);
+  const [campaignsCount] = useState(() => loadCampaigns().length);
+  const [cronJobsCount] = useState(() => loadCronJobs().length);
 
   async function loadBackendStats() {
     try {
@@ -114,6 +103,13 @@ export default function OmnichannelPage() {
       setTemplatesCount(0);
     }
   }
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void loadBackendStats();
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   const metrics = useMemo(
     () => [

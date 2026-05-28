@@ -1,0 +1,21 @@
+{
+  "name": "agent-tools",
+  "root": "services/agent-tools",
+  "tags": ["layer:service", "lang:node"],
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "docker build -t agent-tools services/agent-tools",
+        "cwd": "."
+      }
+    },
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npm run dev",
+        "cwd": "services/agent-tools"
+      }
+    }
+  }
+}

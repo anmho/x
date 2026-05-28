@@ -206,7 +206,8 @@ Use Claude Code subagents to parallelize independent work and protect the main c
 1. When creating or managing PRs, use the **gh-pr-mcp** skill (`.cursor/skills/gh-pr-mcp/SKILL.md`): prefer GitHub MCP tools when available, fall back to `gh` CLI.
 2. Use `gh pr create` (or `gh pr create --fill`) when GitHub MCP is unavailable.
 3. PR description must include:
-   - **Linear backlink:** `Linear: [ANM-XXX](https://linear.app/anmho/issue/ANM-XXX)` at the top.
+  - **Linear backlink:** `Linear: [ANM-XXX](https://linear.app/anmho/issue/ANM-XXX)` at the top.
+  - **Backlink reciprocity:** mention the PR URL inside the Linear issue (for example via a comment or “Linked PRs” section) so the ticket explicitly references the PR that implements it.
    - **Summary:** What changed and why.
    - **Context:** Affected areas, validation steps, risks.
    - **Screenshots:** When UI or visual behavior changes, attach screenshots (before/after if relevant).

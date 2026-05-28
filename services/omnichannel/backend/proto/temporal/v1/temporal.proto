@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package temporal.v1;
+
+option go_package = "github.com/andrewho/omnichannel/internal/rpc/gen/temporal/v1;temporalv1";
+
+service TemporalService {
+  rpc StartNotification(StartNotificationRequest) returns (StartNotificationResponse);
+  rpc GetNotificationStatus(GetNotificationStatusRequest) returns (GetNotificationStatusResponse);
+  rpc ListWorkflows(ListWorkflowsRequest) returns (ListWorkflowsResponse);
+}
+
+message StartNotificationRequest {
+  string recipient_email = 1;
+  optional string template_id = 2;
+  string subject = 3;
+  string body = 4;
+  map<string, string> variables = 5;
+  optional string scheduled_at = 6;
+}
+
+message StartNotificationResponse {
+  string notification_id = 1;
+  string workflow_id = 2;
+  string run_id = 3;
+  string status = 4;
+}
+
+message GetNotificationStatusRequest {
+  string notification_id = 1;
+}
+
+message GetNotificationStatusResponse {
+  string notification_id = 1;
+  string status = 2;
+  string workflow_status = 3;
+  optional string sent_at = 4;
+  optional string failed_at = 5;
+  string error_message = 6;
+}
+
+message ListWorkflowsRequest {
+  string project_id = 1;
+  string environment = 2;
+  repeated string statuses = 3;
+  string query = 4;
+  uint32 page_size = 5;
+  string page_token = 6;
+  optional string start_time = 7;
+  optional string end_time = 8;
+}
+
+message WorkflowListItem {
+  string workflow_id = 1;
+  string run_id = 2;
+  string workflow_type = 3;
+  string status = 4;
+  optional string start_time = 5;
+  optional string close_time = 6;
+  string task_queue = 7;
+  string namespace = 8;
+  string project_id = 9;
+  string environment = 10;
+  string temporal_ui_url = 11;
+}
+
+message ListWorkflowsResponse {
+  repeated WorkflowListItem items = 1;
+  string next_page_token = 2;
+}

@@ -12,7 +12,7 @@ This proto module is published to Buf Schema Registry (BSR):
 
 ## Publish flow
 
-From `services/omnichannel`:
+From repository root:
 
 ```bash
 # 1) Validate schema
@@ -21,7 +21,10 @@ From `services/omnichannel`:
 # 2) Push proto schema
 ./scripts/sdk.sh push
 
-# 3) Publish SDK versions
+# 3) Resolve/publish SDK versions in BSR
+./scripts/sdk.sh publish-all
+
+# Optional: request explicit semantic SDK version when supported by buf CLI
 SDK_VERSION=v1.0.0 ./scripts/sdk.sh publish-all
 ```
 
@@ -31,7 +34,7 @@ Backend runtime stubs can still be generated for server builds:
 
 ```bash
 ./scripts/sdk.sh generate-server
-# or: nx run sdk:generate-go
+# or: npm run sdk:generate-go
 ```
 
 This updates `backend/internal/rpc/gen` from `backend/proto` using `buf.gen.server.yaml`.
@@ -41,8 +44,8 @@ This updates `backend/internal/rpc/gen` from `backend/proto` using `buf.gen.serv
 For local frontend development, generate the TypeScript client:
 
 ```bash
-nx run sdk:generate-es
-# or: ./scripts/sdk.sh generate-es
+./scripts/sdk.sh generate-es
+# or: npm run sdk:generate-es
 ```
 
 Output: `packages/sdk-omnichannel/src/gen`. Cloud console and omnichannel frontend consume this via workspace dependency `@x/sdk-omnichannel`.

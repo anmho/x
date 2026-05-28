@@ -1,0 +1,43 @@
+{
+  "name": "platform",
+  "root": "platform-config",
+  "tags": ["platform"],
+  "targets": {
+    "setup": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "./scripts/setup.sh",
+        "cwd": "."
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "(cd platform-cli && GOCACHE=/tmp/go-cache go test ./...) && python3 scripts/ci/materialize_platform_configs.py --check && npm --prefix mcp run check && (cd cli && cargo test) && (cd services/x_stream_bot && cargo test)",
+        "cwd": "."
+      },
+      "dependsOn": ["sdk:lint"]
+    },
+    "config:materialize": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "python3 scripts/ci/materialize_platform_configs.py",
+        "cwd": "."
+      }
+    },
+    "config:check": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "python3 scripts/ci/materialize_platform_configs.py --check",
+        "cwd": "."
+      }
+    },
+    "project:registry": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "python3 scripts/ci/materialize_platform_configs.py",
+        "cwd": "."
+      }
+    }
+  }
+}

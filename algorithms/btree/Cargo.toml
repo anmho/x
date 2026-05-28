@@ -1,0 +1,5 @@
+[package]
+name = "bplus_tree"
+version = "0.1.0"
+edition = "2021"
+description = "A generic B+ tree with leaf-linked-list range scans"

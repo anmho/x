@@ -1,0 +1,185 @@
+{
+  "version": "1",
+  "projects": [
+    {
+      "name": "cloud-console",
+      "description": "Web dashboard for service access and API key workflows",
+      "path": "apps/cloud-console",
+      "dependencies": [
+        {
+          "name": "omnichannel-api",
+          "type": "stack"
+        }
+      ],
+      "deploy": {
+        "cwd": "apps/cloud-console",
+        "command": "npm run build",
+        "health_url": "http://127.0.0.1:3000"
+      },
+      "deployments": [
+        {
+          "name": "console-web",
+          "provider": "gcp-cloud-run",
+          "service": "console-web",
+          "region": "us-central1",
+          "environment": "production",
+          "desired_state": "present"
+        }
+      ],
+      "targets": {
+        "endpoints": [
+          {
+            "name": "omnichannel-health",
+            "url": "http://127.0.0.1:8080/api/v1/health"
+          }
+        ]
+      },
+      "terraform": {
+        "root": "infra/terraform/projects/cloud-console",
+        "workspace": "dev"
+      },
+      "observability": {
+        "vercel": {
+          "project_id": "cloud-console",
+          "environments": [
+            "production",
+            "preview"
+          ]
+        },
+        "gcp": {
+          "project_id": "my-gcp-project",
+          "metric_prefixes": [
+            "custom.googleapis.com/projectx/cloud_console"
+          ]
+        }
+      }
+    },
+    {
+      "name": "omnichannel-api",
+      "description": "Omnichannel notifications REST API",
+      "path": "services/omnichannel/backend",
+      "dependencies": [
+        {
+          "name": "supabase",
+          "type": "stack"
+        },
+        {
+          "name": "temporal",
+          "type": "stack"
+        }
+      ],
+      "deploy": {
+        "cwd": "services/omnichannel/backend",
+        "command": "GOCACHE=/tmp/go-cache go test ./...",
+        "health_url": "http://127.0.0.1:8080/api/v1/health"
+      },
+      "deployments": [
+        {
+          "name": "omnichannel-api",
+          "provider": "gcp-cloud-run",
+          "service": "omnichannel-api",
+          "region": "us-central1",
+          "environment": "production",
+          "desired_state": "present"
+        }
+      ],
+      "terraform": {
+        "root": "infra/terraform/projects/omnichannel-api",
+        "workspace": "dev"
+      },
+      "observability": {
+        "gcp": {
+          "project_id": "my-gcp-project",
+          "log_filters": [
+            "resource.type=\"cloud_run_revision\"",
+            "labels.service_name=\"omnichannel-api\""
+          ],
+          "metric_prefixes": [
+            "run.googleapis.com",
+            "custom.googleapis.com/projectx/omnichannel_api"
+          ]
+        }
+      }
+    },
+    {
+      "name": "omnichannel-worker",
+      "description": "Temporal worker for omnichannel notification jobs",
+      "path": "services/omnichannel/backend",
+      "dependencies": [
+        {
+          "name": "supabase",
+          "type": "stack"
+        },
+        {
+          "name": "temporal",
+          "type": "stack"
+        }
+      ],
+      "deploy": {
+        "cwd": "services/omnichannel/backend",
+        "command": "GOCACHE=/tmp/go-cache go test ./..."
+      },
+      "deployments": [
+        {
+          "name": "omnichannel-worker",
+          "provider": "gcp-cloud-run",
+          "service": "omnichannel-worker",
+          "region": "us-central1",
+          "environment": "production",
+          "desired_state": "present"
+        }
+      ],
+      "terraform": {
+        "root": "infra/terraform/projects/omnichannel-worker",
+        "workspace": "dev"
+      },
+      "observability": {
+        "gcp": {
+          "project_id": "my-gcp-project",
+          "log_filters": [
+            "resource.type=\"cloud_run_revision\"",
+            "labels.service_name=\"omnichannel-worker\""
+          ],
+          "metric_prefixes": [
+            "run.googleapis.com",
+            "custom.googleapis.com/projectx/omnichannel_worker"
+          ]
+        }
+      }
+    },
+    {
+      "name": "mcp",
+      "description": "ConnectRPC MCP gateway \u2014 internal tools over HTTP with API key auth",
+      "path": "services/mcp",
+      "dependencies": [],
+      "deploy": {
+        "cwd": "services/mcp",
+        "command": "GOCACHE=/tmp/go-cache go test ./...",
+        "health_url": "http://127.0.0.1:8765/health"
+      },
+      "deployments": [
+        {
+          "name": "mcp",
+          "provider": "gcp-cloud-run",
+          "service": "mcp",
+          "region": "us-central1",
+          "environment": "production",
+          "desired_state": "present"
+        }
+      ],
+      "observability": {
+        "gcp": {
+          "project_id": "my-gcp-project",
+          "log_filters": [
+            "resource.type=\"cloud_run_revision\"",
+            "labels.service_name=\"mcp\""
+          ],
+          "metric_prefixes": [
+            "run.googleapis.com",
+            "custom.googleapis.com/projectx/mcp"
+          ]
+        }
+      }
+    }
+  ]
+}

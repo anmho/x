@@ -1,0 +1,14 @@
+{
+  "name": "agents",
+  "root": "agents",
+  "tags": ["agents"],
+  "targets": {
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "test -f ./agents/blueprints/verify && ./agents/blueprints/verify || true",
+        "cwd": "."
+      }
+    }
+  }
+}

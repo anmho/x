@@ -1,6 +1,14 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "targetDefaults": {
+    "dev": {
+      "cache": false
+    },
+    "generate-proto": {
+      "cache": true,
+      "inputs": ["{projectRoot}/proto/**/*.proto", "{projectRoot}/proto/buf*.yaml"],
+      "outputs": ["{projectRoot}/internal/rpc/gen"]
+    },
     "generate-go": {
       "cache": true,
       "inputs": ["{projectRoot}/backend/proto/**/*", "{projectRoot}/backend/proto/buf*.yaml"],
@@ -14,6 +22,21 @@
     "lint": {
       "cache": true,
       "inputs": ["{projectRoot}/backend/proto/**/*", "{projectRoot}/backend/proto/buf*.yaml"]
+    },
+    "push": {
+      "cache": false
+    },
+    "publish": {
+      "cache": false
+    },
+    "publish-es": {
+      "cache": false
+    },
+    "publish-go": {
+      "cache": false
+    },
+    "list": {
+      "cache": false
     },
     "build": {
       "dependsOn": ["^build"],

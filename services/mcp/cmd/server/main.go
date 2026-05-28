@@ -40,6 +40,10 @@ func main() {
 
 	// Build tool registry and handlers
 	reg := tools.NewRegistry(root)
+	linearClient := tools.NewLinearClientFromEnv()
+	reg.SetLinearClient(linearClient)
+	slackBridge := tools.NewSlackBridge(reg.CollabStore(), tools.NewSlackClientFromEnv(), linearClient)
+	reg.SetSlackBridge(slackBridge)
 	authInterceptor := auth.NewInterceptor(storePath)
 
 	mux := http.NewServeMux()
@@ -61,6 +65,9 @@ func main() {
 	jrpcHandler := jsonrpc.NewHandler(reg)
 	mux.Handle("/mcp", authMiddleware(storePath, jrpcHandler))
 	mux.Handle("/mailbox/events", authMiddleware(storePath, watch.NewMailboxEventsHandler(reg.CollabStore())))
+	if slackBridge != nil {
+		mux.Handle("/slack/events", http.HandlerFunc(slackBridge.HandleEvents))
+	}
 	mux.Handle("/health", http.HandlerFunc(healthHandler))
 
 	addr := ":" + port
@@ -69,6 +76,9 @@ func main() {
 	fmt.Printf("[mcp] ConnectRPC: POST /mcp.v1.McpAdminService/{GenerateKey,ListKeys,RevokeKey}\n")
 	fmt.Printf("[mcp] JSON-RPC:   POST /mcp\n")
 	fmt.Printf("[mcp] Mailbox:    GET  /mailbox/events\n")
+	if slackBridge != nil {
+		fmt.Printf("[mcp] Slack:      POST /slack/events\n")
+	}
 	fmt.Printf("[mcp] Health:     GET  /health\n")
 	if err := http.ListenAndServe(addr, mux); err != nil {
 		fmt.Fprintf(os.Stderr, "[mcp] fatal: %v\n", err)

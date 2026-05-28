@@ -1,7 +1,14 @@
 {
-  "servers": {
+  "mcpServers": {
+    "x-mcp": {
+      "type": "http",
+      "url": "http://localhost:8765/mcp",
+      "headers": {
+        "Authorization": "Bearer ${MCP_API_KEY}"
+      }
+    },
     "greptile": {
-      "transport": "http",
+      "type": "http",
       "url": "https://api.greptile.com/mcp",
       "headers": {
         "Authorization": "Bearer ${GREPTILE_API_KEY}"
